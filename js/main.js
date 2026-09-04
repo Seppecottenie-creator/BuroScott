@@ -24,6 +24,42 @@ if (prefersReduced) {
   revealEls.forEach(el => io.observe(el));
 }
 
+/* ---- Zwevende navigatie: blijft nu altijd zichtbaar, ongeacht scrollrichting.
+   De onderste pagina-blur (.bottom-page-blur) zorgt dat de nav er toch
+   duidelijk bovenuit blijft springen over tekst of kaarten. ---- */
+let mobileMenuIsOpen = false; // gedeeld met het hamburgermenu hieronder
+
+/* ---- Mobiel hamburgermenu ---- */
+const navToggle = document.getElementById('nav-toggle');
+const mobileMenu = document.getElementById('mobile-menu');
+const mobileMenuBackdrop = document.getElementById('mobile-menu-backdrop');
+
+if (navToggle && mobileMenu && mobileMenuBackdrop) {
+  const closeMenu = () => {
+    mobileMenuIsOpen = false;
+    navToggle.setAttribute('aria-expanded', 'false');
+    mobileMenu.classList.remove('is-open');
+    mobileMenuBackdrop.classList.remove('is-open');
+    document.body.style.overflow = '';
+  };
+  const openMenu = () => {
+    mobileMenuIsOpen = true;
+    navToggle.setAttribute('aria-expanded', 'true');
+    mobileMenu.classList.add('is-open');
+    mobileMenuBackdrop.classList.add('is-open');
+    document.body.style.overflow = 'hidden'; // achtergrond niet laten meescrollen
+  };
+
+  navToggle.addEventListener('click', () => {
+    const isOpen = navToggle.getAttribute('aria-expanded') === 'true';
+    isOpen ? closeMenu() : openMenu();
+  });
+  mobileMenuBackdrop.addEventListener('click', closeMenu);
+  mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
+  window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
+  window.addEventListener('resize', () => { if (window.innerWidth > 680) closeMenu(); });
+}
+
 /* ---- Actieve link in de zwevende navigatie (optioneel, licht) ---- */
 const sections = document.querySelectorAll('section[id]');
 const navLinks = document.querySelectorAll('.floating-nav a');
