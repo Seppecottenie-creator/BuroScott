@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Offerte aanvragen — Buro Scott</title>
+<meta name="description" content="Vraag een offerte op maat aan bij Buro Scott: fotografie, video, drone-opnames, 360° tours en plattegronden voor jouw pand.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,500;0,600;0,700;0,900;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Vervaagt de onderkant van de pagina zodat de altijd-zichtbare nav opvalt -->
+<div class="bottom-page-blur" aria-hidden="true"></div>
+
+<nav class="floating-nav" id="site-nav">
+  <a href="index.html#top" class="nav-brand">Buro Scott</a>
+  <div class="nav-links">
+    <a href="diensten.html">Diensten</a>
+    <a href="pakketten.html">Pakketten</a>
+    <a href="over-ons.html">Over ons</a>
+  </div>
+  <a href="contact.html" class="nav-contact">Contact</a>
+  <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Menu openen" aria-expanded="false" aria-controls="mobile-menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div class="mobile-menu" id="mobile-menu">
+  <a href="diensten.html">Diensten</a>
+  <a href="pakketten.html">Pakketten</a>
+  <a href="over-ons.html">Over ons</a>
+  <a href="contact.html" class="mobile-menu-contact">Contact</a>
+</div>
+<div class="mobile-menu-backdrop" id="mobile-menu-backdrop"></div>
+
+<section class="page-hero">
+  <p class="page-hero-eyebrow">Offerte</p>
+  <h1 data-reveal>Vraag een offerte op maat aan.</h1>
+  <p data-reveal>Vertel ons iets over het pand en de diensten die je nodig hebt. Hoe vollediger, hoe scherper we meteen kunnen antwoorden — reken op een voorstel binnen de 24u.</p>
+</section>
+
+<section class="form-section form-section-narrow">
+
+  <form class="site-form" id="offerte-form" data-form data-success="offerte-success" novalidate>
+
+    <div class="form-fieldset">
+      <p class="fieldset-title">Jouw gegevens</p>
+      <p class="fieldset-sub">Zodat we weten met wie we spreken en jou kunnen bereiken.</p>
+      <div class="form-grid-2">
+        <div class="field">
+          <label for="o-naam">Naam*</label>
+          <input type="text" id="o-naam" name="naam" autocomplete="name" required>
+        </div>
+        <div class="field">
+          <label for="o-bedrijf">Kantoor / bedrijf <span class="hint">(optioneel)</span></label>
+          <input type="text" id="o-bedrijf" name="bedrijf" autocomplete="organization">
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div class="field">
+          <label for="o-email">E-mail*</label>
+          <input type="email" id="o-email" name="email" autocomplete="email" required>
+        </div>
+        <div class="field">
+          <label for="o-telefoon">Telefoon*</label>
+          <input type="tel" id="o-telefoon" name="telefoon" autocomplete="tel" required>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-fieldset">
+      <p class="fieldset-title">Het pand</p>
+      <p class="fieldset-sub">Basisinfo over de locatie die in beeld gebracht wordt.</p>
+      <div class="form-grid-2">
+        <div class="field">
+          <label for="o-adres">Adres van het pand*</label>
+          <input type="text" id="o-adres" name="adres" placeholder="Straat en nummer" autocomplete="street-address" required>
+        </div>
+        <div class="field">
+          <label for="o-gemeente">Postcode en gemeente*</label>
+          <input type="text" id="o-gemeente" name="gemeente" placeholder="8500 Kortrijk" required>
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div class="field">
+          <label for="o-type">Type pand*</label>
+          <select id="o-type" name="type_pand" required>
+            <option value="" selected disabled>Kies een type</option>
+            <option value="appartement">Appartement</option>
+            <option value="woning">Woning</option>
+            <option value="villa">Villa</option>
+            <option value="nieuwbouwproject">Nieuwbouwproject</option>
+            <option value="commercieel">Commercieel pand</option>
+            <option value="bedrijfsgebouw">Bedrijfsgebouw / kantoor</option>
+            <option value="grond">Grond / perceel</option>
+            <option value="anders">Anders</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="o-oppervlakte">Bewoonbare oppervlakte <span class="hint">(m², optioneel)</span></label>
+          <input type="number" id="o-oppervlakte" name="oppervlakte" min="0" placeholder="bv. 180">
+        </div>
+      </div>
+      <div class="field">
+        <label for="o-kamers">Aantal slaapkamers <span class="hint">(optioneel)</span></label>
+        <input type="number" id="o-kamers" name="slaapkamers" min="0" placeholder="bv. 3" style="max-width:200px;">
+      </div>
+    </div>
+
+    <div class="form-fieldset">
+      <p class="fieldset-title">Gewenste diensten*</p>
+      <p class="fieldset-sub">Duid aan wat je nodig hebt — meerdere opties mogelijk.</p>
+      <div class="check-grid">
+        <label class="check-option">
+          <input type="checkbox" name="diensten" value="fotografie">
+          <span>Fotografie</span>
+        </label>
+        <label class="check-option">
+          <input type="checkbox" name="diensten" value="video">
+          <span>Video</span>
+        </label>
+        <label class="check-option">
+          <input type="checkbox" name="diensten" value="drone">
+          <span>Drone-opnames</span>
+        </label>
+        <label class="check-option">
+          <input type="checkbox" name="diensten" value="360-tours">
+          <span>360° tour</span>
+        </label>
+        <label class="check-option">
+          <input type="checkbox" name="diensten" value="plannen">
+          <span>Plattegronden</span>
+        </label>
+        <label class="check-option">
+          <input type="checkbox" name="diensten" value="nog-niet-zeker">
+          <span>Nog niet zeker — advies gewenst</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="form-fieldset">
+      <p class="fieldset-title">Pakket <span class="hint">(optioneel)</span></p>
+      <p class="fieldset-sub">Heb je al een voorkeur? Kies een pakket, of laat het open.</p>
+      <div class="check-grid">
+        <label class="check-option">
+          <input type="radio" name="pakket" value="Geen voorkeur" checked>
+          <span>Geen voorkeur</span>
+        </label>
+        <label class="check-option">
+          <input type="radio" name="pakket" value="Basic">
+          <span>Scott Basic</span>
+        </label>
+        <label class="check-option">
+          <input type="radio" name="pakket" value="Signature">
+          <span>Scott Signature</span>
+        </label>
+        <label class="check-option">
+          <input type="radio" name="pakket" value="Prestige">
+          <span>Scott Prestige</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="form-fieldset">
+      <p class="fieldset-title">Timing</p>
+      <p class="fieldset-sub">Wanneer wil je de opnames laten inplannen?</p>
+      <div class="form-grid-2">
+        <div class="field">
+          <label for="o-datum">Gewenste opnamedatum <span class="hint">(optioneel)</span></label>
+          <input type="date" id="o-datum" name="datum">
+        </div>
+        <div class="field">
+          <label for="o-snelheid">Hoe snel?*</label>
+          <select id="o-snelheid" name="snelheid" required>
+            <option value="" selected disabled>Kies een optie</option>
+            <option value="zo-snel-mogelijk">Zo snel mogelijk</option>
+            <option value="binnen-2-weken">Binnen 2 weken</option>
+            <option value="specifieke-datum">Op de gekozen datum hierboven</option>
+            <option value="nog-te-bepalen">Nog te bepalen</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-fieldset">
+      <p class="fieldset-title">Bijkomende info <span class="hint">(optioneel)</span></p>
+      <div class="field">
+        <label for="o-bericht">Extra wensen, aandachtspunten of context</label>
+        <textarea id="o-bericht" name="bericht" placeholder="Bv. bewoond of leegstaand, bijzondere toegang, deadline voor publicatie op een portaal…"></textarea>
+      </div>
+    </div>
+
+    <button type="submit" class="form-submit">
+      <span>Offerte aanvragen</span>
+      <span class="arrow">→</span>
+    </button>
+    <p class="form-fineprint">* verplicht in te vullen. We gebruiken je gegevens enkel om je offerte op te maken en contact op te nemen.</p>
+  </form>
+
+  <div class="form-success" id="offerte-success">
+    <h3>Bedankt voor je aanvraag.</h3>
+    <p>We bekijken de gegevens van je pand en sturen binnen de 24u een offerte op maat naar je e-mailadres.</p>
+  </div>
+
+</section>
+
+<footer class="site-footer">
+  <div class="footer-top">
+    <div class="footer-col">
+      <h3>Contact</h3>
+      <p><a href="mailto:hallo@buroscott.be">hallo@buroscott.be</a></p>
+      <p><a href="tel:+3200000000">+32 000 00 00 00</a></p>
+    </div>
+    <div class="footer-col">
+      <h3>Kantoor</h3>
+      <p>Vlaanderen, België</p>
+      <p>Op verplaatsing bij de klant</p>
+    </div>
+    <div class="footer-col">
+      <h3>Volg</h3>
+      <p><a href="#">Instagram</a></p>
+      <p><a href="#">LinkedIn</a></p>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© <span id="year"></span> Buro Scott. Alle rechten voorbehouden.</span>
+    <span>Vastgoedmedia in heel Vlaanderen</span>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>
