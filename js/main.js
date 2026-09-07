@@ -3,6 +3,55 @@
    Geen build-tools nodig; puur vanilla JS.
 ============================================================ */
 
+/* ---- Introfoto's: animatie pauzeren zolang de muis erover zweeft ---- */
+const introPhotos = document.querySelector('.intro-photos');
+const introPhotosTrack = document.querySelector('.intro-photos-track');
+if (introPhotos && introPhotosTrack) {
+  introPhotos.addEventListener('mouseenter', () => introPhotosTrack.classList.add('is-paused'));
+  introPhotos.addEventListener('mouseleave', () => introPhotosTrack.classList.remove('is-paused'));
+  // Ook op touchscreens: kort pauzeren bij aanraken zodat een foto goed te bekijken is.
+  introPhotos.addEventListener('touchstart', () => introPhotosTrack.classList.add('is-paused'), { passive: true });
+  introPhotos.addEventListener('touchend', () => introPhotosTrack.classList.remove('is-paused'));
+}
+
+/* ---- Formulieren (contact & offerte): front-end afhandeling.
+   Er is geen backend gekoppeld — bij versturen tonen we een bevestiging.
+   Koppel hier later een echte verwerker (bv. Formspree, eigen API) aan toe. ---- */
+document.querySelectorAll('form[data-form]').forEach(form => {
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+    const successEl = document.getElementById(form.dataset.success);
+    form.classList.add('is-submitted');
+    if (successEl) {
+      successEl.classList.add('is-visible');
+      successEl.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth', block: 'center' });
+    }
+  });
+});
+
+/* ---- Offerteformulier: dienst/pakket voorinvullen op basis van waar de bezoeker vandaan komt ---- */
+(function prefillOfferteForm(){
+  const form = document.getElementById('offerte-form');
+  if (!form) return;
+  const params = new URLSearchParams(window.location.search);
+
+  const dienst = params.get('dienst');
+  if (dienst) {
+    const checkbox = form.querySelector(`input[name="diensten"][value="${dienst}"]`);
+    if (checkbox) checkbox.checked = true;
+  }
+
+  const pakket = params.get('pakket');
+  if (pakket) {
+    const radio = form.querySelector(`input[name="pakket"][value="${pakket}"]`);
+    if (radio) radio.checked = true;
+  }
+})();
+
 document.getElementById('year').textContent = new Date().getFullYear();
 
 /* ---- Scroll reveal ---- */
