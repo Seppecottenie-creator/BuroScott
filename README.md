@@ -9,7 +9,7 @@ via **GitHub Pages** (of eender welke host) te draaien.
 index.html          → alle content en secties
 css/style.css        → kleuren, typografie, layout (variabelen bovenaan)
 js/main.js            → scroll-animatie, actieve link in navigatie
-assets/images/         → alle beelden (nu nog placeholders)
+assets/images/         → alle beelden (nu tijdelijke stockfoto's van Unsplash)
 ```
 
 ## Eigen foto's plaatsen
@@ -84,3 +84,11 @@ berichten per maand):
 
 Vanaf dan komen aanvragen rechtstreeks in je mailbox. Een onzichtbaar
 spamveld (`_gotcha`) houdt de meeste bots tegen.
+
+## Tijdelijke foto's (Unsplash)
+
+De beelden in `assets/images/` zijn voorlopig rechtenvrije stockfoto's van
+Unsplash (unsplash.com, Unsplash-licentie: gratis, ook commercieel, geen
+bronvermelding nodig). Vervang ze door eigen werk zodra je dat hebt. Behoud
+dezelfde bestandsnaam en pas de `alt="..."`-tekst aan in de HTML.
+Lever foto's bij voorkeur aan op max. 1600 px breed en onder ±300 KB.
