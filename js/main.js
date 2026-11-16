@@ -136,7 +136,7 @@ function showSuccess(form, viaMail){
   if (viaMail){
     const h = successEl.querySelector('h3'), p = successEl.querySelector('p');
     if (h) h.textContent = 'Nog één klik: verstuur de e-mail.';
-    if (p) p.innerHTML = `Je e-mailprogramma opent met je bericht al ingevuld. Druk daar op verzenden. Opent er niets? Mail ons dan rechtstreeks op <a href="mailto:${MAIL_TO}" style="text-decoration:underline">${MAIL_TO}</a> of bel <a href="tel:+32471861171" style="text-decoration:underline">+32 471 86 11 71</a>.`;
+    if (p) p.innerHTML = `Je e-mailprogramma opent met je bericht al ingevuld. Druk daar op verzenden. Opent er niets? Mail ons dan rechtstreeks op <a href="mailto:${MAIL_TO}" style="text-decoration:underline">${MAIL_TO}</a>.`;
   }
   successEl.classList.add('is-visible');
   successEl.focus({ preventScroll:true });
@@ -173,7 +173,7 @@ async function sendForm(form){
     showSuccess(form, false);
   } catch (err) {
     if (alertEl){
-      alertEl.innerHTML = `Het versturen is niet gelukt. Controleer je internetverbinding en probeer opnieuw, of mail ons op <a href="mailto:${MAIL_TO}">${MAIL_TO}</a> of bel <a href="tel:+32471861171">+32 471 86 11 71</a>.`;
+      alertEl.innerHTML = `Het versturen is niet gelukt. Controleer je internetverbinding en probeer opnieuw, of mail ons op <a href="mailto:${MAIL_TO}">${MAIL_TO}</a>.`;
       alertEl.hidden = false;
     }
   } finally {

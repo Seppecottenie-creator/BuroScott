@@ -92,3 +92,16 @@ Unsplash (unsplash.com, Unsplash-licentie: gratis, ook commercieel, geen
 bronvermelding nodig). Vervang ze door eigen werk zodra je dat hebt. Behoud
 dezelfde bestandsnaam en pas de `alt="..."`-tekst aan in de HTML.
 Lever foto's bij voorkeur aan op max. 1600 px breed en onder ±300 KB.
+
+## "Website in opbouw" en voorbeeldmodus
+
+Bezoekers zien voorlopig een scherm "Website in opbouw" (`js/construction.js`).
+Zelf de volledige site bekijken:
+
+- Voorbeeldmodus **aan**: open de site met `?voorbeeld=buroscott` achter het
+  adres. Je toestel onthoudt dit; rechtsboven verschijnt een blauw balkje.
+- Voorbeeldmodus **uit**: klik op "Afsluiten" in dat balkje, of gebruik
+  `?voorbeeld=uit`.
+- **Echt live gaan**: zet in `js/construction.js` `LIVE = false` op `LIVE = true`.
+
+Dit is geen beveiliging: de code is openbaar, dus wie zoekt, vindt de link.
