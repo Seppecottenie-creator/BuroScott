@@ -3,17 +3,6 @@
    Geen build-tools nodig; puur vanilla JS.
 ============================================================ */
 
-/* ---- Introfoto's: animatie pauzeren zolang de muis erover zweeft ---- */
-const introPhotos = document.querySelector('.intro-photos');
-const introPhotosTrack = document.querySelector('.intro-photos-track');
-if (introPhotos && introPhotosTrack) {
-  introPhotos.addEventListener('mouseenter', () => introPhotosTrack.classList.add('is-paused'));
-  introPhotos.addEventListener('mouseleave', () => introPhotosTrack.classList.remove('is-paused'));
-  // Ook op touchscreens: kort pauzeren bij aanraken zodat een foto goed te bekijken is.
-  introPhotos.addEventListener('touchstart', () => introPhotosTrack.classList.add('is-paused'), { passive: true });
-  introPhotos.addEventListener('touchend', () => introPhotosTrack.classList.remove('is-paused'));
-}
-
 /* ---- Formulieren (contact & offerte): eigen validatie met duidelijke foutmeldingen.
    VERZENDEN — twee manieren:
    1. Formspree (aanbevolen): maak een gratis formulier aan op formspree.io en zet
@@ -515,5 +504,101 @@ document.querySelectorAll('.service-card').forEach(card => {
   btn.addEventListener('pointerleave', () => {
     btn.style.setProperty('--tx', '0px');
     btn.style.setProperty('--ty', '0px');
+  });
+})();
+
+/* ============================================================
+   VERSIE 3: stapelende dienstenkaarten, tellers, werkwijzelijn
+   en een volgcursor op de dienstenkaarten.
+============================================================ */
+
+/* ---- Dienstenkaarten: blijven bovenaan plakken en schuiven over elkaar ---- */
+(function stackCards(){
+  const cards = Array.from(document.querySelectorAll('.services-grid .service-card'));
+  if (cards.length < 2) return;
+  const wide = window.matchMedia('(min-width: 681px)');
+  cards.forEach((c, i) => c.style.setProperty('--i', i));
+  let ticking = false;
+  function update(){
+    ticking = false;
+    if (!wide.matches || prefersReduced){
+      cards.forEach(c => { c.style.scale = ''; c.style.filter = ''; });
+      return;
+    }
+    cards.forEach((card, i) => {
+      const next = cards[i + 1];
+      if (!next){ card.style.scale = ''; card.style.filter = ''; return; }
+      const r = card.getBoundingClientRect();
+      const n = next.getBoundingClientRect();
+      // Hoe ver de volgende kaart al over deze kaart geschoven is (0 = niet, 1 = volledig)
+      const p = Math.min(Math.max((r.bottom - n.top) / r.height, 0), 1);
+      card.style.scale = (1 - p * 0.06).toFixed(4);
+      card.style.filter = p > 0 ? `brightness(${(1 - p * 0.12).toFixed(3)})` : '';
+    });
+  }
+  window.addEventListener('scroll', () => { if (!ticking){ ticking = true; requestAnimationFrame(update); } }, { passive:true });
+  window.addEventListener('resize', update);
+  update();
+})();
+
+/* ---- Kerncijfers tellen op zodra ze in beeld komen ---- */
+(function counters(){
+  const nums = document.querySelectorAll('[data-count]');
+  if (!nums.length || prefersReduced || !('IntersectionObserver' in window)) return;
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      io.unobserve(entry.target);
+      const el = entry.target, end = parseInt(el.dataset.count, 10), dur = 1200, t0 = performance.now();
+      (function tick(now){
+        const t = Math.min((now - t0) / dur, 1);
+        el.textContent = Math.round(end * (1 - Math.pow(1 - t, 3)));
+        if (t < 1) requestAnimationFrame(tick);
+      })(t0);
+    });
+  }, { threshold: 0.6 });
+  nums.forEach(n => { n.textContent = '0'; io.observe(n); });
+})();
+
+/* ---- Werkwijze: lijn vult zich en stappen lichten op tijdens het scrollen ---- */
+(function processLine(){
+  const track = document.querySelector('.process-track');
+  if (!track) return;
+  const steps = Array.from(track.querySelectorAll('.process-step'));
+  let ticking = false;
+  function update(){
+    ticking = false;
+    const r = track.getBoundingClientRect();
+    const vh = window.innerHeight;
+    const p = prefersReduced ? 1 : Math.min(Math.max((vh * 0.8 - r.top) / (r.height + vh * 0.35), 0), 1);
+    track.style.setProperty('--p', p.toFixed(3));
+    steps.forEach((s, i) => s.classList.toggle('is-active', p >= (i + 0.15) / steps.length));
+  }
+  window.addEventListener('scroll', () => { if (!ticking){ ticking = true; requestAnimationFrame(update); } }, { passive:true });
+  window.addEventListener('resize', update);
+  update();
+})();
+
+/* ---- Volgcursor "Bekijk" op dienstenkaarten (alleen met muis) ---- */
+(function viewCursor(){
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+  const cards = document.querySelectorAll('.service-card');
+  if (!cards.length) return;
+  const dot = document.createElement('div');
+  dot.className = 'cursor-view';
+  dot.setAttribute('aria-hidden', 'true');
+  dot.textContent = 'Bekijk';
+  document.body.appendChild(dot);
+  let x = 0, y = 0, cx = 0, cy = 0, raf = null;
+  function loop(){
+    cx += (x - cx) * (prefersReduced ? 1 : 0.2);
+    cy += (y - cy) * (prefersReduced ? 1 : 0.2);
+    dot.style.transform = `translate(${cx}px, ${cy}px)`;
+    raf = Math.abs(x - cx) + Math.abs(y - cy) > 0.5 ? requestAnimationFrame(loop) : null;
+  }
+  cards.forEach(card => {
+    card.addEventListener('pointerenter', e => { x = cx = e.clientX; y = cy = e.clientY; loop(); dot.classList.add('is-on'); });
+    card.addEventListener('pointerleave', () => dot.classList.remove('is-on'));
+    card.addEventListener('pointermove', e => { x = e.clientX; y = e.clientY; if (!raf) raf = requestAnimationFrame(loop); });
   });
 })();
