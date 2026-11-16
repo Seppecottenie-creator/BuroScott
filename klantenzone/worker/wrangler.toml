@@ -1,0 +1,18 @@
+# Cloudflare Worker voor de Buro Scott klantenzone.
+# Installatie: zie klantenzone/INSTALLATIE.md
+name = "buroscott-klantenzone"
+main = "src/index.js"
+compatibility_date = "2025-06-01"
+
+# Sites die de klantenzone-API mogen gebruiken (komma-gescheiden).
+# Voeg later je eigen domein toe, bv. "https://www.buroscott.be".
+[vars]
+ALLOWED_ORIGINS = "https://seppecottenie-creator.github.io,http://localhost:8765,http://127.0.0.1:8765"
+
+[[r2_buckets]]
+binding = "GALLERIES"
+bucket_name = "buroscott-klantenzone"
+
+# Elke nacht om 03:17 (UTC) vervallen galerijen verwijderen
+[triggers]
+crons = ["17 3 * * *"]
