@@ -789,3 +789,80 @@ body.nav-is-hidden .bottom-page-blur{ opacity:0; }
   .closing-cta{ translate:none; }
   ::view-transition-old(root), ::view-transition-new(root){ animation:none; }
 }
+
+/* Verborgen voor het oog, wel voorgelezen */
+.visually-hidden{
+  position:absolute !important; width:1px; height:1px; overflow:hidden;
+  clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap;
+}
+/* Spamval in formulieren */
+.hp-field{ position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; }
+/* Algemene melding als verzenden mislukt */
+.form-alert{
+  padding:16px 18px; border-radius:14px; font-size:.92rem; line-height:1.55;
+  background:rgba(180,35,24,0.07); color:#8A1C13; border:1px solid rgba(180,35,24,0.25);
+}
+.form-alert a{ text-decoration:underline; font-weight:600; }
+.form-submit[aria-busy="true"]{ opacity:.7; cursor:progress; }
+.whatsapp-link{ color:var(--accent); }
+
+/* ============================================================
+   WEBSITE IN OPBOUW (zie js/construction.js)
+============================================================ */
+html.is-construction{ background:var(--ink); }
+html.is-construction body{ background:var(--ink); }
+html.is-construction body > *:not(.construction){ display:none !important; }
+.construction{
+  min-height:100svh; display:flex; flex-direction:column; justify-content:space-between;
+  padding:clamp(28px,6vw,72px) max(24px, env(safe-area-inset-right,0px)) 28px max(24px, env(safe-area-inset-left,0px));
+  background:
+    radial-gradient(900px circle at 85% 15%, rgba(29,63,214,0.28), transparent 55%),
+    var(--ink);
+  color:var(--text-on-dark);
+}
+.construction-inner{ margin:auto 0; max-width:900px; display:flex; flex-direction:column; gap:22px; }
+.construction-eyebrow{
+  font-size:.8rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--muted-dark);
+  animation:cIn .8s var(--ease) both;
+}
+.construction-title{
+  font-family:var(--font-display); font-weight:900; text-transform:uppercase; letter-spacing:-0.03em;
+  font-size:clamp(3.2rem, 13vw, 10rem); line-height:.88;
+  animation:cIn .9s .1s var(--ease) both;
+}
+.construction-title .brand-dot{ color:var(--accent-light); }
+.construction-status{
+  display:inline-flex; align-items:center; gap:12px; align-self:flex-start;
+  padding:10px 18px; border:1px solid var(--line-dark); border-radius:999px;
+  font-weight:600; font-size:.95rem;
+  animation:cIn .8s .25s var(--ease) both;
+}
+.construction-pulse{
+  width:9px; height:9px; border-radius:50%; background:var(--accent-light);
+  box-shadow:0 0 0 0 rgba(143,162,255,.6); animation:cPulse 2s ease-out infinite;
+}
+.construction-text{
+  max-width:52ch; color:var(--muted-dark); font-size:clamp(1.05rem,1.6vw,1.25rem); line-height:1.6;
+  animation:cIn .8s .35s var(--ease) both;
+}
+.construction-services{ display:flex; flex-wrap:wrap; gap:8px; animation:cIn .8s .45s var(--ease) both; }
+.construction-services li{
+  font-size:.85rem; font-weight:500; padding:7px 14px; border-radius:999px;
+  background:rgba(245,244,240,0.06); color:var(--text-on-dark);
+}
+.construction-foot{ font-size:.82rem; color:var(--muted-dark); }
+@keyframes cIn{ from{ opacity:0; transform:translateY(16px); } }
+@keyframes cPulse{ 70%{ box-shadow:0 0 0 12px rgba(143,162,255,0); } 100%{ box-shadow:0 0 0 0 rgba(143,162,255,0); } }
+@media (prefers-reduced-motion: reduce){
+  .construction *{ animation:none !important; }
+}
+
+/* Balkje in voorbeeldmodus — enkel voor jou zichtbaar */
+.preview-bar{
+  position:fixed; top:12px; right:12px; z-index:300;
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  background:var(--accent); color:#fff; font-size:.8rem;
+  padding:8px 8px 8px 14px; border-radius:999px; box-shadow:0 10px 30px -10px rgba(29,63,214,.6);
+}
+.preview-bar a{ background:#fff; color:var(--accent); font-weight:700; padding:5px 12px; border-radius:999px; }
+@media (max-width:680px){ .preview-bar{ left:12px; right:12px; justify-content:space-between; } }

@@ -15,8 +15,13 @@ if (introPhotos && introPhotosTrack) {
 }
 
 /* ---- Formulieren (contact & offerte): eigen validatie met duidelijke foutmeldingen.
-   Er is nog geen backend gekoppeld — bij versturen tonen we een bevestiging.
-   Koppel hier later een echte verwerker (bv. Formspree, eigen API) aan toe. ---- */
+   VERZENDEN — twee manieren:
+   1. Formspree (aanbevolen): maak een gratis formulier aan op formspree.io en zet
+      het adres in het data-endpoint-attribuut van het <form>, bv.
+      data-endpoint="https://formspree.io/f/abcdwxyz". De berichten komen dan in je mailbox.
+   2. Zolang data-endpoint leeg is, opent het e-mailprogramma van de bezoeker
+      met een kant-en-klaar bericht naar MAIL_TO. Zo gaat er nooit een aanvraag verloren. ---- */
+const MAIL_TO = 'info@buroscott.be';
 const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function fieldMessage(el){
@@ -90,15 +95,92 @@ document.querySelectorAll('form[data-form]').forEach(form => {
       firstInvalid.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth', block: 'center' });
       return;
     }
-    const successEl = document.getElementById(form.dataset.success);
-    form.classList.add('is-submitted');
-    if (successEl) {
-      successEl.classList.add('is-visible');
-      successEl.focus({ preventScroll:true });
-      successEl.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth', block: 'center' });
-    }
+    sendForm(form);
   });
 });
+
+function readableFields(form){
+  const data = new FormData(form);
+  const lines = [];
+  const seen = new Set();
+  for (const [name] of data){
+    if (name === '_gotcha' || seen.has(name)) continue;
+    seen.add(name);
+    const el = form.querySelector(`[name="${name}"]`);
+    // Toon wat de bezoeker zag (bv. "Nog te bepalen"), niet de interne waarde
+    let values;
+    if (el && el.tagName === 'SELECT') values = Array.from(el.selectedOptions).map(o => o.textContent.trim());
+    else if (el && (el.type === 'checkbox' || el.type === 'radio'))
+      values = Array.from(form.querySelectorAll(`[name="${name}"]:checked`)).map(i => (i.closest('label') || i).textContent.trim() || i.value);
+    else values = data.getAll(name).map(v => String(v).trim());
+    values = values.filter(Boolean);
+    if (!values.length) continue;
+    let label = name;
+    const own = el && el.id && form.querySelector(`label[for="${el.id}"]`);
+    if (own) label = own.childNodes[0].textContent;
+    else {
+      const group = el && el.closest('.form-fieldset');
+      const title = group && group.querySelector('.fieldset-title');
+      if (title) label = title.childNodes[0].textContent;
+    }
+    label = label.replace('*', '').trim();
+    lines.push(`${label}: ${values.join(', ')}`);
+  }
+  return lines;
+}
+
+function showSuccess(form, viaMail){
+  const successEl = document.getElementById(form.dataset.success);
+  form.classList.add('is-submitted');
+  if (!successEl) return;
+  if (viaMail){
+    const h = successEl.querySelector('h3'), p = successEl.querySelector('p');
+    if (h) h.textContent = 'Nog één klik: verstuur de e-mail.';
+    if (p) p.innerHTML = `Je e-mailprogramma opent met je bericht al ingevuld. Druk daar op verzenden. Opent er niets? Mail ons dan rechtstreeks op <a href="mailto:${MAIL_TO}" style="text-decoration:underline">${MAIL_TO}</a>.`;
+  }
+  successEl.classList.add('is-visible');
+  successEl.focus({ preventScroll:true });
+  successEl.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth', block: 'center' });
+}
+
+async function sendForm(form){
+  const alertEl = form.querySelector('.form-alert');
+  const btn = form.querySelector('.form-submit');
+  if (alertEl) alertEl.hidden = true;
+
+  // Spamval ingevuld? Doe alsof alles goed ging, maar verstuur niets.
+  const trap = form.querySelector('[name="_gotcha"]');
+  if (trap && trap.value) { showSuccess(form, false); return; }
+
+  const endpoint = (form.dataset.endpoint || '').trim();
+  const isOfferte = form.id === 'offerte-form';
+
+  if (!endpoint){
+    const subject = isOfferte ? 'Offerteaanvraag via buroscott.be' : 'Bericht via buroscott.be';
+    const body = readableFields(form).join('\n');
+    window.location.href = `mailto:${MAIL_TO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    showSuccess(form, true);
+    return;
+  }
+
+  const label = btn && btn.querySelector('span');
+  const original = label ? label.textContent : '';
+  if (btn){ btn.disabled = true; btn.setAttribute('aria-busy', 'true'); }
+  if (label) label.textContent = 'Bezig met versturen…';
+  try {
+    const res = await fetch(endpoint, { method:'POST', body:new FormData(form), headers:{ Accept:'application/json' } });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    showSuccess(form, false);
+  } catch (err) {
+    if (alertEl){
+      alertEl.innerHTML = `Het versturen is niet gelukt. Controleer je internetverbinding en probeer opnieuw, of mail ons op <a href="mailto:${MAIL_TO}">${MAIL_TO}</a>.`;
+      alertEl.hidden = false;
+    }
+  } finally {
+    if (btn){ btn.disabled = false; btn.removeAttribute('aria-busy'); }
+    if (label) label.textContent = original;
+  }
+}
 
 /* ---- Offerteformulier: dienst/pakket voorinvullen op basis van waar de bezoeker vandaan komt ---- */
 (function prefillOfferteForm(){
