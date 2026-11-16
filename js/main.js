@@ -14,20 +14,87 @@ if (introPhotos && introPhotosTrack) {
   introPhotos.addEventListener('touchend', () => introPhotosTrack.classList.remove('is-paused'));
 }
 
-/* ---- Formulieren (contact & offerte): front-end afhandeling.
-   Er is geen backend gekoppeld — bij versturen tonen we een bevestiging.
+/* ---- Formulieren (contact & offerte): eigen validatie met duidelijke foutmeldingen.
+   Er is nog geen backend gekoppeld — bij versturen tonen we een bevestiging.
    Koppel hier later een echte verwerker (bv. Formspree, eigen API) aan toe. ---- */
+const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function fieldMessage(el){
+  if (el.validity.valueMissing) return el.dataset.error || 'Dit veld is verplicht.';
+  if (el.validity.typeMismatch && el.type === 'email') return 'Dit e-mailadres lijkt niet te kloppen. Controleer het @-teken.';
+  if (!el.validity.valid) return el.dataset.error || 'Controleer dit veld.';
+  return '';
+}
+function getErrorEl(container, baseId){
+  let err = container.querySelector(':scope > .field-error');
+  if (!err){
+    err = document.createElement('p');
+    err.className = 'field-error';
+    err.id = baseId + '-error';
+    err.hidden = true;
+    container.appendChild(err);
+  }
+  return err;
+}
+function linkDescribedBy(el, id){
+  const ids = (el.getAttribute('aria-describedby') || '').split(' ').filter(Boolean);
+  if (!ids.includes(id)) el.setAttribute('aria-describedby', ids.concat(id).join(' '));
+}
+function validateControl(el){
+  const field = el.closest('.field');
+  if (!field) return true;
+  const msg = fieldMessage(el);
+  const err = getErrorEl(field, el.id);
+  linkDescribedBy(el, err.id);
+  field.classList.toggle('is-invalid', !!msg);
+  el.setAttribute('aria-invalid', msg ? 'true' : 'false');
+  err.textContent = msg;
+  err.hidden = !msg;
+  return !msg;
+}
+function validateGroup(group){
+  const boxes = group.querySelectorAll('input[type="checkbox"]');
+  const ok = Array.from(boxes).some(b => b.checked);
+  const err = getErrorEl(group, group.dataset.requiredGroup);
+  group.classList.toggle('is-invalid', !ok);
+  err.textContent = ok ? '' : group.dataset.error;
+  err.hidden = ok;
+  if (!ok) group.setAttribute('aria-describedby', err.id); else group.removeAttribute('aria-describedby');
+  return ok;
+}
+
 document.querySelectorAll('form[data-form]').forEach(form => {
+  const controls = Array.from(form.querySelectorAll('input[required], select[required], textarea[required]'));
+  const groups = Array.from(form.querySelectorAll('[data-required-group]'));
+  let tried = false;
+
+  // Na een eerste poging: meteen feedback terwijl de bezoeker verbetert
+  controls.forEach(el => {
+    el.addEventListener('blur', () => { if (tried) validateControl(el); });
+    el.addEventListener('input', () => { if (tried && el.closest('.field.is-invalid')) validateControl(el); });
+    el.addEventListener('change', () => { if (tried) validateControl(el); });
+  });
+  groups.forEach(g => g.addEventListener('change', () => { if (tried) validateGroup(g); }));
+
   form.addEventListener('submit', (e) => {
     e.preventDefault();
-    if (!form.checkValidity()) {
-      form.reportValidity();
+    tried = true;
+    let firstInvalid = null;
+    controls.forEach(el => { if (!validateControl(el) && !firstInvalid) firstInvalid = el; });
+    groups.forEach(g => { if (!validateGroup(g) && !firstInvalid) firstInvalid = g.querySelector('input'); });
+    // Volgorde in de pagina respecteren voor de focus
+    const invalid = Array.from(form.querySelectorAll('[aria-invalid="true"], .form-fieldset.is-invalid input'));
+    if (invalid.length) firstInvalid = invalid[0];
+    if (firstInvalid){
+      firstInvalid.focus({ preventScroll:true });
+      firstInvalid.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth', block: 'center' });
       return;
     }
     const successEl = document.getElementById(form.dataset.success);
     form.classList.add('is-submitted');
     if (successEl) {
       successEl.classList.add('is-visible');
+      successEl.focus({ preventScroll:true });
       successEl.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth', block: 'center' });
     }
   });
@@ -52,25 +119,33 @@ document.querySelectorAll('form[data-form]').forEach(form => {
   }
 })();
 
-document.getElementById('year').textContent = new Date().getFullYear();
+const yearEl = document.getElementById('year');
+if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-/* ---- Scroll reveal ---- */
-const revealEls = document.querySelectorAll('[data-reveal]');
-const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* ---- Scroll reveal ----
+   Foto's met .reveal-img zijn bij de start weggeknipt (clip-path), en de browser
+   ziet ze dan als onzichtbaar. Daarom volgen we voor die foto's het omliggende element. */
+const revealEls = document.querySelectorAll('[data-reveal], .reveal-img');
 
-if (prefersReduced) {
+if (prefersReduced || !('IntersectionObserver' in window)) {
   revealEls.forEach(el => el.classList.add('is-visible'));
 } else {
+  const targets = new Map(); // waargenomen element -> elementen die zichtbaar moeten worden
+  revealEls.forEach(el => {
+    const watch = el.classList.contains('reveal-img') ? el.parentElement : el;
+    if (!targets.has(watch)) targets.set(watch, []);
+    targets.get(watch).push(el);
+  });
   const io = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
-        entry.target.classList.add('is-visible');
+        (targets.get(entry.target) || []).forEach(el => el.classList.add('is-visible'));
         io.unobserve(entry.target);
       }
     });
-  }, { threshold: 0.15, rootMargin: '0px 0px -8% 0px' });
+  }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
 
-  revealEls.forEach(el => io.observe(el));
+  targets.forEach((_, watch) => io.observe(watch));
 }
 
 /* ---- Zwevende navigatie: blijft nu altijd zichtbaar, ongeacht scrollrichting.
@@ -258,3 +333,105 @@ if (heroSection && heroPanel && !prefersReduced) {
     heroTitle.style.fontSize = clampPx(0.07, 32, 73.6) + 'px';
   }
 }
+
+/* ============================================================
+   EXTRA'S (2026): leesvoortgang, navigatie die wegglijdt,
+   introtekst die woord per woord inkleurt, gloed op dienstenkaarten
+   en een magnetische slotknop. Alles respecteert "beweging beperken".
+============================================================ */
+
+/* ---- Leesvoortgang + navigatie verbergen bij naar beneden scrollen ---- */
+(function scrollUi(){
+  const bar = document.querySelector('.scroll-progress');
+  const nav = document.getElementById('site-nav');
+  let lastY = window.scrollY;
+  let ticking = false;
+
+  function update(){
+    ticking = false;
+    const y = window.scrollY;
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    if (bar) bar.style.setProperty('--progress', max > 0 ? Math.min(y / max, 1) : 0);
+
+    if (nav){
+      const navHasFocus = nav.contains(document.activeElement);
+      const nearBottom = y > max - 80;
+      const goingDown = y > lastY + 4;
+      const goingUp = y < lastY - 4;
+      if (goingDown && y > 240 && !mobileMenuIsOpen && !navHasFocus && !nearBottom){
+        nav.classList.add('is-hidden');
+        document.body.classList.add('nav-is-hidden');
+      } else if (goingUp || y < 240 || nearBottom){
+        nav.classList.remove('is-hidden');
+        document.body.classList.remove('nav-is-hidden');
+      }
+    }
+    if (Math.abs(y - lastY) > 4) lastY = y;
+  }
+  window.addEventListener('scroll', () => {
+    if (!ticking){ ticking = true; requestAnimationFrame(update); }
+  }, { passive:true });
+  // Toetsenbord: zodra iets in de navigatie focus krijgt, komt ze terug
+  if (nav) nav.addEventListener('focusin', () => {
+    nav.classList.remove('is-hidden');
+    document.body.classList.remove('nav-is-hidden');
+  });
+  update();
+})();
+
+/* ---- Introtekst: woord per woord inkleuren tijdens het scrollen ---- */
+(function introWords(){
+  const el = document.querySelector('.intro-text');
+  if (!el || prefersReduced) return;
+  const accentWords = ['Buro', 'Scott'];
+  const words = el.textContent.trim().split(/\s+/);
+  el.setAttribute('aria-label', words.join(' '));
+  el.innerHTML = words.map(w => {
+    const clean = w.replace(/[.,]/g, '');
+    const cls = accentWords.includes(clean) ? 'w is-accent' : 'w';
+    return `<span class="${cls}" aria-hidden="true">${w}</span>`;
+  }).join(' ');
+  const spans = el.querySelectorAll('.w');
+  let ticking = false;
+  function update(){
+    ticking = false;
+    const r = el.getBoundingClientRect();
+    const vh = window.innerHeight;
+    // Start als de tekst op 85% van het scherm staat, klaar als ze op 40% staat
+    const start = vh * 0.85, end = vh * 0.40;
+    const p = Math.min(Math.max((start - r.top) / (start - end + r.height * 0.5), 0), 1);
+    const n = Math.round(p * spans.length);
+    spans.forEach((s, i) => s.classList.toggle('is-on', i < n));
+  }
+  window.addEventListener('scroll', () => {
+    if (!ticking){ ticking = true; requestAnimationFrame(update); }
+  }, { passive:true });
+  window.addEventListener('resize', update);
+  update();
+})();
+
+/* ---- Dienstenkaarten: blauwe gloed volgt de muis ---- */
+document.querySelectorAll('.service-card').forEach(card => {
+  card.addEventListener('pointermove', (e) => {
+    const r = card.getBoundingClientRect();
+    card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+    card.style.setProperty('--my', (e.clientY - r.top) + 'px');
+  });
+});
+
+/* ---- Slotknop "Vraag een offerte aan": trekt licht naar de muis toe ---- */
+(function magnetic(){
+  const btn = document.querySelector('.closing-cta');
+  if (!btn || prefersReduced || !window.matchMedia('(hover: hover)').matches) return;
+  btn.addEventListener('pointermove', (e) => {
+    const r = btn.getBoundingClientRect();
+    const x = (e.clientX - (r.left + r.width / 2)) * 0.25;
+    const y = (e.clientY - (r.top + r.height / 2)) * 0.35;
+    btn.style.setProperty('--tx', x + 'px');
+    btn.style.setProperty('--ty', y + 'px');
+  });
+  btn.addEventListener('pointerleave', () => {
+    btn.style.setProperty('--tx', '0px');
+    btn.style.setProperty('--ty', '0px');
+  });
+})();
