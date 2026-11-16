@@ -1,0 +1,12 @@
+{
+  "name": "buroscott-klantenzone",
+  "private": true,
+  "description": "Cloudflare Worker voor de Buro Scott klantenzone",
+  "scripts": {
+    "dev": "wrangler dev --port 8787",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "4.40.0"
+  }
+}

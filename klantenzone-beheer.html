@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beheer klantenzone — Buro Scott</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0E0F0D">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/klantenzone.css">
+<link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+<script>document.documentElement.classList.add('js')</script>
+<script src="js/klantenzone-config.js"></script>
+</head>
+<body class="kz kz-admin">
+
+<header class="kz-top">
+  <a href="index.html" class="kz-brand">Buro Scott<span class="brand-dot" aria-hidden="true">.</span></a>
+  <span class="kz-top-label">Beheer klantenzone</span>
+  <button type="button" class="kz-logout" id="ad-logout" hidden>Afmelden</button>
+</header>
+
+<main id="inhoud" class="ad-main">
+
+  <!-- Inloggen -->
+  <section class="ad-card ad-login" id="ad-login-view" hidden>
+    <h1>Beheer</h1>
+    <p class="kz-lede">Log in met je beheerwachtwoord.</p>
+    <form id="ad-login-form" class="kz-form" novalidate>
+      <div class="field">
+        <label for="ad-password">Beheerwachtwoord</label>
+        <input type="password" id="ad-password" autocomplete="current-password" required>
+      </div>
+      <p class="form-alert" id="ad-login-error" role="alert" hidden></p>
+      <button type="submit" class="form-submit"><span>Inloggen</span><span class="arrow" aria-hidden="true">→</span></button>
+    </form>
+  </section>
+
+  <!-- Overzicht -->
+  <section id="ad-list-view" hidden>
+    <div class="ad-head">
+      <div>
+        <p class="kz-eyebrow">Galerijen</p>
+        <h1>Klantenzone</h1>
+      </div>
+      <div class="ad-storage" id="ad-storage" aria-label="Opslag"></div>
+    </div>
+
+    <div class="ad-card">
+      <h2>Nieuwe galerij</h2>
+      <form id="ad-create-form" class="kz-form ad-create" novalidate>
+        <div class="field ad-span2">
+          <label for="ad-title">Titel <span class="hint">(bv. het adres van het pand)</span></label>
+          <input type="text" id="ad-title" required placeholder="Kerkstraat 12, Waregem">
+        </div>
+        <div class="field ad-span2">
+          <label for="ad-subtitle">Extra regel <span class="hint">(optioneel, bv. naam van de makelaar)</span></label>
+          <input type="text" id="ad-subtitle" placeholder="Voor Immo Voorbeeld">
+        </div>
+        <div class="field">
+          <label for="ad-code">Galerijcode</label>
+          <input type="text" id="ad-code" required autocapitalize="none" spellcheck="false">
+        </div>
+        <div class="field">
+          <label for="ad-pw">Wachtwoord voor de klant</label>
+          <div class="kz-pw">
+            <input type="text" id="ad-pw" required spellcheck="false">
+            <button type="button" class="kz-pw-toggle" id="ad-pw-new">Nieuw</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="ad-days">Beschikbaar</label>
+          <select id="ad-days">
+            <option value="14">14 dagen</option>
+            <option value="30" selected>30 dagen</option>
+            <option value="60">60 dagen</option>
+            <option value="90">90 dagen</option>
+            <option value="180">180 dagen</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="ad-tour">Link naar 360° tour <span class="hint">(optioneel)</span></label>
+          <input type="url" id="ad-tour" placeholder="https://…">
+        </div>
+        <p class="form-alert ad-span2" id="ad-create-error" role="alert" hidden></p>
+        <button type="submit" class="form-submit ad-span2"><span>Galerij aanmaken</span><span class="arrow" aria-hidden="true">→</span></button>
+      </form>
+    </div>
+
+    <h2 class="ad-h2">Bestaande galerijen</h2>
+    <ul class="ad-list" id="ad-list"></ul>
+  </section>
+
+  <!-- Eén galerij -->
+  <section id="ad-detail-view" hidden>
+    <button type="button" class="ad-back" id="ad-back">← Alle galerijen</button>
+    <div class="ad-head">
+      <div>
+        <p class="kz-eyebrow" id="ad-d-code"></p>
+        <h1 id="ad-d-title"></h1>
+        <p class="kz-meta" id="ad-d-meta"></p>
+      </div>
+      <div class="ad-head-actions">
+        <a class="kz-btn kz-btn-ghost" id="ad-d-open" target="_blank" rel="noopener">Bekijk als klant ↗</a>
+      </div>
+    </div>
+
+    <div class="ad-card ad-share" id="ad-share" hidden>
+      <h2>Bericht voor je klant</h2>
+      <p class="hint">Het wachtwoord zie je alleen nu. Kopieer het bericht en stuur het door.</p>
+      <textarea id="ad-share-text" rows="7" readonly></textarea>
+      <button type="button" class="kz-btn kz-btn-primary" id="ad-share-copy">Kopieer bericht</button>
+    </div>
+
+    <div class="ad-card">
+      <h2>Beelden toevoegen</h2>
+      <div class="ad-upload-row">
+        <div class="field">
+          <label for="ad-cat">Soort</label>
+          <select id="ad-cat">
+            <option value="fotos">Foto's</option>
+            <option value="drone">Drone</option>
+            <option value="plannen">Plannen</option>
+            <option value="overig">Overig</option>
+          </select>
+        </div>
+        <label class="ad-drop" id="ad-drop" for="ad-files">
+          <input type="file" id="ad-files" multiple accept="image/*,application/pdf,video/*,.zip">
+          <strong>Sleep bestanden hierheen</strong>
+          <span>of klik om te kiezen · foto's, plannen (pdf), video</span>
+        </label>
+      </div>
+      <ul class="ad-progress" id="ad-progress" aria-live="polite"></ul>
+    </div>
+
+    <div class="ad-card">
+      <div class="ad-files-head">
+        <h2>Bestanden <span id="ad-d-count"></span></h2>
+      </div>
+      <ul class="ad-files" id="ad-d-files"></ul>
+    </div>
+
+    <div class="ad-card ad-settings">
+      <h2>Instellingen</h2>
+      <div class="ad-settings-grid">
+        <div class="field">
+          <label for="ad-d-days">Beschikbaar vanaf vandaag</label>
+          <div class="kz-pw">
+            <select id="ad-d-days">
+              <option value="7">7 dagen</option><option value="14">14 dagen</option><option value="30" selected>30 dagen</option><option value="60">60 dagen</option><option value="90">90 dagen</option>
+            </select>
+            <button type="button" class="kz-pw-toggle" id="ad-d-days-save">Opslaan</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="ad-d-tour">Link naar 360° tour</label>
+          <div class="kz-pw">
+            <input type="url" id="ad-d-tour" placeholder="https://…">
+            <button type="button" class="kz-pw-toggle" id="ad-d-tour-save">Opslaan</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Wachtwoord</label>
+          <button type="button" class="kz-btn kz-btn-ghost" id="ad-d-newpw">Nieuw wachtwoord maken</button>
+        </div>
+        <div class="field">
+          <label>Galerij verwijderen</label>
+          <button type="button" class="kz-btn kz-btn-danger" id="ad-d-delete">Verwijder galerij en alle beelden</button>
+        </div>
+      </div>
+      <p class="kz-zip-status" id="ad-d-status" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <section class="kz-notice" id="ad-setup" hidden>
+    <h1>De klantenzone is nog niet gekoppeld.</h1>
+    <p>Vul het adres van de Cloudflare Worker in <code>js/klantenzone-config.js</code>. Zie <code>klantenzone/INSTALLATIE.md</code>.</p>
+  </section>
+</main>
+
+<!-- Bevestigen (geen browserpopup) -->
+<dialog class="ad-confirm" id="ad-confirm">
+  <form method="dialog">
+    <h2 id="ad-confirm-title">Zeker?</h2>
+    <p id="ad-confirm-text"></p>
+    <div class="ad-confirm-actions">
+      <button value="cancel" class="kz-btn kz-btn-ghost">Annuleren</button>
+      <button value="ok" class="kz-btn kz-btn-danger" id="ad-confirm-ok">Verwijderen</button>
+    </div>
+  </form>
+</dialog>
+
+<script type="module" src="js/klantenzone-beheer.js"></script>
+</body>
+</html>

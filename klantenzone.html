@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Klantenzone — Buro Scott</title>
+<meta name="description" content="Bekijk en download je beelden van Buro Scott.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0E0F0D">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/klantenzone.css">
+<link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+<script>document.documentElement.classList.add('js')</script>
+<script src="js/klantenzone-config.js"></script>
+</head>
+<body class="kz">
+
+<a class="skip-link" href="#inhoud">Naar de inhoud</a>
+
+<header class="kz-top">
+  <a href="index.html" class="kz-brand">Buro Scott<span class="brand-dot" aria-hidden="true">.</span></a>
+  <span class="kz-top-label">Klantenzone</span>
+  <button type="button" class="kz-logout" id="kz-logout" hidden>Afmelden</button>
+</header>
+
+<main id="inhoud">
+
+  <!-- ---------- Inloggen ---------- -->
+  <section class="kz-login" id="kz-login-view">
+    <div class="kz-login-art" aria-hidden="true">
+      <img src="assets/images/service-fotografie-a.jpg" alt="">
+    </div>
+    <div class="kz-login-panel">
+      <p class="kz-eyebrow">Klantenzone</p>
+      <h1>Je beelden staan klaar.</h1>
+      <p class="kz-lede">Vul de galerijcode en het wachtwoord in die je van ons kreeg. Daarna kan je alles bekijken en downloaden.</p>
+      <form class="kz-form" id="kz-login-form" novalidate>
+        <div class="field">
+          <label for="kz-code">Galerijcode</label>
+          <input type="text" id="kz-code" name="code" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="bv. kerkstraat-12-a7k2" required>
+        </div>
+        <div class="field">
+          <label for="kz-password">Wachtwoord</label>
+          <div class="kz-pw">
+            <input type="password" id="kz-password" name="password" autocomplete="current-password" required>
+            <button type="button" class="kz-pw-toggle" id="kz-pw-toggle" aria-pressed="false">Toon</button>
+          </div>
+        </div>
+        <p class="form-alert" id="kz-login-error" role="alert" hidden></p>
+        <button type="submit" class="form-submit" id="kz-login-btn"><span>Bekijk mijn beelden</span><span class="arrow" aria-hidden="true">→</span></button>
+        <p class="kz-help">Geen code ontvangen of werkt het niet? Mail naar <a href="mailto:info@buroscott.be" class="inline-link">info@buroscott.be</a>.</p>
+      </form>
+    </div>
+  </section>
+
+  <!-- ---------- Galerij ---------- -->
+  <section class="kz-gallery" id="kz-gallery-view" hidden>
+    <div class="kz-head">
+      <div class="kz-head-text">
+        <p class="kz-eyebrow">Jouw beelden</p>
+        <h1 id="kz-title"></h1>
+        <p class="kz-sub" id="kz-subtitle"></p>
+        <p class="kz-meta" id="kz-meta"></p>
+      </div>
+      <div class="kz-actions">
+        <a class="kz-btn kz-btn-ghost" id="kz-tour" href="#" target="_blank" rel="noopener" hidden>
+          <span class="kz-360" aria-hidden="true">360°</span> Bekijk de virtuele tour<span class="visually-hidden"> (opent in een nieuw venster)</span>
+        </a>
+        <button type="button" class="kz-btn kz-btn-primary" id="kz-zip">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0 4.5-4.5M12 15l-4.5-4.5M5 19h14"/></svg>
+          <span>Download alles</span>
+        </button>
+      </div>
+    </div>
+    <p class="kz-zip-status" id="kz-zip-status" role="status" aria-live="polite"></p>
+
+    <div class="kz-tabs" id="kz-tabs" role="tablist" aria-label="Soort beelden"></div>
+    <ul class="kz-grid" id="kz-grid"></ul>
+  </section>
+
+  <!-- ---------- Nog niet ingesteld ---------- -->
+  <section class="kz-notice" id="kz-setup" hidden>
+    <h1>De klantenzone is nog niet gekoppeld.</h1>
+    <p>Vul het adres van de Cloudflare Worker in <code>js/klantenzone-config.js</code>. Zie <code>klantenzone/INSTALLATIE.md</code>.</p>
+  </section>
+
+</main>
+
+<!-- ---------- Groot bekijken ---------- -->
+<dialog class="kz-lightbox" id="kz-lightbox" aria-label="Beeld groot bekijken">
+  <div class="kz-lb-bar">
+    <span class="kz-lb-count" id="kz-lb-count"></span>
+    <span class="kz-lb-name" id="kz-lb-name"></span>
+    <a class="kz-lb-btn" id="kz-lb-download" href="#">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0 4.5-4.5M12 15l-4.5-4.5M5 19h14"/></svg>Origineel
+    </a>
+    <button type="button" class="kz-lb-btn kz-lb-close" id="kz-lb-close" aria-label="Sluiten">✕</button>
+  </div>
+  <div class="kz-lb-stage">
+    <button type="button" class="kz-lb-nav kz-lb-prev" id="kz-lb-prev" aria-label="Vorige">‹</button>
+    <img id="kz-lb-img" alt="">
+    <button type="button" class="kz-lb-nav kz-lb-next" id="kz-lb-next" aria-label="Volgende">›</button>
+  </div>
+</dialog>
+
+<footer class="kz-foot">
+  <span>© <span id="year"></span> Buro Scott</span>
+  <a href="mailto:info@buroscott.be">info@buroscott.be</a>
+</footer>
+
+<script type="module" src="js/klantenzone.js"></script>
+</body>
+</html>

@@ -111,3 +111,10 @@ Dit is geen beveiliging: de code is openbaar, dus wie zoekt, vindt de link.
 De inhoud en richtprijzen staan in `pakketten.html` (kaarten, vergelijkingstabel,
 losse extra's, veelgestelde vragen) en kort op de homepage (blok "Pakketten" in
 `index.html`). Pas je een prijs aan, doe het dan op al die plaatsen.
+
+## Klantenzone
+
+Makelaars loggen in op `klantenzone.html` met een galerijcode en wachtwoord en
+downloaden daar hun beelden. Jij beheert galerijen op `klantenzone-beheer.html`.
+De beelden staan afgeschermd bij Cloudflare (gratis tot 10 GB).
+Installatie en gebruik: zie **`klantenzone/INSTALLATIE.md`**.
