@@ -71,7 +71,7 @@ diezelfde Pages-instellingen — laat het weten als je daarbij hulp wil.
 ## Formulieren laten aankomen (Formspree)
 
 Nu opent bij versturen het e-mailprogramma van de bezoeker met een ingevuld
-bericht naar `hallo@buroscott.be`. Zo gaat er niets verloren, maar de bezoeker
+bericht naar `info@buroscott.be`. Zo gaat er niets verloren, maar de bezoeker
 moet nog zelf op verzenden drukken. Netter is Formspree (gratis tot 50
 berichten per maand):
 

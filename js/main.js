@@ -21,7 +21,7 @@ if (introPhotos && introPhotosTrack) {
       data-endpoint="https://formspree.io/f/abcdwxyz". De berichten komen dan in je mailbox.
    2. Zolang data-endpoint leeg is, opent het e-mailprogramma van de bezoeker
       met een kant-en-klaar bericht naar MAIL_TO. Zo gaat er nooit een aanvraag verloren. ---- */
-const MAIL_TO = 'hallo@buroscott.be';
+const MAIL_TO = 'info@buroscott.be';
 const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function fieldMessage(el){
