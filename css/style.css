@@ -866,3 +866,7 @@ html.is-construction body > *:not(.construction){ display:none !important; }
 }
 .preview-bar a{ background:#fff; color:var(--accent); font-weight:700; padding:5px 12px; border-radius:999px; }
 @media (max-width:680px){ .preview-bar{ left:12px; right:12px; justify-content:space-between; } }
+
+/* Plattegronden: altijd volledig tonen, niet bijsnijden */
+.media-contain{ background:#fff; border:1px solid var(--line-light); }
+.media-contain img{ object-fit:contain; padding:4%; }

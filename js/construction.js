@@ -49,9 +49,9 @@
         '<p class="construction-eyebrow">Vastgoedmedia · Vlaanderen</p>' +
         '<h1 class="construction-title">Buro Scott<span class="brand-dot">.</span></h1>' +
         '<p class="construction-status"><span class="construction-pulse" aria-hidden="true"></span>Website in opbouw</p>' +
-        '<p class="construction-text">Binnenkort vind je hier vastgoedfotografie, video, drone-opnames, 360° tours en plannen voor makelaars en projectontwikkelaars.</p>' +
+        '<p class="construction-text">Binnenkort vind je hier vastgoedfotografie, drone-opnames, 360° tours en plannen voor makelaars en projectontwikkelaars.</p>' +
         '<ul class="construction-services" aria-label="Diensten">' +
-          '<li>Fotografie</li><li>Video</li><li>Drone</li><li>360° tours</li><li>Plannen</li>' +
+          '<li>Fotografie</li><li>Drone</li><li>360° tours</li><li>Plannen</li>' +
         '</ul>' +
       '</div>' +
       '<p class="construction-foot">© ' + year + ' Buro Scott</p>';
