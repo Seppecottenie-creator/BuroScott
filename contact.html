@@ -65,21 +65,24 @@
       </div>
       <div class="contact-info-item">
         <h3>Telefoon</h3>
-        <p><a href="tel:+3200000000">+32 000 00 00 00</a></p>
+        <p><a href="tel:+32471861171">+32 471 86 11 71</a></p>
+      </div>
+      <div class="contact-info-item">
+        <h3>WhatsApp</h3>
+        <p><a href="https://wa.me/32471861171?text=Hallo%20Buro%20Scott%2C%20" class="whatsapp-link" rel="noopener" target="_blank">Stuur een bericht<span class="visually-hidden"> via WhatsApp (opent in een nieuw venster)</span> <span aria-hidden="true">→</span></a></p>
       </div>
       <div class="contact-info-item">
         <h3>Werkgebied</h3>
         <p>Vlaanderen, België</p>
         <p>Op verplaatsing bij de klant</p>
       </div>
-      <!-- "Volg ons" (Instagram / LinkedIn) terugzetten zodra de echte links er zijn -->
       <div class="contact-note">
         Op zoek naar een prijsopgave voor een concreet pand? Gebruik dan liever het <a href="offerte.html" style="text-decoration:underline;">offerteformulier</a> — zo kunnen we sneller en gerichter antwoorden.
       </div>
     </div>
 
     <div data-reveal>
-      <form class="site-form" id="contact-form" data-form data-success="contact-success" novalidate>
+      <form class="site-form" id="contact-form" data-form data-endpoint="" data-success="contact-success" novalidate>
         <div class="form-grid-2">
           <div class="field">
             <label for="c-naam">Naam*</label>
@@ -109,6 +112,9 @@
           <label for="c-bericht">Bericht*</label>
           <textarea id="c-bericht" data-error="Schrijf kort waarmee we kunnen helpen." name="bericht" required placeholder="Waarmee kunnen we helpen?"></textarea>
         </div>
+        <!-- Spamval: onzichtbaar voor mensen, bots vullen dit in -->
+        <div class="hp-field" aria-hidden="true"><label for="contact-form-website">Laat dit veld leeg</label><input type="text" id="contact-form-website" name="_gotcha" tabindex="-1" autocomplete="off"></div>
+        <p class="form-alert" role="alert" hidden></p>
         <button type="submit" class="form-submit">
           <span>Bericht versturen</span>
           <span class="arrow">→</span>
@@ -132,7 +138,8 @@
     <div class="footer-col">
       <h2>Contact</h2>
       <p><a href="mailto:hallo@buroscott.be">hallo@buroscott.be</a></p>
-      <p><a href="tel:+3200000000">+32 000 00 00 00</a></p>
+      <p><a href="tel:+32471861171">+32 471 86 11 71</a></p>
+      <p><a href="https://wa.me/32471861171" rel="noopener" target="_blank">WhatsApp<span class="visually-hidden"> (opent in een nieuw venster)</span></a></p>
     </div>
     <div class="footer-col">
       <h2>Kantoor</h2>
@@ -144,7 +151,6 @@
       <p><a href="diensten.html">Diensten</a></p>
       <p><a href="pakketten.html">Pakketten</a></p>
       <p><a href="offerte.html">Offerte aanvragen</a></p>
-      <!-- Instagram / LinkedIn: voeg hier de echte links toe zodra die er zijn -->
     </div>
   </div>
   <div class="footer-bottom">

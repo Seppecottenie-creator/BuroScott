@@ -61,13 +61,26 @@ diezelfde Pages-instellingen — laat het weten als je daarbij hulp wil.
 - **Toetsenbord:** zichtbare focusring, een link "Naar de inhoud" bovenaan elke
   pagina (verschijnt bij de eerste Tab-toets).
 - **Formulieren:** foutmeldingen staan onder het veld zelf. Eigen tekst per veld
-  zet je via `data-error="..."` op het `<input>`/`<select>`. Er is nog **geen
-  verzenddienst** gekoppeld: berichten komen nergens aan tot je die toevoegt in
-  `js/main.js` (bv. Formspree).
+  zet je via `data-error="..."` op het `<input>`/`<select>`.
 - **Animaties:** foto's met klasse `reveal-img` schuiven open bij het scrollen;
   alle beweging valt weg als de bezoeker "beweging beperken" aanzet.
 - **Navigatie:** glijdt weg bij naar beneden scrollen, komt terug bij omhoog.
 - **Foto's vervangen?** Pas dan ook de `alt="..."`-tekst aan zodat ze beschrijft
   wat er écht op de foto staat.
-- **Instagram/LinkedIn:** tijdelijk weggelaten; in de HTML staat een opmerking
-  waar de echte links terug kunnen.
+
+## Formulieren laten aankomen (Formspree)
+
+Nu opent bij versturen het e-mailprogramma van de bezoeker met een ingevuld
+bericht naar `hallo@buroscott.be`. Zo gaat er niets verloren, maar de bezoeker
+moet nog zelf op verzenden drukken. Netter is Formspree (gratis tot 50
+berichten per maand):
+
+1. Maak een account op formspree.io met het e-mailadres waar je de aanvragen
+   wil ontvangen.
+2. Maak twee formulieren aan, "Offerte" en "Contact". Je krijgt per formulier
+   een adres zoals `https://formspree.io/f/abcdwxyz`.
+3. Plak dat adres in `offerte.html` en `contact.html` bij `data-endpoint=""`
+   op het `<form>`-element.
+
+Vanaf dan komen aanvragen rechtstreeks in je mailbox. Een onzichtbaar
+spamveld (`_gotcha`) houdt de meeste bots tegen.

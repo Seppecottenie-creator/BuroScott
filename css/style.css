@@ -789,3 +789,19 @@ body.nav-is-hidden .bottom-page-blur{ opacity:0; }
   .closing-cta{ translate:none; }
   ::view-transition-old(root), ::view-transition-new(root){ animation:none; }
 }
+
+/* Verborgen voor het oog, wel voorgelezen */
+.visually-hidden{
+  position:absolute !important; width:1px; height:1px; overflow:hidden;
+  clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap;
+}
+/* Spamval in formulieren */
+.hp-field{ position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; }
+/* Algemene melding als verzenden mislukt */
+.form-alert{
+  padding:16px 18px; border-radius:14px; font-size:.92rem; line-height:1.55;
+  background:rgba(180,35,24,0.07); color:#8A1C13; border:1px solid rgba(180,35,24,0.25);
+}
+.form-alert a{ text-decoration:underline; font-weight:600; }
+.form-submit[aria-busy="true"]{ opacity:.7; cursor:progress; }
+.whatsapp-link{ color:var(--accent); }
