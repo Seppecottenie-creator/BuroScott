@@ -105,3 +105,9 @@ Zelf de volledige site bekijken:
 - **Echt live gaan**: zet in `js/construction.js` `LIVE = false` op `LIVE = true`.
 
 Dit is geen beveiliging: de code is openbaar, dus wie zoekt, vindt de link.
+
+## Pakketten en prijzen
+
+De inhoud en richtprijzen staan in `pakketten.html` (kaarten, vergelijkingstabel,
+losse extra's, veelgestelde vragen) en kort op de homepage (blok "Pakketten" in
+`index.html`). Pas je een prijs aan, doe het dan op al die plaatsen.

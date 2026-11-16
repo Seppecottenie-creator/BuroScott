@@ -870,3 +870,227 @@ html.is-construction body > *:not(.construction){ display:none !important; }
 /* Plattegronden: altijd volledig tonen, niet bijsnijden */
 .media-contain{ background:#fff; border:1px solid var(--line-light); }
 .media-contain img{ object-fit:contain; padding:4%; }
+
+/* ============================================================
+   VERSIE 3 — "100x cooler"
+   Korrel, hero-details, kerncijfers, stapelende dienstenkaarten,
+   werkwijze, pakketten-teaser en de volledige pakkettenpagina.
+============================================================ */
+
+/* Subtiele filmkorrel over de hele pagina — geeft beeld en vlakken textuur */
+body::after{
+  content:""; position:fixed; inset:-50%; z-index:95; pointer-events:none; opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:grain 1.2s steps(4) infinite;
+}
+@keyframes grain{ 25%{ transform:translate(-3%,2%);} 50%{ transform:translate(2%,-3%);} 75%{ transform:translate(-2%,-2%);} }
+html.is-construction body::after{ opacity:.06; }
+
+/* ---------- Hero-details ---------- */
+.hero-panel-main{ flex-direction:column; gap:clamp(18px,2.4vw,30px); }
+.hero-panel-bottom{
+  display:flex; justify-content:center; flex-wrap:wrap; gap:6px 22px;
+  font-size:.78rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--grey-dark);
+}
+.hero-panel-bottom span + span::before{ content:"·"; margin-right:22px; color:var(--accent); }
+.scroll-hint{
+  position:absolute; right:clamp(18px,3vw,36px); bottom:clamp(18px,3vw,36px);
+  width:2px; height:56px; background:var(--line-light); overflow:hidden; border-radius:2px;
+}
+.scroll-hint span{ position:absolute; left:0; top:0; width:100%; height:40%; background:var(--accent); animation:scrollHint 1.8s var(--ease) infinite; }
+@keyframes scrollHint{ from{ transform:translateY(-100%);} to{ transform:translateY(260%);} }
+
+/* ---------- Kerncijfers ---------- */
+.stats{
+  max-width:var(--container); margin:0 auto; padding:30px var(--gutter) 120px;
+  display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:0;
+}
+.stat{ display:flex; flex-direction:column; gap:10px; padding:28px 24px 0; border-left:1px solid var(--line-light); }
+.stat:first-child{ border-left:none; padding-left:0; }
+.stat-num{
+  font-family:var(--font-display); font-weight:900; letter-spacing:-.04em; line-height:.9;
+  font-size:clamp(3rem, 6vw, 5.4rem); font-variant-numeric:tabular-nums;
+}
+.stat-num small{ font-size:.42em; letter-spacing:0; margin-left:4px; color:var(--accent); }
+.stat-num.stat-word{ font-size:clamp(1.7rem, 2.8vw, 2.5rem); letter-spacing:-.02em; padding-top:.35em; }
+.stat-label{ color:var(--grey-dark); font-size:.95rem; max-width:22ch; }
+@media (max-width:860px){
+  .stats{ grid-template-columns:1fr 1fr; row-gap:36px; padding-bottom:90px; }
+  .stat:nth-child(3){ border-left:none; padding-left:0; }
+}
+
+/* ---------- Dienstenkaarten die op elkaar stapelen (desktop) ---------- */
+@media (min-width:681px){
+  .services-grid{ gap:28px; }
+  .service-card,
+  .service-card:nth-child(even){
+    position:sticky; top:calc(86px + var(--i, 0) * 22px);
+    transform:none; transform-origin:50% 0;
+    transition:background .45s var(--ease), box-shadow .45s var(--ease), border-color .45s var(--ease), scale .1s linear, filter .1s linear;
+  }
+  .service-card:hover{ transform:none; }
+  .js .service-card[data-reveal]{ transform:none; }
+  .services{ padding-bottom:140px; }
+}
+.service-card-media{ position:relative; }
+.service-card-media::after{
+  content:"Bekijk voorbeelden →"; position:absolute; left:14px; bottom:14px;
+  padding:7px 12px; border-radius:999px; background:rgba(14,15,13,.72); color:#fff;
+  font-size:.75rem; font-weight:600; backdrop-filter:blur(6px);
+  opacity:0; transform:translateY(6px); transition:opacity .35s var(--ease), transform .35s var(--ease);
+}
+.service-card:hover .service-card-media::after,
+.service-card:focus-visible .service-card-media::after{ opacity:1; transform:none; }
+
+/* Volgcursor op dienstenkaarten (enkel met muis) */
+.cursor-view{
+  position:fixed; left:0; top:0; z-index:120; pointer-events:none;
+  width:92px; height:92px; margin:-46px 0 0 -46px; border-radius:50%;
+  background:var(--accent); color:#fff; display:grid; place-items:center;
+  font-size:.82rem; font-weight:700; letter-spacing:.02em;
+  scale:0; transition:scale .3s var(--ease);
+}
+.cursor-view.is-on{ scale:1; }
+
+/* ---------- Werkwijze ---------- */
+.process{ background:var(--ink); color:var(--text-on-dark); padding:130px var(--gutter) 140px; position:relative; overflow:hidden; }
+.process::before{
+  content:""; position:absolute; width:900px; height:900px; right:-300px; top:-380px; pointer-events:none;
+  background:radial-gradient(circle, rgba(29,63,214,.35), transparent 60%);
+}
+.process-inner{ max-width:var(--container); margin:0 auto; position:relative; }
+.eyebrow-dark{ font-size:.78rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--accent-light); margin-bottom:18px; }
+.process-head h2{ font-size:clamp(2.2rem, 4.6vw, 3.8rem); line-height:1.02; letter-spacing:-.025em; font-weight:800; max-width:16ch; }
+.process-track{ position:relative; margin-top:90px; }
+.process-steps{ list-style:none; display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:36px; position:relative; }
+.process-line{ position:absolute; left:0; right:0; top:7px; height:2px; background:var(--line-dark); }
+.process-line span{ position:absolute; inset:0; background:var(--accent-light); transform-origin:0 50%; transform:scaleX(var(--p, 0)); }
+.process-step{ position:relative; padding-top:46px; }
+.process-dot{
+  position:absolute; left:0; top:0; width:16px; height:16px; border-radius:50%;
+  background:var(--ink); border:2px solid var(--line-dark);
+  transition:background .4s var(--ease), border-color .4s var(--ease), box-shadow .4s var(--ease);
+}
+.process-step.is-active .process-dot{ background:var(--accent-light); border-color:var(--accent-light); box-shadow:0 0 0 7px rgba(143,162,255,.18); }
+.process-num{ font-size:.85rem; font-weight:700; color:var(--accent-light); letter-spacing:.06em; }
+.process-step h3{ font-size:1.6rem; font-weight:700; margin:10px 0 12px; letter-spacing:-.01em; }
+.process-step p{ color:var(--muted-dark); line-height:1.6; font-size:.98rem; max-width:30ch; }
+@media (max-width:860px){
+  .process{ padding:100px var(--gutter); }
+  .process-track{ margin-top:60px; }
+  .process-steps{ grid-template-columns:1fr; gap:44px; padding-left:40px; }
+  .process-line{ left:7px; right:auto; top:0; bottom:0; width:2px; height:auto; }
+  .process-line span{ transform-origin:50% 0; transform:scaleY(var(--p, 0)); }
+  .process-step{ padding-top:0; }
+  .process-dot{ left:-40px; top:4px; }
+}
+
+/* ---------- Pakketten-teaser ---------- */
+.pk-teaser{ padding:130px 0 150px; }
+.pk-teaser-grid{
+  max-width:var(--container); margin:0 auto; padding:0 var(--gutter);
+  display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:20px;
+}
+.pk-mini{
+  position:relative; display:flex; flex-direction:column; gap:8px; padding:34px 30px;
+  border:1px solid var(--line-light); border-radius:26px; background:var(--paper);
+  transition:transform .45s var(--ease), box-shadow .45s var(--ease), border-color .45s var(--ease);
+}
+.pk-mini:hover{ transform:translateY(-6px); border-color:var(--accent); box-shadow:0 30px 60px -36px rgba(29,63,214,.5); }
+.pk-mini-name{ font-weight:700; font-size:1.1rem; }
+.pk-mini-price{ font-family:var(--font-display); font-weight:900; font-size:clamp(2.4rem,4vw,3.2rem); letter-spacing:-.03em; line-height:1.05; }
+.pk-mini-price small, .package-price small{ font-size:.32em; font-weight:600; letter-spacing:.02em; color:var(--grey); vertical-align:middle; margin-right:4px; }
+.pk-mini-sub{ color:var(--grey-dark); font-size:.95rem; }
+.pk-mini.is-featured{ background:var(--ink); color:var(--text-on-dark); border-color:var(--ink); box-shadow:0 34px 70px -34px rgba(29,63,214,.65); }
+.pk-mini.is-featured .pk-mini-sub, .pk-mini.is-featured .pk-mini-price small{ color:var(--muted-dark); }
+.pk-mini-tag{ position:absolute; top:20px; right:20px; font-size:.7rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; background:var(--accent); color:#fff; padding:5px 10px; border-radius:999px; }
+@media (max-width:860px){ .pk-teaser-grid{ grid-template-columns:1fr; } .pk-teaser{ padding:90px 0 110px; } }
+
+/* ---------- Pakkettenpagina ---------- */
+@property --angle{ syntax:'<angle>'; initial-value:0deg; inherits:false; }
+.packages-grid{ align-items:start; padding-bottom:110px; }
+.package-card{ padding:38px 32px 32px; border-radius:28px; position:relative; scroll-margin-top:30px; }
+.package-card h2{ font-size:1.75rem; font-weight:800; letter-spacing:-.015em; margin:4px 0 12px; }
+.package-card .package-for{ font-size:.75rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--grey); }
+.package-card .package-intro{ color:var(--grey-dark); font-size:.97rem; line-height:1.6; }
+.package-card .package-price{ font-family:var(--font-display); font-weight:900; font-size:3.2rem; letter-spacing:-.035em; margin:22px 0 22px; line-height:1; }
+.package-card .package-list{ border-top:1px solid var(--line-light); padding-top:22px; gap:13px; }
+.package-card .package-list li{ display:flex; gap:12px; align-items:flex-start; padding-left:0; font-size:.95rem; }
+.package-card .package-list li::before{ display:none; }
+.ck{ flex:0 0 auto; width:20px; height:20px; margin-top:1px; fill:none; stroke:var(--accent); stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; }
+.package-card .package-cta{ gap:10px; }
+.package-card:hover{ transform:translateY(-6px); }
+.package-card.is-featured{
+  border:1.5px solid transparent;
+  background:linear-gradient(var(--ink), var(--ink)) padding-box,
+             conic-gradient(from var(--angle), #1D3FD6, #8FA2FF, #0E0F0D 35%, #0E0F0D 65%, #1D3FD6) border-box;
+  animation:spinBorder 6s linear infinite;
+  box-shadow:0 40px 90px -40px rgba(29,63,214,.7);
+}
+@keyframes spinBorder{ to{ --angle:360deg; } }
+@media (min-width:981px){ .package-card.is-featured{ margin-top:-16px; } }
+.package-card.is-featured .package-for, .package-card.is-featured .package-intro, .package-card.is-featured .package-price small{ color:var(--muted-dark); }
+.package-card.is-featured .package-list{ border-top-color:var(--line-dark); }
+.package-card.is-featured .ck{ stroke:var(--accent-light); }
+.package-card.is-featured .package-cta{ background:var(--accent); border-color:var(--accent); color:#fff; }
+.package-card.is-featured .package-cta:hover{ background:#fff; color:var(--ink); border-color:#fff; }
+.package-card .package-badge,
+.package-card.is-featured .package-badge{
+  position:absolute; top:-13px; left:32px; margin:0;
+  background:var(--accent); color:#fff; letter-spacing:.08em;
+}
+
+.compare, .extras, .faq{ padding:0 0 120px; }
+.compare-wrap{ max-width:var(--container); margin:0 auto; padding:0 var(--gutter); overflow-x:auto; }
+.compare-table{ width:100%; min-width:640px; border-collapse:collapse; font-size:.95rem; }
+.compare-table th, .compare-table td{ padding:18px 20px; text-align:left; border-bottom:1px solid var(--line-light); }
+.compare-table thead th{ font-size:.78rem; letter-spacing:.1em; text-transform:uppercase; color:var(--grey); font-weight:700; }
+.compare-table tbody th{ font-weight:500; }
+.compare-table td{ font-weight:600; font-variant-numeric:tabular-nums; }
+.compare-table .is-featured{ background:var(--accent-soft); }
+.compare-table thead .is-featured{ color:var(--accent); border-radius:14px 14px 0 0; }
+.compare-table .yes{ color:var(--accent); }
+.compare-table .no{ color:var(--grey); font-weight:500; }
+.compare-table .row-price th, .compare-table .row-price td{ border-bottom:none; font-weight:800; }
+
+.extras-grid{
+  max-width:var(--container); margin:0 auto; padding:0 var(--gutter);
+  display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:16px;
+}
+.extra{
+  display:flex; flex-direction:column; gap:8px; padding:26px 24px; border-radius:20px;
+  border:1px solid var(--line-light); transition:border-color .3s var(--ease), transform .3s var(--ease);
+}
+.extra:hover{ border-color:var(--accent); transform:translateY(-3px); }
+.extra h3{ font-size:1.1rem; font-weight:700; }
+.extra p{ color:var(--grey-dark); font-size:.92rem; line-height:1.55; flex:1; }
+.extra-price{ align-self:flex-start; margin-top:8px; font-weight:800; font-size:1.05rem; color:var(--accent); }
+@media (max-width:860px){ .extras-grid{ grid-template-columns:1fr 1fr; } }
+@media (max-width:560px){ .extras-grid{ grid-template-columns:1fr; } }
+
+.faq-list{ max-width:900px; margin:0 auto; padding:0 var(--gutter); }
+.faq-item{ border-bottom:1px solid var(--line-light); }
+.faq-item summary{
+  list-style:none; cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:20px;
+  padding:24px 0; font-size:1.12rem; font-weight:600;
+}
+.faq-item summary::-webkit-details-marker{ display:none; }
+.faq-item summary::after{
+  content:""; flex:0 0 auto; width:34px; height:34px; border-radius:50%; border:1px solid var(--line-light);
+  background:linear-gradient(currentColor,currentColor) center/12px 2px no-repeat,
+             linear-gradient(currentColor,currentColor) center/2px 12px no-repeat;
+  transition:transform .35s var(--ease), background-color .35s var(--ease), color .35s var(--ease);
+}
+.faq-item[open] summary::after{ transform:rotate(135deg); background-color:var(--accent); color:#fff; border-color:var(--accent); }
+.faq-item div{ padding:0 60px 26px 0; color:var(--grey-dark); line-height:1.7; }
+.faq-item[open] div{ animation:faqIn .4s var(--ease); }
+@keyframes faqIn{ from{ opacity:0; transform:translateY(-6px); } }
+
+@media (prefers-reduced-motion: reduce){
+  body::after{ animation:none; }
+  .package-card.is-featured{ animation:none; }
+  .scroll-hint span{ animation:none; }
+  .service-card{ scale:1 !important; filter:none !important; }
+}
+.package-card .package-price{ color:var(--text-on-light); }
+.package-card.is-featured .package-price{ color:var(--text-on-dark); }
