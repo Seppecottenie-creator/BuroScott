@@ -53,3 +53,21 @@ in `css/style.css` bij `.marq-col`. Wil je een ander woord (bv. voluit
 
 Wil je een eigen domeinnaam (bv. `buroscott.be`) koppelen, dat kan ook via
 diezelfde Pages-instellingen — laat het weten als je daarbij hulp wil.
+
+## Toegankelijkheid & effecten (update 2026)
+
+- **Accentkleur:** diep blauw (`--accent: #1D3FD6`), met `--accent-light` voor
+  donkere vlakken. Aanpassen kan bovenaan `css/style.css`.
+- **Toetsenbord:** zichtbare focusring, een link "Naar de inhoud" bovenaan elke
+  pagina (verschijnt bij de eerste Tab-toets).
+- **Formulieren:** foutmeldingen staan onder het veld zelf. Eigen tekst per veld
+  zet je via `data-error="..."` op het `<input>`/`<select>`. Er is nog **geen
+  verzenddienst** gekoppeld: berichten komen nergens aan tot je die toevoegt in
+  `js/main.js` (bv. Formspree).
+- **Animaties:** foto's met klasse `reveal-img` schuiven open bij het scrollen;
+  alle beweging valt weg als de bezoeker "beweging beperken" aanzet.
+- **Navigatie:** glijdt weg bij naar beneden scrollen, komt terug bij omhoog.
+- **Foto's vervangen?** Pas dan ook de `alt="..."`-tekst aan zodat ze beschrijft
+  wat er écht op de foto staat.
+- **Instagram/LinkedIn:** tijdelijk weggelaten; in de HTML staat een opmerking
+  waar de echte links terug kunnen.

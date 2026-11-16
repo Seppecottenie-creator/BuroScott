@@ -9,14 +9,26 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,500;0,600;0,700;0,900;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
+<meta name="theme-color" content="#0E0F0D">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="nl_BE">
+<meta property="og:site_name" content="Buro Scott">
+<meta property="og:title" content="Over ons — Buro Scott">
+<meta property="og:description" content="Buro Scott is opgericht vanuit één overtuiging: goed vastgoed verdient goed beeld. Maak kennis met ons.">
+<link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+<script>document.documentElement.classList.add('js')</script>
+
 </head>
 <body>
+
+<a class="skip-link" href="#inhoud">Naar de inhoud</a>
+<div class="scroll-progress" aria-hidden="true"></div>
 
 <!-- Vervaagt de onderkant van de pagina zodat de altijd-zichtbare nav opvalt -->
 <div class="bottom-page-blur" aria-hidden="true"></div>
 
 <nav class="floating-nav" id="site-nav">
-  <a href="index.html#top" class="nav-brand">Buro Scott</a>
+  <a href="index.html#top" class="nav-brand">Buro Scott<span class="brand-dot" aria-hidden="true">.</span></a>
   <div class="nav-links">
     <a href="diensten.html">Diensten</a>
     <a href="pakketten.html">Pakketten</a>
@@ -36,6 +48,7 @@
 </div>
 <div class="mobile-menu-backdrop" id="mobile-menu-backdrop"></div>
 
+<main id="inhoud">
 <section class="page-hero">
   <p class="page-hero-eyebrow">Over ons</p>
   <h1 data-reveal>Goed vastgoed verdient goed beeld.</h1>
@@ -43,7 +56,7 @@
 </section>
 
 <section class="about" id="over">
-  <div class="about-media" data-reveal>
+  <div class="about-media reveal-img">
     <img src="assets/images/about.jpg" alt="Buro Scott team">
   </div>
   <div class="about-text" data-reveal>
@@ -74,22 +87,26 @@
   </a>
 </section>
 
+</main>
+
 <footer class="site-footer">
   <div class="footer-top">
     <div class="footer-col">
-      <h3>Contact</h3>
+      <h2>Contact</h2>
       <p><a href="mailto:hallo@buroscott.be">hallo@buroscott.be</a></p>
       <p><a href="tel:+3200000000">+32 000 00 00 00</a></p>
     </div>
     <div class="footer-col">
-      <h3>Kantoor</h3>
+      <h2>Kantoor</h2>
       <p>Vlaanderen, België</p>
       <p>Op verplaatsing bij de klant</p>
     </div>
     <div class="footer-col">
-      <h3>Volg</h3>
-      <p><a href="#">Instagram</a></p>
-      <p><a href="#">LinkedIn</a></p>
+      <h2>Snel naar</h2>
+      <p><a href="diensten.html">Diensten</a></p>
+      <p><a href="pakketten.html">Pakketten</a></p>
+      <p><a href="offerte.html">Offerte aanvragen</a></p>
+      <!-- Instagram / LinkedIn: voeg hier de echte links toe zodra die er zijn -->
     </div>
   </div>
   <div class="footer-bottom">

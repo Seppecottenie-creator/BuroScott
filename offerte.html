@@ -9,14 +9,26 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,500;0,600;0,700;0,900;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
+<meta name="theme-color" content="#0E0F0D">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="nl_BE">
+<meta property="og:site_name" content="Buro Scott">
+<meta property="og:title" content="Offerte aanvragen — Buro Scott">
+<meta property="og:description" content="Vraag een offerte op maat aan bij Buro Scott: fotografie, video, drone-opnames, 360° tours en plattegronden voor jouw pand.">
+<link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+<script>document.documentElement.classList.add('js')</script>
+
 </head>
 <body>
+
+<a class="skip-link" href="#inhoud">Naar de inhoud</a>
+<div class="scroll-progress" aria-hidden="true"></div>
 
 <!-- Vervaagt de onderkant van de pagina zodat de altijd-zichtbare nav opvalt -->
 <div class="bottom-page-blur" aria-hidden="true"></div>
 
 <nav class="floating-nav" id="site-nav">
-  <a href="index.html#top" class="nav-brand">Buro Scott</a>
+  <a href="index.html#top" class="nav-brand">Buro Scott<span class="brand-dot" aria-hidden="true">.</span></a>
   <div class="nav-links">
     <a href="diensten.html">Diensten</a>
     <a href="pakketten.html">Pakketten</a>
@@ -36,6 +48,7 @@
 </div>
 <div class="mobile-menu-backdrop" id="mobile-menu-backdrop"></div>
 
+<main id="inhoud">
 <section class="page-hero">
   <p class="page-hero-eyebrow">Offerte</p>
   <h1 data-reveal>Vraag een offerte op maat aan.</h1>
@@ -52,7 +65,7 @@
       <div class="form-grid-2">
         <div class="field">
           <label for="o-naam">Naam*</label>
-          <input type="text" id="o-naam" name="naam" autocomplete="name" required>
+          <input type="text" id="o-naam" data-error="Vul je naam in." name="naam" autocomplete="name" required>
         </div>
         <div class="field">
           <label for="o-bedrijf">Kantoor / bedrijf <span class="hint">(optioneel)</span></label>
@@ -62,11 +75,11 @@
       <div class="form-grid-2">
         <div class="field">
           <label for="o-email">E-mail*</label>
-          <input type="email" id="o-email" name="email" autocomplete="email" required>
+          <input type="email" id="o-email" data-error="Vul een geldig e-mailadres in, bv. naam@kantoor.be." name="email" autocomplete="email" required>
         </div>
         <div class="field">
           <label for="o-telefoon">Telefoon*</label>
-          <input type="tel" id="o-telefoon" name="telefoon" autocomplete="tel" required>
+          <input type="tel" id="o-telefoon" data-error="Vul een telefoonnummer in zodat we je kunnen bellen." name="telefoon" autocomplete="tel" required>
         </div>
       </div>
     </div>
@@ -77,17 +90,17 @@
       <div class="form-grid-2">
         <div class="field">
           <label for="o-adres">Adres van het pand*</label>
-          <input type="text" id="o-adres" name="adres" placeholder="Straat en nummer" autocomplete="street-address" required>
+          <input type="text" id="o-adres" data-error="Vul het adres van het pand in." name="adres" placeholder="Straat en nummer" autocomplete="street-address" required>
         </div>
         <div class="field">
           <label for="o-gemeente">Postcode en gemeente*</label>
-          <input type="text" id="o-gemeente" name="gemeente" placeholder="8500 Kortrijk" required>
+          <input type="text" id="o-gemeente" data-error="Vul de postcode en gemeente in." name="gemeente" placeholder="8500 Kortrijk" required>
         </div>
       </div>
       <div class="form-grid-2">
         <div class="field">
           <label for="o-type">Type pand*</label>
-          <select id="o-type" name="type_pand" required>
+          <select id="o-type" data-error="Kies het type pand." name="type_pand" required>
             <option value="" selected disabled>Kies een type</option>
             <option value="appartement">Appartement</option>
             <option value="woning">Woning</option>
@@ -110,8 +123,8 @@
       </div>
     </div>
 
-    <div class="form-fieldset">
-      <p class="fieldset-title">Gewenste diensten*</p>
+    <div class="form-fieldset" role="group" aria-labelledby="o-diensten-titel" data-required-group="diensten" data-error="Kies minstens één dienst, of duid &quot;Nog niet zeker&quot; aan.">
+      <p class="fieldset-title" id="o-diensten-titel">Gewenste diensten*</p>
       <p class="fieldset-sub">Duid aan wat je nodig hebt — meerdere opties mogelijk.</p>
       <div class="check-grid">
         <label class="check-option">
@@ -174,7 +187,7 @@
         </div>
         <div class="field">
           <label for="o-snelheid">Hoe snel?*</label>
-          <select id="o-snelheid" name="snelheid" required>
+          <select id="o-snelheid" data-error="Kies wanneer de opnames moeten gebeuren." name="snelheid" required>
             <option value="" selected disabled>Kies een optie</option>
             <option value="zo-snel-mogelijk">Zo snel mogelijk</option>
             <option value="binnen-2-weken">Binnen 2 weken</option>
@@ -200,29 +213,34 @@
     <p class="form-fineprint">* verplicht in te vullen. We gebruiken je gegevens enkel om je offerte op te maken en contact op te nemen.</p>
   </form>
 
-  <div class="form-success" id="offerte-success">
+  <div class="form-success" id="offerte-success" role="status" tabindex="-1">
+    <svg class="success-check" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="23"/><path d="M15 27l7.5 7.5L37 19"/></svg>
     <h3>Bedankt voor je aanvraag.</h3>
     <p>We bekijken de gegevens van je pand en sturen binnen de 24u een offerte op maat naar je e-mailadres.</p>
   </div>
 
 </section>
 
+</main>
+
 <footer class="site-footer">
   <div class="footer-top">
     <div class="footer-col">
-      <h3>Contact</h3>
+      <h2>Contact</h2>
       <p><a href="mailto:hallo@buroscott.be">hallo@buroscott.be</a></p>
       <p><a href="tel:+3200000000">+32 000 00 00 00</a></p>
     </div>
     <div class="footer-col">
-      <h3>Kantoor</h3>
+      <h2>Kantoor</h2>
       <p>Vlaanderen, België</p>
       <p>Op verplaatsing bij de klant</p>
     </div>
     <div class="footer-col">
-      <h3>Volg</h3>
-      <p><a href="#">Instagram</a></p>
-      <p><a href="#">LinkedIn</a></p>
+      <h2>Snel naar</h2>
+      <p><a href="diensten.html">Diensten</a></p>
+      <p><a href="pakketten.html">Pakketten</a></p>
+      <p><a href="offerte.html">Offerte aanvragen</a></p>
+      <!-- Instagram / LinkedIn: voeg hier de echte links toe zodra die er zijn -->
     </div>
   </div>
   <div class="footer-bottom">
