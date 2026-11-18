@@ -76,7 +76,7 @@ button{ font-family:inherit; cursor:pointer; }
    HERO — getilde "SCOTT"-achtergrond + omkaderd paneel
 ============================================================ */
 .hero{
-  position:relative; height:155vh;
+  position:relative; height:225vh;
   background:var(--ink);
 }
 .hero-sticky{
@@ -235,7 +235,7 @@ button{ font-family:inherit; cursor:pointer; }
 ============================================================ */
 .intro{
   position:relative; z-index:2; background:var(--paper);
-  width:100%; margin-top:-30vh;
+  width:100%; margin-top:-100vh;
   text-align:left;
 }
 .intro-inner{
@@ -634,7 +634,7 @@ button{ font-family:inherit; cursor:pointer; }
 }
 @media (max-width: 680px){
   /* Korter hero-scroltraject op mobiel — hetzelfde effect zonder eindeloos scrollen */
-  .hero{ height:125vh; }
+  .hero{ height:195vh; }
 
   /* Pil-nav met alle links past niet op smalle schermen: enkel logo + hamburger,
      de links verhuizen naar het uitklapmenu hieronder. */
@@ -1243,3 +1243,12 @@ html.is-construction body::after{ opacity:.06; }
   .process-step, .process-big, .process-icon, .process-glow{ transition:none; }
   .process-step.is-active{ transform:none; }
 }
+
+
+/* Hero blijft staan: de inhoud schuift er als een gordijn overheen */
+.intro{
+  border-radius:36px 36px 0 0;
+  box-shadow:0 -40px 80px -30px rgba(0,0,0,.45);
+}
+@media (max-width:680px){ .intro{ border-radius:26px 26px 0 0; } }
+@media (prefers-reduced-motion: reduce){ .intro{ margin-top:0; border-radius:0; box-shadow:none; } }

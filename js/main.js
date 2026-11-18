@@ -361,7 +361,9 @@ if (heroSection && heroPanel && !prefersReduced) {
     // Vastgezet (sticky) tijdens de volledige hoogte van .hero; de krimp
     // volgt de scroll-voortgang door die vastgezette periode.
     const rect = heroSection.getBoundingClientRect();
-    const scrollDistance = heroSection.offsetHeight - window.innerHeight;
+    // Het vlak krimpt tijdens de eerste ±40% van een schermhoogte scrollen en blijft
+    // daarna staan; de rest van de pagina schuift er dan overheen.
+    const scrollDistance = window.innerHeight * (window.innerWidth <= 680 ? 0.35 : 0.42);
     if (scrollDistance <= 0) return;
 
     const scrolled = -rect.top;
@@ -406,6 +408,8 @@ if (heroSection && heroPanel && !prefersReduced) {
   heroPanel.style.height = Math.min(460, window.innerHeight * 0.62) + 'px';
   heroPanel.style.borderRadius = '28px';
   heroSection.style.height = '100svh';
+  const introEl = document.querySelector('.intro');
+  if (introEl) introEl.style.marginTop = '0';
   if (heroTitle) {
     heroTitle.style.fontSize = clampPx(0.07, 32, 73.6) + 'px';
   }
