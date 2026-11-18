@@ -1097,7 +1097,7 @@ html.is-construction body::after{ opacity:.06; }
 
 /* ============================================================
    VERSIE 4 — snellere hero, scroll-indicator, diensten op volle
-   pagina, My Scott-knop, cijfers met bron
+   pagina, Klantenzone-knop, cijfers met bron
 ============================================================ */
 
 /* Duidelijke scroll-indicator onderaan de hero */
@@ -1123,7 +1123,7 @@ html.is-construction body::after{ opacity:.06; }
   .service-card h3{ font-size:clamp(1.8rem,2.8vw,2.6rem); }
   .service-card p{ font-size:1.05rem; max-width:52ch; }
 }
-/* My Scott-knop in de navigatie */
+/* Klantenzone-knop in de navigatie */
 .floating-nav .nav-portal{
   display:inline-flex; align-items:center; gap:7px; color:var(--text-on-dark);
   border:1px solid var(--line-dark); padding:7px 14px; border-radius:999px; font-weight:600;
