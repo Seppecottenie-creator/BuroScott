@@ -5,7 +5,7 @@
    'https://buroscott-klantenzone.jouwnaam.workers.dev'
    (zonder schuine streep op het einde).
 ============================================================ */
-window.KLANTENZONE_API = '';
+window.KLANTENZONE_API = 'https://buroscott-klantenzone.buroscott.workers.dev';
 
 /* Enkel om te testen: met ?api=<adres> in de link kan je tijdelijk een
    ander adres gebruiken (wordt onthouden in deze browser). ?api=reset wist het. */
