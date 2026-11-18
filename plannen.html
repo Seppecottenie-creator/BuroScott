@@ -143,8 +143,17 @@
 <dialog class="lib-dialog pe-dlg pe-small" id="pe-export-dlg" aria-labelledby="pe-export-title">
   <div class="lib-dialog-head"><h2 id="pe-export-title">Exporteren</h2><button type="button" class="lib-dialog-close" data-close aria-label="Sluiten">✕</button></div>
   <div class="pe-dlg-body">
+    <div class="field"><label for="pe-x-mode">Maten op het plan</label>
+      <select id="pe-x-mode">
+        <option value="all">Lengtes en oppervlaktes</option>
+        <option value="area">Enkel oppervlaktes</option>
+        <option value="dims">Enkel lengtes</option>
+        <option value="none">Geen maten</option>
+      </select>
+    </div>
+    <label class="ad-remember"><input type="checkbox" id="pe-x-h" checked> Hoogte per ruimte</label>
     <label class="ad-remember"><input type="checkbox" id="pe-x-furn" checked> Meubels tonen</label>
-    <label class="ad-remember"><input type="checkbox" id="pe-x-dims" checked> Maten tonen</label>
+    <p class="hint">Maten of oppervlaktes die je bij een ruimte hebt uitgezet, blijven ook hier uit.</p>
     <div class="pe-x-buttons">
       <button type="button" class="kz-btn kz-btn-primary" id="pe-x-png">Afbeelding (PNG) · deze verdieping</button>
       <button type="button" class="kz-btn kz-btn-ghost" id="pe-x-pdf">PDF / afdrukken · alle verdiepingen</button>
