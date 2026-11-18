@@ -617,7 +617,7 @@ document.querySelectorAll('.service-card').forEach(card => {
 
 /* ---- Dienstpagina: foto zoomt traag uit tijdens het scrollen ---- */
 (function serviceParallax(){
-  const media = document.querySelector('.sd-media:not(.is-contain)');
+  const media = document.querySelector('.sd-media');
   if (!media || prefersReduced) return;
   let ticking = false;
   function update(){
