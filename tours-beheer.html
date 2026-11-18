@@ -62,6 +62,7 @@
         <button type="submit" class="form-submit ad-span2"><span>Tour aanmaken</span><span class="arrow" aria-hidden="true">→</span></button>
       </form>
     </div>
+    <p class="te-soon" id="te-soon" hidden></p>
     <h2 class="ad-h2">Bestaande tours</h2>
     <ul class="ad-list" id="te-list"></ul>
   </section>
@@ -87,6 +88,23 @@
         <div class="field"><label for="te-link">Link (vervalt niet)</label><div class="kz-pw"><input type="text" id="te-link" readonly><button type="button" class="kz-pw-toggle" data-copy="te-link">Kopieer</button></div></div>
         <div class="field"><label for="te-embed">Insluiten op een website</label><div class="kz-pw"><input type="text" id="te-embed" readonly><button type="button" class="kz-pw-toggle" data-copy="te-embed">Kopieer</button></div></div>
       </div>
+    </div>
+
+    <div class="ad-card te-online">
+      <div class="te-online-head">
+        <div>
+          <h2>Online</h2>
+          <p class="te-online-text" id="te-online-text"></p>
+        </div>
+        <span class="ad-pill" id="te-online-pill"></span>
+      </div>
+      <div class="te-online-actions">
+        <button type="button" class="kz-btn kz-btn-primary" data-months="1">+1 maand</button>
+        <button type="button" class="kz-btn kz-btn-primary" data-months="3">+3 maanden</button>
+        <button type="button" class="kz-btn kz-btn-primary" data-months="12">+1 jaar</button>
+        <button type="button" class="kz-btn kz-btn-ghost" id="te-pause">Nu pauzeren</button>
+      </div>
+      <p class="hint">Inbegrepen bij een tour: 3 maanden online. Daarna €7,50/maand · €19/kwartaal · €59/jaar (excl. btw). Een gepauzeerde tour wordt niet verwijderd: na verlengen werkt dezelfde link meteen weer.</p>
     </div>
 
     <div class="ad-card">
