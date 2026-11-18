@@ -19,8 +19,8 @@ window.BS_PRICES = {
   kmFree: 20, kmRate: 0.5, base: [50.883, 3.367], roadFactor: 1.35,
   packages: {
     Basic:     { price: 179, foto: 20, drone: 0,  tour: false, plan: 0, label: 'Scott Basic' },
-    Signature: { price: 349, foto: 30, drone: 5,  tour: false, plan: 2, label: 'Scott Signature' },
-    Prestige:  { price: 599, foto: 40, drone: 10, tour: true,  plan: 3, label: 'Scott Prestige', voorrang: true },
+    Signature: { price: 389, foto: 30, drone: 5,  tour: false, plan: 1, label: 'Scott Signature' },
+    Prestige:  { price: 699, foto: 40, drone: 10, tour: true,  plan: 2, label: 'Scott Prestige', voorrang: true },
   },
 };
 
