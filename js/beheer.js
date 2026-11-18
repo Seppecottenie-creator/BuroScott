@@ -43,7 +43,7 @@ $('hb-login-form').addEventListener('submit', async (e) => {
 async function load() {
   show('hb-view');
   $('hb-date').textContent = new Date().toLocaleDateString('nl-BE', { weekday: 'long', day: 'numeric', month: 'long' });
-  const [g, t, act] = await Promise.all([api('/api/admin/galleries'), api('/api/admin/tours'), api('/api/admin/activity?limit=6')]);
+  const [g, t, act, aq] = await Promise.all([api('/api/admin/galleries'), api('/api/admin/tours'), api('/api/admin/activity?limit=6'), api('/api/admin/aanvragen').catch(() => ({ nieuw: 0, aanvragen: [] }))]);
   renderActivity(act.events);
   const now = Date.now();
   const liveG = g.galleries.filter((x) => x.expires > now);
@@ -55,6 +55,7 @@ async function load() {
 
   // Meldingen
   const alerts = [];
+  if (aq.nieuw) alerts.push({ cls: 'is-warn', html: `<b>${aq.nieuw} nieuwe ${aq.nieuw === 1 ? 'aanvraag' : 'aanvragen'}</b> via de website. Bekijk en beantwoord ze.`, href: 'aanvragen.html' });
   t.tours.filter((x) => x.activeUntil && x.activeUntil > now && x.activeUntil - now < 14 * DAY)
     .forEach((x) => alerts.push({ cls: 'is-warn', html: `Tour <b>${esc(x.title)}</b> gaat offline op ${fmtDate(x.activeUntil)}. Tijd om te factureren of te verlengen.`, href: `tours-beheer.html?t=${encodeURIComponent(x.id)}` }));
   t.tours.filter((x) => x.activeUntil && x.activeUntil <= now)

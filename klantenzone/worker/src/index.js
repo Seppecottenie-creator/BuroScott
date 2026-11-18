@@ -72,6 +72,8 @@ async function route(request, env, ctx) {
     return json({ ...g, asAdmin });
   }
   if (p === '/api/file' && m === 'GET') return serveFile(request, env, url, track);
+  // --- Offerte- en contactaanvragen van de website (ook bewaard naast de mail) ---
+  if (p === '/api/aanvraag' && m === 'POST') return json(await saveAanvraag(request, env));
   if (p === '/api/activity' && m === 'POST') {
     const payload = await verify(env, bearer(request));
     if (!payload || payload.c === 'admin') return json({ ok: true });
@@ -123,6 +125,18 @@ async function route(request, env, ctx) {
       if (parts[2] === 'logo' && parts.length === 3 && m === 'DELETE') return json(await adminTourLogo(null, env, id));
       if (parts[2] === 'scenes' && parts.length === 4 && m === 'PUT') return json(await adminUploadScene(request, env, id, parts[3], url), 201);
       if (parts[2] === 'scenes' && parts.length === 4 && m === 'DELETE') return json(await adminDeleteScene(env, id, parts[3]));
+    }
+    if (parts[0] === 'aanvragen') {
+      if (parts.length === 1 && m === 'GET') return json(await listAanvragen(env));
+      const id = parts[1];
+      if (!AQ_RE.test(id || '')) throw new HttpError(400, 'Ongeldige aanvraag.');
+      if (parts.length === 2 && m === 'GET') {
+        const obj = await env.GALLERIES.get(`aq/${id}.json`);
+        if (!obj) throw new HttpError(404, 'Aanvraag niet gevonden.');
+        return json(await obj.json());
+      }
+      if (parts.length === 2 && m === 'PATCH') return json(await setAanvraagStatus(request, env, id));
+      if (parts.length === 2 && m === 'DELETE') { await env.GALLERIES.delete(`aq/${id}.json`); return json({ ok: true }); }
     }
     if (parts[0] === 'plans') {
       if (parts.length === 1 && m === 'GET') return json(await adminListPlans(env));
@@ -559,6 +573,64 @@ async function adminActivity(env, url) {
   out.sort((a, b) => b.t - a.t);
   const limit = clampInt(url.searchParams.get('limit'), 1, 1000, 300);
   return { events: out.slice(0, limit), stats };
+}
+
+/* ---------------- Aanvragen (offerte/contact) ---------------- */
+
+const AQ_RE = /^[0-9]{16}-[0-9a-f]{6}$/;
+const AQ_STATUS = ['nieuw', 'behandeld'];
+async function saveAanvraag(request, env) {
+  const origin = request.headers.get('origin') || '';
+  const allowed = String(env.ALLOWED_ORIGINS || '*').split(',').map(x => x.trim()).filter(Boolean);
+  if (!allowed.includes('*') && !allowed.includes(origin)) throw new HttpError(403, 'Niet toegelaten.');
+  const raw = await request.text();
+  if (raw.length > 40000) throw new HttpError(413, 'Aanvraag is te groot.');
+  let b; try { b = JSON.parse(raw); } catch { throw new HttpError(400, 'Ongeldige aanvraag.'); }
+  if (b.hp) return { ok: true }; // spamval ingevuld
+  const form = b.form === 'contact' ? 'contact' : 'offerte';
+  const fields = (Array.isArray(b.fields) ? b.fields : []).slice(0, 40)
+    .filter(f => Array.isArray(f) && f.length === 2)
+    .map(([k, v]) => [String(k).slice(0, 80), String(v).slice(0, 4000)]);
+  const get = (re) => (fields.find(([k]) => re.test(k)) || [])[1] || '';
+  const naam = get(/^naam$/i), email = String(b.email || get(/^e-?mail$/i)).slice(0, 160);
+  if (!naam || !/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(email)) throw new HttpError(400, 'Naam en e-mail zijn verplicht.');
+  const cf = request.cf || {};
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  const who = ip ? (await sha256(`${env.SIGNING_KEY}:${ip}`)).slice(0, 10) : '';
+  const now = Date.now();
+  // max. 6 aanvragen per uur van hetzelfde internetadres
+  const recent = await env.GALLERIES.list({ prefix: 'aq/', limit: 60, include: ['customMetadata'] });
+  if (who && recent.objects.filter(o => o.customMetadata && o.customMetadata.who === who && now - +o.customMetadata.t < 3600e3).length >= 6)
+    throw new HttpError(429, 'Te veel aanvragen. Probeer later opnieuw of mail ons.');
+  const id = `${REV(now)}-${randomHex(3)}`;
+  const gemeente = [get(/^postcode$/i), get(/^gemeente$/i)].filter(Boolean).join(' ');
+  const keuze = (get(/overzicht/i).split('\n')[0] || '').replace(/^Keuze:\s*/, '');
+  const totaal = ((get(/overzicht/i).match(/Totaal vanaf: ([^\n]+)/) || [])[1] || '');
+  const doc = { id, t: now, form, status: 'nieuw', naam, email, fields, loc: [cf.city, cf.country].filter(Boolean).join(', '), dev: device(request.headers.get('user-agent') || '') };
+  await env.GALLERIES.put(`aq/${id}.json`, JSON.stringify(doc), {
+    httpMetadata: { contentType: 'application/json' },
+    customMetadata: { t: String(now), form, status: 'nieuw', naam: naam.slice(0, 80), email, who, gemeente: gemeente.slice(0, 80), keuze: keuze.slice(0, 80), totaal: totaal.slice(0, 80) },
+  });
+  return { ok: true, id };
+}
+async function listAanvragen(env) {
+  const pages = await listAll(env, 'aq/', { include: ['customMetadata'] });
+  const items = pages.flatMap(pg => pg.objects).map(o => {
+    const m = o.customMetadata || {};
+    return { id: o.key.slice(3, -5), t: +m.t || 0, form: m.form || 'offerte', status: m.status || 'nieuw', naam: m.naam || '', email: m.email || '', gemeente: m.gemeente || '', keuze: m.keuze || '', totaal: m.totaal || '' };
+  });
+  items.sort((a, b) => b.t - a.t);
+  return { aanvragen: items, nieuw: items.filter(i => i.status === 'nieuw').length };
+}
+async function setAanvraagStatus(request, env, id) {
+  const obj = await env.GALLERIES.get(`aq/${id}.json`);
+  if (!obj) throw new HttpError(404, 'Aanvraag niet gevonden.');
+  const b = await readJson(request);
+  if (!AQ_STATUS.includes(b.status)) throw new HttpError(400, 'Ongeldige status.');
+  const doc = await obj.json();
+  doc.status = b.status;
+  await env.GALLERIES.put(`aq/${id}.json`, JSON.stringify(doc), { httpMetadata: { contentType: 'application/json' }, customMetadata: { ...(obj.customMetadata || {}), status: b.status } });
+  return { ok: true };
 }
 
 /* ---------------- Plannen ---------------- */

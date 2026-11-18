@@ -17,6 +17,7 @@
     tours: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18"/>',
     activiteit: '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
     plannen: '<path d="M3 3h18v18H3zM3 12h7v9M14 3v6h7"/>',
+    aanvragen: '<path d="M4 4h16v12H8l-4 4z"/><path d="M8 9h8M8 12h5"/>',
     map: '<path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
     alle: '<path d="M4 7h16M4 12h16M4 17h16"/>',
     geen: '<path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke-dasharray="3 3"/>',
@@ -25,6 +26,7 @@
   const svg = (k) => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICON[k]}</svg>`;
   const NAV = [
     ['overzicht', 'beheer.html', 'Overzicht'],
+    ['aanvragen', 'aanvragen.html', 'Aanvragen'],
     ['galerijen', 'klantenzone-beheer.html', 'Galerijen'],
     ['tours', 'tours-beheer.html', '360° tours'],
     ['plannen', 'plannen.html', 'Plannen'],
@@ -37,7 +39,7 @@
     <div class="lib-side-top">
       <a href="beheer.html" class="lib-brand">BURO SCOTT<span>.</span><small>Beheer</small></a>
     </div>
-    <nav class="lib-nav">${NAV.map(([k, href, label]) => `<a href="${href}"${k === page ? ' aria-current="page"' : ''}>${svg(k)}${label}</a>`).join('')}</nav>
+    <nav class="lib-nav">${NAV.map(([k, href, label]) => `<a href="${href}"${k === page ? ' aria-current="page"' : ''}>${svg(k)}${label}${k === 'aanvragen' ? '<em class="lib-badge" id="adm-aq-badge" hidden></em>' : ''}</a>`).join('')}</nav>
     <div class="lib-fold-head">
       <p class="lib-label">Mappen</p>
       <button type="button" class="lib-fold-add" id="adm-folder-add" aria-label="Nieuwe map" title="Nieuwe map">+</button>
@@ -203,6 +205,13 @@
     // Standaard: op andere pagina's naar de galerijen in die map gaan
     onSelect(key) { location.href = 'klantenzone-beheer.html' + (key && key !== 'alle' ? '?map=' + encodeURIComponent(key) : ''); },
     onChange() { return Shell.load(); },
+    async badge() {
+      if (!API || !token()) return;
+      try {
+        const r = await api('/api/admin/aanvragen');
+        const b = $('adm-aq-badge'); b.textContent = r.nieuw; b.hidden = !r.nieuw;
+      } catch (e) {}
+    },
   };
   window.AdminShell = Shell;
   render();
@@ -213,6 +222,7 @@
     const on = !out.hidden;
     document.body.classList.toggle('adm-in', on);
     if (on && !S.loaded && page !== 'galerijen') Shell.load();
+    if (on) Shell.badge();
   };
   new MutationObserver(sync).observe(out, { attributes: true, attributeFilter: ['hidden'] });
   sync();
