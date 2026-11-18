@@ -18,6 +18,33 @@
   // Alles in het keuzeblok hoort niet los in de mail: het overzicht vat het samen
   qa('.o-choice input, .o-choice select').forEach(function (el) { el.setAttribute('data-mail-skip', ''); });
 
+  /* ---------- Pakketkaartjes: inhoud en info-knop ---------- */
+  function packItems(P) {
+    var L = [P.foto + " professionele foto's, binnen en buiten"];
+    if (P.drone) L.push(P.drone + " dronefoto's van pand, tuin en omgeving");
+    if (P.tour) L.push('Volledige 360° tour, 3 maanden online');
+    if (P.plan) L.push('2D-plattegrond, tot ' + P.plan + (P.plan === 1 ? ' verdieping' : ' verdiepingen'));
+    L.push('Lichtbewerking en rechte lijnen');
+    if (P.voorrang) L.push('Voorrang bij de planning');
+    L.push('Levering binnen 48 uur');
+    return L;
+  }
+  qa('.o-pack').forEach(function (card) {
+    var P = PK[card.dataset.pack];
+    var bits = [P.foto + " foto's"];
+    if (P.drone) bits.push(P.drone + ' drone');
+    if (P.tour) bits.push('360° tour');
+    if (P.plan) bits.push('plan tot ' + P.plan + ' verd.');
+    card.querySelector('.o-pack-sum').textContent = bits.join(' · ');
+    card.querySelector('.o-pack-info').innerHTML = packItems(P).map(function (t) { return '<li>' + t + '</li>'; }).join('');
+    var btn = card.querySelector('.o-info');
+    btn.addEventListener('click', function () {
+      var open = btn.getAttribute('aria-expanded') !== 'true';
+      btn.setAttribute('aria-expanded', String(open));
+      card.querySelector('.o-pack-info').hidden = !open;
+    });
+  });
+
   /* ---------- Particulier / professioneel ---------- */
   function syncKlant() {
     var pro = val('klant') === 'Professioneel';
@@ -67,6 +94,10 @@
     ['pakket', 'zelf', 'advies'].forEach(function (m) {
       var p = $('o-panel-' + m), on = m === mode;
       p.hidden = !on;
+      $('o-wait').hidden = !!mode;
+      $('o-stage').classList.toggle('is-on', !!mode);
+      var mc = mode && q('[name="keuze"][value="' + mode + '"]').closest('.o-mode');
+      if (mc) { var sb = $('o-stage').getBoundingClientRect(), mb = mc.getBoundingClientRect(); $('o-stage').style.setProperty('--arrow-x', (mb.left + mb.width / 2 - sb.left) + 'px'); }
       p.querySelectorAll('input,select').forEach(function (i) {
         if (!on) i.disabled = true;
         else i.disabled = !!(i.closest('.o-not-lot') && isLot()) || (i.name === 'pakket' && isLot() && i.value !== 'Basic');
@@ -85,8 +116,8 @@
 
   /* ---------- Verplaatsing (schatting via postcode) ---------- */
   function distance() {
-    var m = /^\s*([1-9][0-9]{3})\b/.exec($('o-gemeente').value || '');
-    var pc = m && window.BS_POSTCODES && BS_POSTCODES[m[1]];
+    var z = ($('o-postcode').value || '').trim();
+    var pc = form.dataset.lat ? [+form.dataset.lat, +form.dataset.lng] : (/^[1-9][0-9]{3}$/.test(z) && window.BS_POSTCODES && BS_POSTCODES[z]);
     if (!pc) return null;
     var R = 6371, rad = Math.PI / 180, a = PR.base;
     var dLat = (pc[0] - a[0]) * rad, dLng = (pc[1] - a[1]) * rad;
@@ -98,7 +129,88 @@
     if (km == null || km <= PR.kmFree) return null;
     return ['Verplaatsing ± ' + km + ' km (heen en terug)', Math.round(2 * km * PR.kmRate)];
   }
-  $('o-gemeente').addEventListener('input', function () { update(); });
+
+  /* ---------- Postcode ↔ gemeente ---------- */
+  var PCS = window.BS_POSTCODES || {};
+  var byName = {};
+  Object.keys(PCS).forEach(function (z) {
+    PCS[z][2].split('|').forEach(function (n) { var k = n.toLowerCase(); (byName[k] = byName[k] || { name: n, zips: [] }).zips.push(z); });
+  });
+  (function () {
+    var names = Object.keys(byName).sort().map(function (k) { return byName[k]; });
+    $('o-gemeenten').innerHTML = names.map(function (o) { return '<option value="' + o.name + '">' + o.zips.slice(0, 3).join(', ') + '</option>'; }).join('');
+  })();
+  $('o-postcode').addEventListener('input', function () {
+    var el = $('o-postcode');
+    el.value = el.value.replace(/\D/g, '').slice(0, 4);
+    delete form.dataset.lat; delete form.dataset.lng;
+    var hit = PCS[el.value];
+    if (hit) {
+      var names = hit[2].split('|'), cur = $('o-gemeente').value.trim().toLowerCase();
+      if (!names.some(function (n) { return n.toLowerCase() === cur; })) $('o-gemeente').value = names[0];
+    }
+    update();
+  });
+  $('o-gemeente').addEventListener('input', function () {
+    delete form.dataset.lat; delete form.dataset.lng;
+    var hit = byName[$('o-gemeente').value.trim().toLowerCase()];
+    if (hit && hit.zips.indexOf($('o-postcode').value) < 0) $('o-postcode').value = hit.zips[0];
+    update();
+  });
+
+  /* ---------- Adresvoorstellen (Vlaamse adresdienst, Geopunt) ---------- */
+  var GEO = 'https://geo.api.vlaanderen.be/geolocation/v4/';
+  var acList = $('o-adres-list'), acInput = $('o-adres'), acTimer = null, acItems = [], acActive = -1, acSeq = 0;
+  function acClose() { acList.hidden = true; acInput.setAttribute('aria-expanded', 'false'); acInput.removeAttribute('aria-activedescendant'); acActive = -1; }
+  function acRender() {
+    if (!acItems.length) { acClose(); return; }
+    acList.innerHTML = acItems.map(function (t, i) { return '<li role="option" id="o-ac-' + i + '"' + (i === acActive ? ' aria-selected="true"' : '') + ' data-i="' + i + '">' + t.replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }) + '</li>'; }).join('');
+    acList.hidden = false; acInput.setAttribute('aria-expanded', 'true');
+    if (acActive >= 0) acInput.setAttribute('aria-activedescendant', 'o-ac-' + acActive);
+  }
+  function acSearch() {
+    var qv = acInput.value.trim();
+    if (qv.length < 4 || !/[a-zA-Z]{3}/.test(qv)) { acItems = []; acClose(); return; }
+    var extra = $('o-gemeente').value.trim() && qv.toLowerCase().indexOf($('o-gemeente').value.trim().toLowerCase()) < 0 ? ' ' + $('o-gemeente').value.trim() : '';
+    var seq = ++acSeq;
+    fetch(GEO + 'Suggestion?c=6&q=' + encodeURIComponent(qv + extra))
+      .then(function (r) { return r.ok ? r.json() : { SuggestionResult: [] }; })
+      .then(function (d) { if (seq !== acSeq) return; acItems = (d.SuggestionResult || []).slice(0, 6); acActive = -1; acRender(); })
+      .catch(function () { acItems = []; acClose(); });
+  }
+  function acPick(i) {
+    var text = acItems[i]; if (!text) return;
+    var cut = text.lastIndexOf(', ');
+    acInput.value = cut > 0 ? text.slice(0, cut) : text;
+    var muni = cut > 0 ? text.slice(cut + 2) : '';
+    acClose();
+    if (muni) {
+      $('o-gemeente').value = muni;
+      var hit = byName[muni.toLowerCase()];
+      if (hit) $('o-postcode').value = hit.zips[0];
+    }
+    update();
+    // exacte postcode en ligging opvragen
+    fetch(GEO + 'Location?c=1&q=' + encodeURIComponent(text))
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        var L = d && d.LocationResult && d.LocationResult[0];
+        if (!L) return;
+        if (L.Zipcode) $('o-postcode').value = L.Zipcode;
+        if (L.Municipality) $('o-gemeente').value = L.Municipality;
+        if (L.Location && L.Location.Lat_WGS84) { form.dataset.lat = L.Location.Lat_WGS84; form.dataset.lng = L.Location.Lon_WGS84; }
+        update();
+      }).catch(function () {});
+  }
+  acInput.addEventListener('input', function () { clearTimeout(acTimer); acTimer = setTimeout(acSearch, 250); });
+  acInput.addEventListener('keydown', function (e) {
+    if (acList.hidden) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); acActive = (acActive + (e.key === 'ArrowDown' ? 1 : -1) + acItems.length) % acItems.length; acRender(); }
+    else if (e.key === 'Enter' && acActive >= 0) { e.preventDefault(); acPick(acActive); }
+    else if (e.key === 'Escape') acClose();
+  });
+  acList.addEventListener('mousedown', function (e) { var li = e.target.closest('li'); if (li) { e.preventDefault(); acPick(+li.dataset.i); } });
+  acInput.addEventListener('blur', function () { setTimeout(acClose, 150); });
 
   /* ---------- Berekening ---------- */
   function floors() { return Math.min(8, Math.max(1, num('o-verdiepingen') || 1)); }
@@ -182,7 +294,7 @@
     var tl = L.length ? travelLine() : null;
     if (tl) L.push(tl);
     var km = distance();
-    var pcTyped = /^\s*[1-9][0-9]{3}\b/.test($('o-gemeente').value || '');
+    var pcTyped = /^[1-9][0-9]{3}$/.test(($('o-postcode').value || '').trim());
     $('o-fine').textContent = 'Vanafprijs. Je krijgt altijd eerst een offerte op maat. ' + (km == null && pcTyped
       ? 'Deze postcode kennen we niet: controleer ze even. De verplaatsing staat in je offerte.'
       : km == null

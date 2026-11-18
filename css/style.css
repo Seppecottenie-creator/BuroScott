@@ -1415,7 +1415,8 @@ body.nav-is-compact .bottom-page-blur{ opacity:0; }
 .o-mode:has(input:checked){ border-color:var(--accent-dark); background:var(--accent-soft); }
 .o-panel{ margin-top:18px; }
 .o-packs{ display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; }
-.o-pack{ position:relative; display:flex; flex-direction:column; gap:4px; padding:16px 16px 16px 46px; border:1.5px solid var(--line-light); border-radius:16px; background:#fff; cursor:pointer; }
+.o-pack{ position:relative; border:1.5px solid var(--line-light); border-radius:16px; background:#fff; }
+.o-pack > label{ display:flex; flex-direction:column; gap:4px; padding:16px 44px 16px 46px; cursor:pointer; }
 .o-pack input{ position:absolute; left:16px; top:18px; width:18px; height:18px; accent-color:var(--accent-dark); }
 .o-pack-price{ font-weight:800; color:var(--accent-dark); }
 .o-pack small{ font-size:.8rem; color:var(--grey-dark); line-height:1.4; }
@@ -1448,3 +1449,32 @@ body.nav-is-compact .bottom-page-blur{ opacity:0; }
 
 .o-total b{ white-space:nowrap; }
 @media (max-width:480px){ .o-total{ flex-wrap:wrap; } .o-total b{ font-size:1.35rem; } }
+
+/* Verborgen velden echt verbergen (ook in rasters) */
+.site-form [hidden]{ display:none !important; }
+
+/* Stappen 1 → 2 */
+.o-step{ display:flex; align-items:center; gap:10px; margin:18px 0 12px; font-weight:800; font-size:1rem; }
+.o-step b{ display:inline-grid; place-items:center; width:26px; height:26px; border-radius:50%; background:var(--ink); color:#fff; font-size:.8rem; }
+.o-stage{ position:relative; margin-top:18px; padding:4px 20px 20px; border-radius:20px; border:2px dashed var(--line-light); background:#FAFAF7; }
+.o-stage.is-on{ border:2px solid var(--accent-dark); background:#EDF0FC; }
+.o-stage.is-on::before{ content:""; position:absolute; top:-11px; left:var(--arrow-x, 50%); width:18px; height:18px; background:#EDF0FC; border-left:2px solid var(--accent-dark); border-top:2px solid var(--accent-dark); transform:translateX(-50%) rotate(45deg); }
+.o-stage .o-panel{ margin-top:0; }
+.o-stage .o-step b{ background:var(--accent-dark); }
+.o-wait{ margin:16px 0 0; color:var(--grey-dark); font-size:.95rem; text-align:center; }
+.o-stage .o-pack, .o-stage .o-opts .check-option, .o-stage select{ background:#fff; }
+
+/* Info-knop bij een pakket */
+.o-info{ position:absolute; top:12px; right:12px; width:26px; height:26px; border-radius:50%; border:1.5px solid var(--line-light); background:#fff; font:inherit; font-weight:800; font-size:.8rem; font-style:italic; font-family:Georgia, serif; color:var(--accent-dark); cursor:pointer; }
+.o-info:hover, .o-info[aria-expanded="true"]{ background:var(--accent-dark); border-color:var(--accent-dark); color:#fff; }
+.o-pack-info{ list-style:none; margin:0 16px 14px; padding-top:10px; border-top:1px solid var(--line-light); display:flex; flex-direction:column; gap:6px; font-size:.82rem; color:var(--ink); }
+.o-pack-info li{ position:relative; padding-left:16px; }
+.o-pack-info li::before{ content:"✓"; position:absolute; left:0; color:var(--accent-dark); font-weight:800; }
+
+/* Adres met voorstellen */
+.o-ac{ position:relative; }
+.o-ac-list{ position:absolute; z-index:20; left:0; right:0; top:calc(100% + 6px); list-style:none; padding:6px; border-radius:14px; background:#fff; border:1px solid var(--line-light); box-shadow:0 18px 40px -18px rgba(0,0,0,.35); max-height:280px; overflow-y:auto; }
+.o-ac-list li{ padding:10px 12px; border-radius:10px; cursor:pointer; font-size:.95rem; }
+.o-ac-list li:hover, .o-ac-list li[aria-selected="true"]{ background:var(--accent-soft); color:var(--accent-dark); }
+.o-pcgrid{ grid-template-columns:1fr 2fr; }
+@media (max-width:760px){ .o-pcgrid{ grid-template-columns:1fr 2fr !important; } }
