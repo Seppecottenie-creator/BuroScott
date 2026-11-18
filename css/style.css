@@ -1371,3 +1371,24 @@ html.is-construction body::after{ opacity:.06; }
 /* Plannen: plattegrond krijgt dezelfde zoom als de andere dienstfoto's */
 .sd-media.is-contain img{ transform:scale(var(--z, 1.12)); }
 .sd-body{ padding-bottom:150px; }
+
+/* ============================================================
+   NAVIGATIE: bij naar beneden scrollen krimpt ze tot een rond
+   menuknopje in plaats van te verdwijnen
+============================================================ */
+.floating-nav{ transition:padding .45s var(--ease), gap .45s var(--ease), transform .4s var(--ease), box-shadow .3s var(--ease); }
+.floating-nav.is-compact{ gap:0; padding:7px; box-shadow:0 12px 34px -10px rgba(14,15,13,.5); }
+.floating-nav.is-compact .nav-brand,
+.floating-nav.is-compact .nav-links,
+.floating-nav.is-compact .nav-portal,
+.floating-nav.is-compact .nav-contact{ display:none; }
+.floating-nav.is-compact .nav-toggle{ display:flex; width:46px; height:46px; background:var(--accent); }
+.floating-nav.is-compact .nav-toggle:hover{ background:#2B4DF0; }
+.floating-nav.is-compact{ animation:navPop .45s var(--ease); }
+@keyframes navPop{ from{ transform:translateX(-50%) scale(.85); } }
+body.nav-is-compact .bottom-page-blur{ opacity:0; }
+/* het uitklapmenu werkt nu ook op grote schermen */
+@media (min-width:681px){
+  .mobile-menu{ bottom:96px; }
+}
+@media (prefers-reduced-motion: reduce){ .floating-nav.is-compact{ animation:none; } }
