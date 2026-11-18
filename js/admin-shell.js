@@ -16,6 +16,7 @@
     galerijen: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
     tours: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18"/>',
     activiteit: '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
+    plannen: '<path d="M3 3h18v18H3zM3 12h7v9M14 3v6h7"/>',
     map: '<path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
     alle: '<path d="M4 7h16M4 12h16M4 17h16"/>',
     geen: '<path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke-dasharray="3 3"/>',
@@ -26,6 +27,7 @@
     ['overzicht', 'beheer.html', 'Overzicht'],
     ['galerijen', 'klantenzone-beheer.html', 'Galerijen'],
     ['tours', 'tours-beheer.html', '360° tours'],
+    ['plannen', 'plannen.html', 'Plannen'],
     ['activiteit', 'activiteit.html', 'Activiteit'],
   ];
 

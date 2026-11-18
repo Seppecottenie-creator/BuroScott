@@ -122,6 +122,15 @@ async function route(request, env, ctx) {
       if (parts[2] === 'scenes' && parts.length === 4 && m === 'PUT') return json(await adminUploadScene(request, env, id, parts[3], url), 201);
       if (parts[2] === 'scenes' && parts.length === 4 && m === 'DELETE') return json(await adminDeleteScene(env, id, parts[3]));
     }
+    if (parts[0] === 'plans') {
+      if (parts.length === 1 && m === 'GET') return json(await adminListPlans(env));
+      if (parts.length === 1 && m === 'POST') return json(await adminCreatePlan(request, env), 201);
+      const id = parts[1];
+      if (!PLAN_RE.test(id || '')) throw new HttpError(400, 'Ongeldig plan.');
+      if (parts.length === 2 && m === 'GET') return json(await readPlan(env, id) || (() => { throw new HttpError(404, 'Plan niet gevonden.'); })());
+      if (parts.length === 2 && m === 'PUT') return json(await adminSavePlan(request, env, id));
+      if (parts.length === 2 && m === 'DELETE') { await env.GALLERIES.delete(`pl/${id}.json`); return json({ ok: true }); }
+    }
     if (parts[0] === 'folders') {
       if (parts.length === 1 && m === 'GET') return json({ folders: await readFolders(env) });
       if (parts.length === 1 && m === 'POST') return json(await adminCreateFolder(request, env), 201);
@@ -548,6 +557,55 @@ async function adminActivity(env, url) {
   out.sort((a, b) => b.t - a.t);
   const limit = clampInt(url.searchParams.get('limit'), 1, 1000, 300);
   return { events: out.slice(0, limit), stats };
+}
+
+/* ---------------- Plannen ---------------- */
+
+const PLAN_RE = /^[a-f0-9]{10}$/;
+async function readPlan(env, id) {
+  const obj = await env.GALLERIES.get(`pl/${id}.json`);
+  return obj ? obj.json() : null;
+}
+function planSummary(p) {
+  let rooms = 0, area = 0;
+  for (const f of p.floors || []) for (const r of f.rooms || []) {
+    rooms++;
+    const v = r.pts || [];
+    let a = 0;
+    for (let i = 0; i < v.length; i++) { const q = v[(i + 1) % v.length]; a += v[i][0] * q[1] - q[0] * v[i][1]; }
+    area += Math.abs(a) / 2 / 10000;
+  }
+  return { title: String(p.title || '').slice(0, 120), updated: String(p.updated || 0), floors: String((p.floors || []).length), rooms: String(rooms), area: area.toFixed(1) };
+}
+async function writePlan(env, p) {
+  const body = JSON.stringify(p);
+  if (body.length > 1.5e6) throw new HttpError(400, 'Plan is te groot.');
+  await env.GALLERIES.put(`pl/${p.id}.json`, body, { httpMetadata: { contentType: 'application/json' }, customMetadata: planSummary(p) });
+}
+async function adminListPlans(env) {
+  const pages = await listAll(env, 'pl/', { include: ['customMetadata'] });
+  const plans = pages.flatMap(pg => pg.objects).map(o => {
+    const m = o.customMetadata || {};
+    return { id: o.key.slice(3, -5), title: m.title || 'Plan', updated: +m.updated || o.uploaded.getTime(), floors: +m.floors || 1, rooms: +m.rooms || 0, area: +m.area || 0 };
+  });
+  plans.sort((a, b) => b.updated - a.updated);
+  return { plans };
+}
+async function adminCreatePlan(request, env) {
+  const b = await readJson(request);
+  const title = String(b.title || '').trim().slice(0, 120) || 'Nieuw plan';
+  const p = { id: randomHex(5), title, created: Date.now(), updated: Date.now(), floors: [{ id: 'f1', name: 'Gelijkvloers', rooms: [], items: [] }] };
+  await writePlan(env, p);
+  return p;
+}
+async function adminSavePlan(request, env, id) {
+  const old = await readPlan(env, id);
+  if (!old) throw new HttpError(404, 'Plan niet gevonden.');
+  const b = await readJson(request);
+  if (!Array.isArray(b.floors)) throw new HttpError(400, 'Ongeldig plan.');
+  const p = { ...b, id, created: old.created, title: String(b.title || old.title).trim().slice(0, 120) || old.title, updated: Date.now() };
+  await writePlan(env, p);
+  return { ok: true, updated: p.updated };
 }
 
 /* ---------------- Mappen ---------------- */
