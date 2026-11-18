@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beheer 360° tours — Buro Scott</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0E0F0D">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/klantenzone.css">
+<link rel="stylesheet" href="js/vendor/pannellum/pannellum.css">
+<link rel="stylesheet" href="css/tour.css">
+<link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+<script>document.documentElement.classList.add('js')</script>
+<script src="js/klantenzone-config.js"></script>
+</head>
+<body class="kz kz-admin te">
+
+<header class="kz-top">
+  <a href="index.html" class="kz-brand">Buro Scott<span class="brand-dot" aria-hidden="true">.</span></a>
+  <nav class="ad-tabs" aria-label="Beheer">
+    <a href="klantenzone-beheer.html">Galerijen</a>
+    <a href="tours-beheer.html" aria-current="page">360° tours</a>
+  </nav>
+  <button type="button" class="kz-logout" id="te-logout" hidden>Afmelden</button>
+</header>
+
+<main id="inhoud" class="ad-main">
+
+  <section class="ad-card ad-login" id="te-login-view" hidden>
+    <h1>Beheer</h1>
+    <p class="kz-lede">Log in met je beheerwachtwoord.</p>
+    <form id="te-login-form" class="kz-form" novalidate>
+      <div class="field">
+        <label for="te-password">Beheerwachtwoord</label>
+        <input type="password" id="te-password" autocomplete="current-password" required>
+      </div>
+      <p class="form-alert" id="te-login-error" role="alert" hidden></p>
+      <button type="submit" class="form-submit"><span>Inloggen</span><span class="arrow" aria-hidden="true">→</span></button>
+    </form>
+  </section>
+
+  <!-- Overzicht -->
+  <section id="te-list-view" hidden>
+    <div class="ad-head">
+      <div>
+        <p class="kz-eyebrow">Eigen hosting · vaste link</p>
+        <h1>360° tours</h1>
+      </div>
+    </div>
+    <div class="ad-card">
+      <h2>Nieuwe tour</h2>
+      <form id="te-create-form" class="kz-form ad-create" novalidate>
+        <div class="field ad-span2">
+          <label for="te-title">Titel <span class="hint">(bv. het adres van het pand)</span></label>
+          <input type="text" id="te-title" required placeholder="Kerkstraat 12, Waregem">
+        </div>
+        <p class="form-alert ad-span2" id="te-create-error" role="alert" hidden></p>
+        <button type="submit" class="form-submit ad-span2"><span>Tour aanmaken</span><span class="arrow" aria-hidden="true">→</span></button>
+      </form>
+    </div>
+    <h2 class="ad-h2">Bestaande tours</h2>
+    <ul class="ad-list" id="te-list"></ul>
+  </section>
+
+  <!-- Editor -->
+  <section id="te-edit-view" hidden>
+    <button type="button" class="ad-back" id="te-back">← Alle tours</button>
+    <div class="ad-head">
+      <div>
+        <p class="kz-eyebrow" id="te-id"></p>
+        <h1 id="te-heading"></h1>
+      </div>
+      <div class="ad-head-actions">
+        <a class="kz-btn kz-btn-ghost" id="te-open" target="_blank" rel="noopener">Bekijk tour ↗</a>
+        <button type="button" class="kz-btn kz-btn-primary" id="te-save">Opslaan</button>
+      </div>
+    </div>
+    <p class="kz-zip-status" id="te-status" role="status" aria-live="polite"></p>
+
+    <div class="ad-card">
+      <h2>Delen</h2>
+      <div class="te-share">
+        <div class="field"><label for="te-link">Link (vervalt niet)</label><div class="kz-pw"><input type="text" id="te-link" readonly><button type="button" class="kz-pw-toggle" data-copy="te-link">Kopieer</button></div></div>
+        <div class="field"><label for="te-embed">Insluiten op een website</label><div class="kz-pw"><input type="text" id="te-embed" readonly><button type="button" class="kz-pw-toggle" data-copy="te-embed">Kopieer</button></div></div>
+      </div>
+    </div>
+
+    <div class="ad-card">
+      <h2>Ruimtes</h2>
+      <p class="hint">Upload de panorama's uit Insta360 Stitcher (equirectangulair, verhouding 2:1). Elke foto wordt één ruimte.</p>
+      <label class="ad-drop" id="te-drop" for="te-files">
+        <input type="file" id="te-files" multiple accept="image/jpeg,image/png">
+        <strong>Sleep panorama's hierheen</strong>
+        <span>of klik om te kiezen · JPG of PNG, 2:1</span>
+      </label>
+      <ul class="ad-progress" id="te-progress" aria-live="polite"></ul>
+      <ul class="te-scenes" id="te-scenes"></ul>
+    </div>
+
+    <div class="ad-card te-editor-card" id="te-editor-card" hidden>
+      <div class="te-editor-head">
+        <h2>Pijlen plaatsen in <span id="te-cur"></span></h2>
+        <div class="te-tools">
+          <label class="visually-hidden" for="te-target">Pijl naar</label>
+          <select id="te-target"></select>
+          <button type="button" class="kz-btn kz-btn-primary" id="te-add">+ Pijl plaatsen</button>
+          <button type="button" class="kz-btn kz-btn-ghost" id="te-start">Huidige blik = startblik</button>
+        </div>
+      </div>
+      <p class="hint" id="te-mode-hint">Kies een ruimte en klik op "Pijl plaatsen", klik daarna in het panorama op de plek van de deur of doorgang.</p>
+      <div id="te-pano" class="te-pano"></div>
+      <ul class="te-hotspots" id="te-hotspots"></ul>
+    </div>
+
+    <div class="ad-card">
+      <h2>Tour verwijderen</h2>
+      <p class="hint">De link werkt daarna niet meer.</p>
+      <button type="button" class="kz-btn kz-btn-danger" id="te-delete">Verwijder tour</button>
+    </div>
+  </section>
+
+  <section class="kz-notice" id="te-setup" hidden>
+    <h1>De klantenzone is nog niet gekoppeld.</h1>
+  </section>
+</main>
+
+<dialog class="ad-confirm" id="te-confirm">
+  <form method="dialog">
+    <h2 id="te-confirm-title">Zeker?</h2>
+    <p id="te-confirm-text"></p>
+    <div class="ad-confirm-actions">
+      <button value="cancel" class="kz-btn kz-btn-ghost">Annuleren</button>
+      <button value="ok" class="kz-btn kz-btn-danger">Verwijderen</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="js/vendor/pannellum/pannellum.js"></script>
+<script type="module" src="js/tours-beheer.js"></script>
+</body>
+</html>

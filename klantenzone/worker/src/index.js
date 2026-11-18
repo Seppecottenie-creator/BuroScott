@@ -42,7 +42,7 @@ export default {
     const now = Date.now();
     for (const code of await listGalleryCodes(env)) {
       const meta = await readMeta(env, code);
-      if (meta && meta.expires && meta.expires < now) await deleteGallery(env, code);
+      if (meta && meta.expires && meta.expires < now) await deletePrefix(env, `g/${code}/`);
     }
   },
 };
@@ -64,11 +64,26 @@ async function route(request, env) {
   }
   if (p === '/api/file' && m === 'GET') return serveFile(request, env, url);
 
+  // --- 360°-tours (openbaar te bekijken, vaste link) ---
+  if (p === '/api/tour' && m === 'GET') return json(await publicTour(env, url.searchParams.get('id')), 200, { 'Cache-Control': 'public, max-age=60' });
+  if (p === '/api/tourfile' && m === 'GET') return serveTourFile(env, url);
+
   // --- Beheer ---
   if (p === '/api/admin/login' && m === 'POST') return adminLogin(request, env);
   if (p.startsWith('/api/admin/')) {
     await requireAdmin(request, env);
     const parts = p.split('/').slice(3).map(decodeURIComponent); // na /api/admin/
+    if (parts[0] === 'tours') {
+      if (parts.length === 1 && m === 'GET') return json(await adminListTours(env));
+      if (parts.length === 1 && m === 'POST') return json(await adminCreateTour(request, env), 201);
+      const id = parts[1];
+      if (!CODE_RE.test(id || '')) throw new HttpError(400, 'Ongeldige tour.');
+      if (parts.length === 2 && m === 'GET') return json(await adminGetTour(env, id));
+      if (parts.length === 2 && m === 'PUT') return json(await adminSaveTour(request, env, id));
+      if (parts.length === 2 && m === 'DELETE') { await deletePrefix(env, `t/${id}/`); return json({ ok: true }); }
+      if (parts[2] === 'scenes' && parts.length === 4 && m === 'PUT') return json(await adminUploadScene(request, env, id, parts[3], url), 201);
+      if (parts[2] === 'scenes' && parts.length === 4 && m === 'DELETE') return json(await adminDeleteScene(env, id, parts[3]));
+    }
     if (parts[0] === 'galleries') {
       if (parts.length === 1 && m === 'GET') return json(await adminListGalleries(env));
       if (parts.length === 1 && m === 'POST') return json(await adminCreateGallery(request, env), 201);
@@ -111,6 +126,7 @@ async function galleryForClient(env, code, url) {
     title: meta.title,
     subtitle: meta.subtitle || '',
     tourUrl: meta.tourUrl || '',
+    cover: meta.cover || '',
     created: meta.created,
     expires: meta.expires,
     files,
@@ -205,6 +221,7 @@ async function adminUpdateGallery(request, env, code) {
   if (body.title !== undefined) meta.title = String(body.title).trim().slice(0, 120) || meta.title;
   if (body.subtitle !== undefined) meta.subtitle = String(body.subtitle).trim().slice(0, 160);
   if (body.tourUrl !== undefined) meta.tourUrl = cleanUrl(body.tourUrl);
+  if (body.cover !== undefined) meta.cover = validName(String(body.cover)) ? String(body.cover) : '';
   if (body.days !== undefined) meta.expires = Date.now() + clampInt(body.days, 1, 365, 30) * 86400e3;
   if (body.password) {
     if (String(body.password).length < 8) throw new HttpError(400, 'Het wachtwoord moet minstens 8 tekens hebben.');
@@ -238,6 +255,113 @@ async function adminDeleteFile(env, code, name) {
   if (!validName(name)) throw new HttpError(400, 'Ongeldige bestandsnaam.');
   await env.GALLERIES.delete([`g/${code}/o/${name}`, `g/${code}/p/${name}.jpg`]);
   return { ok: true };
+}
+
+/* ---------------- 360°-tours ----------------
+   t/<id>/tour.json        titel, scènes, navigatiepunten
+   t/<id>/s/<scene>.jpg    panorama (equirectangulair, 2:1)
+   t/<id>/p/<scene>.jpg    kleine voorvertoning (snel laden + miniatuur)
+   Tours vervallen niet: de link blijft werken tot jij ze verwijdert. */
+const SCENE_RE = /^[a-z0-9-]{1,40}$/;
+
+async function readTour(env, id) {
+  const obj = await env.GALLERIES.get(`t/${id}/tour.json`);
+  return obj ? obj.json() : null;
+}
+async function publicTour(env, id) {
+  if (!CODE_RE.test(id || '')) throw new HttpError(400, 'Ongeldige tour.');
+  const t = await readTour(env, id);
+  if (!t) throw new HttpError(404, 'Deze tour bestaat niet (meer).');
+  return t;
+}
+async function serveTourFile(env, url) {
+  const id = url.searchParams.get('id');
+  const scene = url.searchParams.get('s');
+  const kind = url.searchParams.get('k') === 'p' ? 'p' : 's';
+  if (!CODE_RE.test(id || '') || !SCENE_RE.test(scene || '')) throw new HttpError(400, 'Ongeldig bestand.');
+  const obj = await env.GALLERIES.get(`t/${id}/${kind}/${scene}.jpg`);
+  if (!obj) throw new HttpError(404, 'Bestand niet gevonden.');
+  const headers = new Headers();
+  obj.writeHttpMetadata(headers);
+  headers.set('etag', obj.httpEtag);
+  headers.set('Cache-Control', 'public, max-age=86400');
+  headers.set('Content-Length', String(obj.size));
+  return new Response(obj.body, { headers });
+}
+async function adminListTours(env) {
+  const pages = await listAll(env, 't/', { delimiter: '/' });
+  const ids = pages.flatMap(p => p.delimitedPrefixes).map(s => s.slice(2, -1));
+  const out = [];
+  for (const id of ids) {
+    const t = await readTour(env, id);
+    if (t) out.push({ id, title: t.title, created: t.created, scenes: (t.scenes || []).length });
+  }
+  out.sort((a, b) => b.created - a.created);
+  return { tours: out };
+}
+async function adminCreateTour(request, env) {
+  const body = await readJson(request);
+  const title = String(body.title || '').trim().slice(0, 120);
+  if (!title) throw new HttpError(400, 'Geef de tour een titel, bv. het adres van het pand.');
+  const id = String(body.id || '').trim().toLowerCase();
+  if (!CODE_RE.test(id)) throw new HttpError(400, 'Ongeldige tourcode.');
+  if (await readTour(env, id)) throw new HttpError(409, 'Deze tourcode bestaat al.');
+  const t = { id, title, created: Date.now(), updated: Date.now(), firstScene: '', scenes: [] };
+  await writeTour(env, id, t);
+  return t;
+}
+async function adminGetTour(env, id) {
+  const t = await readTour(env, id);
+  if (!t) throw new HttpError(404, 'Tour niet gevonden.');
+  return t;
+}
+function cleanTour(body, existing) {
+  const scenes = Array.isArray(body.scenes) ? body.scenes.slice(0, 60) : [];
+  const ids = new Set(scenes.map(s => String(s.id || '')));
+  const num = (v, min, max) => { const n = Number(v); return Number.isFinite(n) ? Math.min(Math.max(n, min), max) : 0; };
+  const clean = scenes.filter(s => SCENE_RE.test(String(s.id || ''))).map(s => ({
+    id: s.id,
+    title: String(s.title || '').trim().slice(0, 60) || 'Ruimte',
+    yaw: num(s.yaw, -180, 180),
+    pitch: num(s.pitch, -90, 90),
+    hotSpots: (Array.isArray(s.hotSpots) ? s.hotSpots.slice(0, 30) : [])
+      .filter(h => ids.has(String(h.scene || '')))
+      .map(h => ({ pitch: num(h.pitch, -90, 90), yaw: num(h.yaw, -180, 180), scene: String(h.scene) })),
+  }));
+  return {
+    ...existing,
+    title: String(body.title || existing.title).trim().slice(0, 120) || existing.title,
+    firstScene: ids.has(String(body.firstScene || '')) ? body.firstScene : (clean[0] ? clean[0].id : ''),
+    scenes: clean,
+    updated: Date.now(),
+  };
+}
+async function adminSaveTour(request, env, id) {
+  const existing = await readTour(env, id);
+  if (!existing) throw new HttpError(404, 'Tour niet gevonden.');
+  const t = cleanTour(await readJson(request), existing);
+  await writeTour(env, id, t);
+  return t;
+}
+async function adminUploadScene(request, env, id, scene, url) {
+  if (!(await readTour(env, id))) throw new HttpError(404, 'Tour niet gevonden.');
+  if (!SCENE_RE.test(scene)) throw new HttpError(400, 'Ongeldige ruimte.');
+  const kind = url.searchParams.get('k') === 'p' ? 'p' : 's';
+  await env.GALLERIES.put(`t/${id}/${kind}/${scene}.jpg`, request.body, { httpMetadata: { contentType: 'image/jpeg' } });
+  return { ok: true };
+}
+async function adminDeleteScene(env, id, scene) {
+  if (!SCENE_RE.test(scene)) throw new HttpError(400, 'Ongeldige ruimte.');
+  await env.GALLERIES.delete([`t/${id}/s/${scene}.jpg`, `t/${id}/p/${scene}.jpg`]);
+  return { ok: true };
+}
+async function writeTour(env, id, t) {
+  await env.GALLERIES.put(`t/${id}/tour.json`, JSON.stringify(t), { httpMetadata: { contentType: 'application/json' } });
+}
+async function deletePrefix(env, prefix) {
+  const pages = await listAll(env, prefix);
+  const keys = pages.flatMap(p => p.objects).map(o => o.key);
+  for (let i = 0; i < keys.length; i += 1000) await env.GALLERIES.delete(keys.slice(i, i + 1000));
 }
 
 /* ---------------- Opslag ---------------- */

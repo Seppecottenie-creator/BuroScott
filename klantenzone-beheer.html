@@ -19,7 +19,10 @@
 
 <header class="kz-top">
   <a href="index.html" class="kz-brand">Buro Scott<span class="brand-dot" aria-hidden="true">.</span></a>
-  <span class="kz-top-label">Klantenzone · beheer</span>
+  <nav class="ad-tabs" aria-label="Beheer">
+    <a href="klantenzone-beheer.html" aria-current="page">Galerijen</a>
+    <a href="tours-beheer.html">360° tours</a>
+  </nav>
   <button type="button" class="kz-logout" id="ad-logout" hidden>Afmelden</button>
 </header>
 
@@ -156,7 +159,14 @@
           </div>
         </div>
         <div class="field">
-          <label for="ad-d-tour">Link naar 360° tour</label>
+          <label for="ad-d-tourpick">Eigen 360° tour koppelen</label>
+          <div class="kz-pw">
+            <select id="ad-d-tourpick"><option value="">— Kies een tour —</option></select>
+            <button type="button" class="kz-pw-toggle" id="ad-d-tourpick-save">Koppel</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="ad-d-tour">Of een externe link naar een tour</label>
           <div class="kz-pw">
             <input type="url" id="ad-d-tour" placeholder="https://…">
             <button type="button" class="kz-pw-toggle" id="ad-d-tour-save">Opslaan</button>

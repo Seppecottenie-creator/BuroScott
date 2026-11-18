@@ -186,15 +186,32 @@ async function refreshDetail(code) {
       : `<span class="ad-file-ext">${esc((f.name.split('.').pop() || '').toUpperCase().slice(0, 4))}</span>`;
     li.innerHTML = `${thumb}
       <span class="ad-file-info"><b>${esc(f.name)}</b><span>${CAT_LABEL[f.cat] || f.cat} · ${fmtBytes(f.size)}</span></span>
-      <button type="button" class="ad-file-del" aria-label="${esc(f.name)} verwijderen">✕</button>`;
+      <button type="button" class="ad-file-del" aria-label="${esc(f.name)} verwijderen">✕</button>
+      ${f.preview ? `<button type="button" class="ad-file-cover${g.cover === f.name ? ' is-on' : ''}">${g.cover === f.name ? '★ Omslag' : 'Als omslag'}</button>` : ''}`;
     li.querySelector('.ad-file-del').addEventListener('click', async () => {
       if (!(await confirmBox('Bestand verwijderen?', `${f.name} wordt definitief verwijderd.`))) return;
       await api(`/api/admin/galleries/${encodeURIComponent(g.code)}/files/${encodeURIComponent(f.name)}`, { method: 'DELETE' });
       await refreshDetail(g.code);
     });
+    const cb = li.querySelector('.ad-file-cover');
+    if (cb) cb.addEventListener('click', () => patch({ cover: f.name }, `${f.name} is nu de omslagfoto.`));
     ul.appendChild(li);
   }
+  loadTourPicker(g);
 }
+
+async function loadTourPicker(g) {
+  const sel = $('ad-d-tourpick');
+  try {
+    const r = await api('/api/admin/tours');
+    const base = location.href.replace(/klantenzone-beheer\.html.*$/, 'tour.html?id=');
+    sel.innerHTML = '<option value="">— Kies een tour —</option>' + r.tours.map((t) => `<option value="${base}${encodeURIComponent(t.id)}"${g.tourUrl === base + encodeURIComponent(t.id) ? ' selected' : ''}>${esc(t.title)} (${t.scenes} ruimtes)</option>`).join('');
+  } catch (e) { sel.innerHTML = '<option value="">Tours konden niet geladen worden</option>'; }
+}
+$('ad-d-tourpick-save').addEventListener('click', () => {
+  const v = $('ad-d-tourpick').value;
+  patch({ tourUrl: v }, v ? 'Tour gekoppeld aan deze galerij.' : 'Tour losgekoppeld.');
+});
 
 /* ---------- Uploaden ---------- */
 const drop = $('ad-drop');
