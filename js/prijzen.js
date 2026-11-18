@@ -15,6 +15,8 @@ window.BS_PRICES = {
   tourMonth: 7.5, tourQuarter: 19, tourYear: 59,
   // vanafprijzen gelden tot deze grootte; daarboven offerte op maat
   bigHouse: 250, bigLot: 1000,
+  // verplaatsing: tot 20 km (enkele rit, vertrek Desselgem; op de site 'Waregem') gratis, daarna per km heen én terug
+  kmFree: 20, kmRate: 0.5, base: [50.883, 3.367], roadFactor: 1.35,
   packages: {
     Basic:     { price: 179, foto: 20, drone: 0,  tour: false, plan: 0, label: 'Scott Basic' },
     Signature: { price: 349, foto: 30, drone: 5,  tour: false, plan: 2, label: 'Scott Signature' },

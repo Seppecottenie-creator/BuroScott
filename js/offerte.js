@@ -75,6 +75,23 @@
   qa('#o-panel-pakket select, #o-panel-pakket input[type=checkbox], #o-panel-zelf select, #o-panel-zelf input, #o-verdiepingen, #o-oppervlakte, #o-perceel')
     .forEach(function (el) { el.addEventListener('input', update); el.addEventListener('change', update); });
 
+  /* ---------- Verplaatsing (schatting via postcode) ---------- */
+  function distance() {
+    var m = /^\s*([1-9][0-9]{3})\b/.exec($('o-gemeente').value || '');
+    var pc = m && window.BS_POSTCODES && BS_POSTCODES[m[1]];
+    if (!pc) return null;
+    var R = 6371, rad = Math.PI / 180, a = PR.base;
+    var dLat = (pc[0] - a[0]) * rad, dLng = (pc[1] - a[1]) * rad;
+    var h = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(a[0] * rad) * Math.cos(pc[0] * rad) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    return Math.round(2 * R * Math.asin(Math.sqrt(h)) * PR.roadFactor);
+  }
+  function travelLine() {
+    var km = distance();
+    if (km == null || km <= PR.kmFree) return null;
+    return ['Verplaatsing ± ' + km + ' km (heen en terug)', Math.round(2 * km * PR.kmRate)];
+  }
+  $('o-gemeente').addEventListener('input', function () { update(); });
+
   /* ---------- Berekening ---------- */
   function floors() { return Math.min(8, Math.max(1, num('o-verdiepingen') || 1)); }
   function planCost(n) { return n * PR.plan; }
@@ -153,6 +170,13 @@
         }
       }
     }
+    // verplaatsing komt bij elke keuze bovenop (niet in de pakketvergelijking)
+    var tl = L.length ? travelLine() : null;
+    if (tl) L.push(tl);
+    var km = distance();
+    $('o-fine').textContent = 'Vanafprijs. Je krijgt altijd eerst een offerte op maat. ' + (km == null
+      ? 'Verplaatsing: tot ' + PR.kmFree + ' km van Waregem gratis, daarna ' + money(rg(PR.kmRate)) + '/km heen en terug.'
+      : km <= PR.kmFree ? 'Verplaatsing gratis (binnen ' + PR.kmFree + ' km van Waregem).' : 'Afstand geschat vanaf Waregem; de juiste afstand staat in je offerte.');
     // prijzen op de pakketkaartjes
     qa('[data-pk]').forEach(function (el) { el.textContent = 'vanaf ' + show(PK[el.dataset.pk].price); });
 
