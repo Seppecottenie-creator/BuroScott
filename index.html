@@ -45,6 +45,11 @@
       </div>
     </div>
 
+    <a href="#inhoud" class="scroll-cue" aria-label="Scroll naar beneden">
+      <span class="scroll-cue-mouse" aria-hidden="true"><span></span></span>
+      <span class="scroll-cue-text">Scroll</span>
+    </a>
+
     <div class="hero-panel">
       <div class="hero-panel-top">
         <span class="brand-tag">Vastgoedmedia</span>
@@ -55,7 +60,6 @@
           <span>Fotografie</span><span>Drone</span><span>360° tours</span><span>Plannen</span>
         </div>
       </div>
-      <div class="scroll-hint" aria-hidden="true"><span></span></div>
     </div>
 
   </div>
@@ -72,6 +76,7 @@
     <a href="pakketten.html">Pakketten</a>
     <a href="over-ons.html">Over ons</a>
   </div>
+  <a href="klantenzone.html" class="nav-portal" aria-label="My Scott, klantenportaal">My Scott</a>
   <a href="contact.html" class="nav-contact">Contact</a>
   <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Menu openen" aria-expanded="false" aria-controls="mobile-menu">
     <span></span><span></span><span></span>
@@ -82,6 +87,7 @@
   <a href="diensten.html">Diensten</a>
   <a href="pakketten.html">Pakketten</a>
   <a href="over-ons.html">Over ons</a>
+  <a href="klantenzone.html" class="mobile-menu-portal">My Scott <span>klantenportaal</span></a>
   <a href="contact.html" class="mobile-menu-contact">Contact</a>
 </div>
 <div class="mobile-menu-backdrop" id="mobile-menu-backdrop"></div>
@@ -99,12 +105,13 @@
     </p>
   </div>
   <!-- Kerncijfers -->
-  <ul class="stats" aria-label="Buro Scott in cijfers">
-    <li class="stat" data-reveal><span class="stat-num"><span data-count="48">48</span><small>u</small></span><span class="stat-label">Levering na de opname</span></li>
-    <li class="stat" data-reveal><span class="stat-num"><span data-count="4">4</span></span><span class="stat-label">Diensten, één aanspreekpunt</span></li>
-    <li class="stat" data-reveal><span class="stat-num"><span data-count="24">24</span><small>u</small></span><span class="stat-label">Tot je offerte in je mailbox zit</span></li>
-    <li class="stat" data-reveal><span class="stat-num stat-word">Vlaanderen</span><span class="stat-label">Wij komen naar het pand</span></li>
+  <ul class="stats" aria-label="Waarom professionele beelden">
+    <li class="stat" data-reveal><span class="stat-num"><span data-count="32">32</span><small>%</small></span><span class="stat-label">sneller verkocht met professionele foto's<sup>1</sup></span></li>
+    <li class="stat" data-reveal><span class="stat-num"><small class="pre">+</small><span data-count="3">3</span><small>%</small></span><span class="stat-label">hogere verkoopprijs met een virtuele tour<sup>2</sup></span></li>
+    <li class="stat" data-reveal><span class="stat-num"><span data-count="48">48</span><small>u</small></span><span class="stat-label">tot al je beelden klaarstaan</span></li>
+    <li class="stat" data-reveal><span class="stat-num"><span data-count="1">1</span></span><span class="stat-label">aanspreekpunt voor foto, drone, tour en plan</span></li>
   </ul>
+  <p class="stats-source"><sup>1</sup> VHT Studios, analyse van woningverkopen (2014). <sup>2</sup> University of Iowa, studie naar virtuele tours. Resultaten uit het buitenland, ter indicatie.</p>
 </section>
 
 <!-- ======================================================
@@ -232,26 +239,57 @@
 <section class="pk-teaser">
   <div class="section-head" data-reveal>
     <h2>Pakketten</h2>
-    <p>Drie vaste combinaties, of stel zelf samen. <a href="pakketten.html" class="inline-link">Alle details →</a></p>
+    <p>Drie vaste combinaties, of stel zelf samen met losse extra's. <a href="pakketten.html" class="inline-link">Vergelijk alle details →</a></p>
   </div>
-  <div class="pk-teaser-grid">
-    <a href="pakketten.html#basic" class="pk-mini" data-reveal>
-      <span class="pk-mini-name">Scott Basic</span>
-      <span class="pk-mini-price"><small>vanaf</small> €179</span>
-      <span class="pk-mini-sub">Foto's voor appartement of rijwoning</span>
-    </a>
-    <a href="pakketten.html#signature" class="pk-mini is-featured" data-reveal>
-      <span class="pk-mini-tag">Meest gekozen</span>
-      <span class="pk-mini-name">Scott Signature</span>
-      <span class="pk-mini-price"><small>vanaf</small> €349</span>
-      <span class="pk-mini-sub">Foto's, drone en plattegrond</span>
-    </a>
-    <a href="pakketten.html#prestige" class="pk-mini" data-reveal>
-      <span class="pk-mini-name">Scott Prestige</span>
-      <span class="pk-mini-price"><small>vanaf</small> €599</span>
-      <span class="pk-mini-sub">Alles, inclusief 360° tour</span>
-    </a>
-  </div>
+  <section class="packages-grid">
+
+  <article class="package-card" data-reveal>
+    <p class="package-for">Appartement · rijwoning</p>
+    <h2>Scott Basic</h2>
+    <p class="package-intro">Scherpe, lichte foto's die je pand meteen goed laten ogen op Immoweb en Zimmo.</p>
+    <p class="package-price"><small>vanaf</small> €179</p>
+    <ul class="package-list">
+      <li><svg class="ck" viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 10.5l3.5 3.5 7.5-8"/></svg><span>20 professionele foto's, binnen en buiten</span></li>
+      <li><svg class="ck" viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 10.5l3.5 3.5 7.5-8"/></svg><span>Lichtbewerking en rechte lijnen</span></li>
+      <li><svg class="ck" viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 10.5l3.5 3.5 7.5-8"/></svg><span>Formaat klaar voor portaal en brochure</span></li>
+      <li><svg class="ck" viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 10.5l3.5 3.5 7.5-8"/></svg><span>Levering binnen 48 uur</span></li>
+    </ul>
+    <a href="offerte.html?pakket=Basic" class="package-cta">Kies Basic <span aria-hidden="true">→</span></a>
+  </article>
+
+  <article class="package-card is-featured" data-reveal>
+    <span class="package-badge">Meest gekozen</span>
+    <p class="package-for">Halfopen · open bebouwing</p>
+    <h2>Scott Signature</h2>
+    <p class="package-intro">Foto's, luchtbeelden en een plattegrond: alles wat kopers willen zien voor ze een bezoek plannen.</p>
+    <p class="package-price"><small>vanaf</small> €349</p>
+    <ul class="package-list">
+      <li><svg class="ck" viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 10.5l3.5 3.5 7.5-8"/></svg><span>30 professionele foto's, binnen en buiten</span></li>
+      <li><svg class="ck" viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 10.5l3.5 3.5 7.5-8"/></svg><span>5 dronefoto's van pand, tuin en omgeving</span></li>
+      <li><svg class="ck" viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 10.5l3.5 3.5 7.5-8"/></svg><span>2D-plattegrond van elke verdieping</span></li>
+      <li><svg class="ck" viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 10.5l3.5 3.5 7.5-8"/></svg><span>Lichtbewerking en rechte lijnen</span></li>
+      <li><svg class="ck" viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 10.5l3.5 3.5 7.5-8"/></svg><span>Levering binnen 48 uur</span></li>
+    </ul>
+    <a href="offerte.html?pakket=Signature" class="package-cta">Kies Signature <span aria-hidden="true">→</span></a>
+  </article>
+
+  <article class="package-card" data-reveal>
+    <p class="package-for">Villa · nieuwbouwproject</p>
+    <h2>Scott Prestige</h2>
+    <p class="package-intro">Het volledige verhaal van een uitzonderlijk pand, met een virtuele tour die kopers dag en nacht kunnen bezoeken.</p>
+    <p class="package-price"><small>vanaf</small> €599</p>
+    <ul class="package-list">
+      <li><svg class="ck" viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 10.5l3.5 3.5 7.5-8"/></svg><span>40 professionele foto's, inclusief schemerfoto's</span></li>
+      <li><svg class="ck" viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 10.5l3.5 3.5 7.5-8"/></svg><span>10 dronefoto's van pand, tuin en omgeving</span></li>
+      <li><svg class="ck" viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 10.5l3.5 3.5 7.5-8"/></svg><span>Volledige 360° tour van het pand</span></li>
+      <li><svg class="ck" viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 10.5l3.5 3.5 7.5-8"/></svg><span>2D-plattegrond en presentatieplan in kleur</span></li>
+      <li><svg class="ck" viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 10.5l3.5 3.5 7.5-8"/></svg><span>Voorrang bij de planning</span></li>
+      <li><svg class="ck" viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 10.5l3.5 3.5 7.5-8"/></svg><span>Levering binnen 48 uur</span></li>
+    </ul>
+    <a href="offerte.html?pakket=Prestige" class="package-cta">Kies Prestige <span aria-hidden="true">→</span></a>
+  </article>
+
+</section>
 </section>
 
 <!-- ======================================================
@@ -290,7 +328,7 @@
       <p><a href="diensten.html">Diensten</a></p>
       <p><a href="pakketten.html">Pakketten</a></p>
       <p><a href="offerte.html">Offerte aanvragen</a></p>
-      <p><a href="klantenzone.html">Klantenzone</a></p>
+      <p><a href="klantenzone.html">My Scott (klantenportaal)</a></p>
     </div>
   </div>
   <div class="footer-bottom">
