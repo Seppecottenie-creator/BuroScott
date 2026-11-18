@@ -48,19 +48,47 @@
     </form>
   </section>
 
-  <!-- Overzicht -->
-  <section id="ad-list-view" hidden>
-    <div class="ad-head">
-      <div>
-        <p class="kz-eyebrow">Galerijen</p>
-        <h1>Klantenzone</h1>
-      </div>
-      <div class="ad-storage" id="ad-storage" aria-label="Opslag"></div>
-    </div>
+  <!-- Bibliotheek (Picflow-stijl) -->
+  <section id="ad-list-view" class="lib" hidden>
+    <aside class="lib-side" aria-label="Beheer">
+      <a href="beheer.html" class="lib-brand">BURO SCOTT<span>.</span><small>Beheer</small></a>
+      <nav class="lib-nav">
+        <a href="beheer.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Overzicht</a>
+        <a href="klantenzone-beheer.html" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Galerijen</a>
+        <a href="tours-beheer.html"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18"/></svg>360° tours</a>
+        <a href="activiteit.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>Activiteit</a>
+      </nav>
+      <p class="lib-label">Mappen</p>
+      <ul class="lib-folders" id="lib-folders"></ul>
+      <div class="lib-storage" id="ad-storage" aria-label="Opslag"></div>
+    </aside>
 
-    <div class="ad-card">
-      <h2>Nieuwe galerij</h2>
-      <form id="ad-create-form" class="kz-form ad-create" novalidate>
+    <div class="lib-main">
+      <div class="lib-top">
+        <label class="lib-search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+          <span class="visually-hidden">Zoek galerijen</span>
+          <input type="search" id="lib-search" placeholder="Zoek op adres, makelaar of code…" autocomplete="off">
+        </label>
+        <div class="lib-create">
+          <button type="button" class="lib-create-btn" id="lib-new">+ Nieuwe galerij</button>
+          <a href="tours-beheer.html?nieuw=1" class="lib-create-alt" title="Nieuwe 360° tour">+ Tour</a>
+        </div>
+      </div>
+      <div class="lib-head">
+        <h1 id="lib-folder-title">Alle galerijen</h1>
+        <span class="lib-count" id="lib-count"></span>
+      </div>
+      <ul class="lib-grid" id="ad-list"></ul>
+    </div>
+  </section>
+
+  <dialog class="lib-dialog" id="ad-new-dialog" aria-labelledby="ad-new-title">
+    <div class="lib-dialog-head">
+      <h2 id="ad-new-title">Nieuwe galerij</h2>
+      <button type="button" class="lib-dialog-close" id="ad-new-close" aria-label="Sluiten">✕</button>
+    </div>
+    <form id="ad-create-form" class="kz-form ad-create" novalidate>
         <div class="field ad-span2">
           <label for="ad-title">Titel <span class="hint">(bv. het adres van het pand)</span></label>
           <input type="text" id="ad-title" required placeholder="Kerkstraat 12, Waregem">
@@ -97,11 +125,7 @@
         <p class="form-alert ad-span2" id="ad-create-error" role="alert" hidden></p>
         <button type="submit" class="form-submit ad-span2"><span>Galerij aanmaken</span><span class="arrow" aria-hidden="true">→</span></button>
       </form>
-    </div>
-
-    <h2 class="ad-h2">Bestaande galerijen</h2>
-    <ul class="ad-list" id="ad-list"></ul>
-  </section>
+  </dialog>
 
   <!-- Eén galerij -->
   <section id="ad-detail-view" hidden>
