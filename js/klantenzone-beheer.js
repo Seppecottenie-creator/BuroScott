@@ -12,6 +12,7 @@ const state = { token: null, current: null };
 
 /* ---------- Hulpjes ---------- */
 function show(view) {
+  document.body.classList.toggle('is-library', view === 'ad-list-view');
   for (const v of ['ad-login-view', 'ad-list-view', 'ad-detail-view', 'ad-setup']) $(v).hidden = v !== view;
   $('ad-logout').hidden = !['ad-list-view', 'ad-detail-view'].includes(view);
   window.scrollTo(0, 0);
@@ -98,30 +99,88 @@ $('ad-title').addEventListener('input', () => { if (!$('ad-code').dataset.touche
 $('ad-code').addEventListener('input', () => { $('ad-code').dataset.touched = '1'; });
 $('ad-pw-new').addEventListener('click', () => { $('ad-pw').value = newPassword(); });
 
+const lib = { galleries: [], folder: 'alle', query: '' };
+function ago(ms) {
+  const m = Math.round((Date.now() - ms) / 60000);
+  if (m < 1) return 'zonet';
+  if (m < 60) return `${m} min geleden`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h} uur geleden`;
+  const d = Math.round(h / 24);
+  if (d === 1) return 'gisteren';
+  if (d < 30) return `${d} dagen geleden`;
+  return fmtDate(ms);
+}
+function statusOf(g) {
+  const days = Math.ceil((g.expires - Date.now()) / 86400e3);
+  if (days <= 0) return { cls: 'is-off', label: 'Verlopen' };
+  if (days <= 7) return { cls: 'is-warn', label: `Nog ${days} ${days === 1 ? 'dag' : 'dagen'}` };
+  return { cls: '', label: `Online · ${days} d` };
+}
 async function openList() {
   show('ad-list-view');
   resetCreateForm();
-  const list = $('ad-list');
-  list.innerHTML = '<li class="ad-empty">Laden…</li>';
+  $('ad-list').innerHTML = '<li class="lib-empty">Laden…</li>';
   const r = await api('/api/admin/galleries');
+  lib.galleries = r.galleries.sort((a, b) => (b.updated || b.created) - (a.updated || a.created));
   const pct = Math.min(100, (r.totalBytes / r.limitBytes) * 100);
-  $('ad-storage').innerHTML = `<span>Opslag: <b>${fmtBytes(r.totalBytes)}</b> van ${fmtBytes(r.limitBytes)} gratis</span><span class="ad-bar"><span style="width:${pct.toFixed(1)}%"></span></span>`;
-  list.innerHTML = '';
-  if (!r.galleries.length) { list.innerHTML = '<li class="ad-empty">Nog geen galerijen. Maak er hierboven een aan.</li>'; return; }
-  for (const g of r.galleries) {
-    const expired = g.expires < Date.now();
-    const li = document.createElement('li');
-    li.className = 'ad-item';
-    li.innerHTML = `
-      <button type="button" class="ad-item-main">
-        <span class="ad-item-title">${esc(g.title)}</span>
-        <span class="ad-item-meta">${esc(g.code)} · ${g.fileCount} bestanden · ${fmtBytes(g.bytes)}</span>
-      </button>
-      <span class="ad-pill ${expired ? 'is-off' : ''}">${expired ? 'Verlopen' : 'Tot ' + fmtDate(g.expires)}</span>`;
-    li.querySelector('button').addEventListener('click', () => openDetail(g.code));
-    list.appendChild(li);
-  }
+  $('ad-storage').innerHTML = `<span class="lib-storage-label"><b>${fmtBytes(r.totalBytes)}</b> van 10 GB gratis</span><span class="ad-bar"><span style="width:${Math.max(1, pct).toFixed(1)}%"></span></span>`;
+  renderFolders();
+  renderLibrary();
 }
+function renderFolders() {
+  const years = [...new Set(lib.galleries.map((g) => new Date(g.created).getFullYear()))].sort((a, b) => b - a);
+  const now = Date.now();
+  const items = [['alle', 'Alle galerijen', lib.galleries.length], ...years.map((y) => [String(y), String(y), lib.galleries.filter((g) => new Date(g.created).getFullYear() === y).length])];
+  const expired = lib.galleries.filter((g) => g.expires < now).length;
+  if (expired) items.push(['verlopen', 'Verlopen', expired]);
+  $('lib-folders').innerHTML = items.map(([key, label, n]) => `<li><button type="button" data-folder="${key}" ${lib.folder === key ? 'aria-current="true"' : ''}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>${label}</span><em>${n}</em></button></li>`).join('');
+  $('lib-folders').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { lib.folder = b.dataset.folder; renderFolders(); renderLibrary(); }));
+}
+function renderLibrary() {
+  const now = Date.now();
+  const q = lib.query.toLowerCase();
+  let list = lib.galleries;
+  if (lib.folder === 'verlopen') list = list.filter((g) => g.expires < now);
+  else if (lib.folder !== 'alle') list = list.filter((g) => String(new Date(g.created).getFullYear()) === lib.folder);
+  if (q) list = list.filter((g) => [g.title, g.subtitle, g.code].join(' ').toLowerCase().includes(q));
+  $('lib-folder-title').textContent = lib.folder === 'alle' ? 'Alle galerijen' : lib.folder === 'verlopen' ? 'Verlopen galerijen' : `Map ${lib.folder}`;
+  $('lib-count').textContent = `${list.length} ${list.length === 1 ? 'galerij' : 'galerijen'}`;
+  const grid = $('ad-list');
+  if (!list.length) {
+    grid.innerHTML = lib.galleries.length
+      ? '<li class="lib-empty">Geen galerijen gevonden.</li>'
+      : '<li class="lib-empty lib-empty-big"><b>Nog geen galerijen.</b><span>Maak je eerste galerij aan met de blauwe knop.</span></li>';
+    return;
+  }
+  grid.innerHTML = '';
+  list.forEach((g, i) => {
+    const st = statusOf(g);
+    const cover = g.cover ? `${API}/api/file?g=${encodeURIComponent(g.code)}&n=${encodeURIComponent(g.cover)}&k=p&t=${encodeURIComponent(state.token)}` : '';
+    const li = document.createElement('li');
+    li.className = 'lib-card' + (g.expires < now ? ' is-expired' : '');
+    li.style.setProperty('--d', `${Math.min(i, 12) * 40}ms`);
+    li.innerHTML = `
+      <button type="button" class="lib-card-open" aria-label="Open ${esc(g.title)}">
+        ${cover ? `<img src="${cover}" alt="" loading="lazy">` : '<span class="lib-card-empty">BS<b>.</b></span>'}
+      </button>
+      <span class="lib-pill ${st.cls}">${st.label}</span>
+      ${g.tourUrl ? '<span class="lib-tour" title="Met 360° tour">360°</span>' : ''}
+      <div class="lib-card-text">
+        <span class="lib-card-title">${esc(g.title)}</span>
+        <span class="lib-card-meta">${g.fileCount} ${g.fileCount === 1 ? 'bestand' : 'bestanden'} · ${ago(g.updated || g.created)}</span>
+      </div>
+      <div class="lib-card-actions">
+        <a href="${clientLink(g.code)}&beheer=1" target="_blank" rel="noopener">Bekijk als klant ↗</a>
+        <a href="activiteit.html?g=${encodeURIComponent(g.code)}">Activiteit</a>
+      </div>`;
+    li.querySelector('.lib-card-open').addEventListener('click', () => openDetail(g.code));
+    grid.appendChild(li);
+  });
+}
+$('lib-search').addEventListener('input', (e) => { lib.query = e.target.value.trim(); renderLibrary(); });
+$('lib-new').addEventListener('click', () => { resetCreateForm(); $('ad-new-dialog').showModal(); $('ad-title').focus(); });
+$('ad-new-close').addEventListener('click', () => $('ad-new-dialog').close());
 
 $('ad-create-form').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -137,6 +196,7 @@ $('ad-create-form').addEventListener('submit', async (e) => {
   };
   try {
     const g = await api('/api/admin/galleries', { method: 'POST', body: JSON.stringify(body) });
+    $('ad-new-dialog').close();
     await openDetail(g.code, body.password);
   } catch (ex) { err.textContent = ex.message; err.hidden = false; }
 });
@@ -328,7 +388,7 @@ $('ad-d-delete').addEventListener('click', async () => {
       const q = new URLSearchParams(location.search);
       if (q.get('g')) { await openDetail(q.get('g')); return; }
       await openList();
-      if (q.get('nieuw')) $('ad-title').focus();
+      if (q.get('nieuw')) { $('ad-new-dialog').showModal(); $('ad-title').focus(); }
       return;
     }
   } catch (e) {}

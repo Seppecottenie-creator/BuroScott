@@ -217,7 +217,10 @@ async function adminListGalleries(env) {
     const files = await listFiles(env, code);
     const bytes = files.reduce((s, f) => s + f.size, 0) + files.reduce((s, f) => s + (f.previewSize || 0), 0);
     totalBytes += bytes;
-    out.push({ code, title: meta.title, created: meta.created, expires: meta.expires, tourUrl: meta.tourUrl || '', fileCount: files.length, bytes });
+    const imgs = files.filter(f => f.preview);
+    const cover = (imgs.find(f => f.name === meta.cover) || imgs.find(f => f.cat === 'fotos') || imgs[0] || {}).name || '';
+    const updated = files.reduce((m, f) => Math.max(m, f.uploaded || 0), meta.created || 0);
+    out.push({ code, title: meta.title, subtitle: meta.subtitle || '', created: meta.created, updated, expires: meta.expires, tourUrl: meta.tourUrl || '', fileCount: files.length, bytes, cover });
   }
   out.sort((a, b) => b.created - a.created);
   return { galleries: out, totalBytes, limitBytes: 10 * 1024 ** 3 };
