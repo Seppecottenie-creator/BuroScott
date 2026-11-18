@@ -1,0 +1,97 @@
+/* ============================================================
+   BURO SCOTT — 360°-TOUR
+============================================================ */
+:root{ --ink:#0E0F0D; --accent:#1D3FD6; --accent-light:#8FA2FF; --glass:rgba(14,15,13,.6); --line:rgba(255,255,255,.16); --ease:cubic-bezier(.22,.61,.36,1); }
+*{ box-sizing:border-box; margin:0; padding:0; }
+html, body{ height:100%; }
+body.tr{ background:var(--ink); color:#fff; font-family:"Archivo", "Helvetica Neue", Arial, sans-serif; overflow:hidden; -webkit-font-smoothing:antialiased; }
+button{ font:inherit; cursor:pointer; }
+.tr-pano{ position:fixed; inset:0; }
+.tr-pano .pnlm-load-box{ display:none !important; }
+
+/* Laadscherm */
+.tr-loading{
+  position:fixed; inset:0; z-index:30; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px;
+  background:radial-gradient(800px circle at 70% 20%, rgba(29,63,214,.35), transparent 60%), var(--ink);
+  transition:opacity .8s var(--ease), visibility .8s;
+}
+.tr-loading.is-done{ opacity:0; visibility:hidden; }
+.tr-brand-big{ font-weight:900; letter-spacing:-.03em; font-size:clamp(2.4rem,7vw,5rem); }
+.tr-brand-big span, .tr-brand span{ color:var(--accent-light); }
+.tr-bar{ width:180px; height:3px; border-radius:3px; background:var(--line); overflow:hidden; }
+.tr-bar span{ display:block; width:40%; height:100%; background:var(--accent-light); animation:trBar 1.2s ease-in-out infinite; }
+@keyframes trBar{ from{ transform:translateX(-100%); } to{ transform:translateX(260%); } }
+.tr-loading p{ color:#C9C7BF; font-size:.95rem; text-align:center; max-width:34ch; padding:0 16px; }
+.tr-loading.is-error .tr-bar{ display:none; }
+
+/* Bovenbalk */
+.tr-top{ position:fixed; z-index:20; top:max(16px, env(safe-area-inset-top)); left:max(16px, env(safe-area-inset-left)); right:max(16px, env(safe-area-inset-right)); display:flex; align-items:center; gap:10px; pointer-events:none; }
+.tr-top > *{ pointer-events:auto; }
+.tr-pill{
+  display:inline-flex; align-items:center; gap:10px; padding:11px 18px; border-radius:999px; color:#fff; text-decoration:none;
+  background:var(--glass); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border:1px solid var(--line);
+}
+.tr-brand{ font-weight:900; letter-spacing:-.01em; }
+.tr-title{ font-weight:600; font-size:.92rem; min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.tr-360{ flex:0 0 auto; font-weight:900; font-size:.7rem; background:var(--accent); padding:4px 8px; border-radius:999px; }
+.tr-ctrls{ margin-left:auto; display:flex; gap:8px; }
+.tr-btn{
+  width:48px; height:48px; border-radius:50%; display:grid; place-items:center; color:#fff;
+  background:var(--glass); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border:1px solid var(--line);
+  transition:background .25s var(--ease);
+}
+.tr-btn svg{ width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
+.tr-btn:hover, .tr-btn[aria-pressed="true"]{ background:var(--accent); border-color:var(--accent); }
+.tr-btn:focus-visible, .tr-scene:focus-visible, .tr-pill:focus-visible{ outline:2px solid var(--accent-light); outline-offset:3px; }
+
+/* Tip */
+.tr-hint{
+  position:fixed; z-index:15; left:50%; top:50%; transform:translate(-50%,-50%); pointer-events:none;
+  display:flex; align-items:center; gap:10px; padding:12px 20px; border-radius:999px; font-size:.9rem; font-weight:500;
+  background:var(--glass); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border:1px solid var(--line);
+  transition:opacity .8s var(--ease);
+}
+.tr-hint svg{ width:22px; height:22px; fill:none; stroke:#fff; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; animation:trSwipe 1.8s ease-in-out infinite; }
+@keyframes trSwipe{ 50%{ transform:translateX(5px); } }
+.tr-hint.is-gone{ opacity:0; }
+
+/* Ruimtes onderaan */
+.tr-scenes{
+  position:fixed; z-index:20; left:50%; transform:translateX(-50%); bottom:max(16px, env(safe-area-inset-bottom));
+  display:flex; gap:8px; max-width:calc(100% - 32px); overflow-x:auto; padding:8px; border-radius:20px;
+  background:var(--glass); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border:1px solid var(--line);
+  scrollbar-width:none;
+}
+.tr-scenes::-webkit-scrollbar{ display:none; }
+.tr-scene{
+  flex:0 0 auto; width:132px; border:0; background:transparent; color:#fff; border-radius:12px; overflow:hidden; text-align:left;
+  outline:2px solid transparent; transition:outline-color .25s var(--ease), transform .25s var(--ease);
+}
+.tr-scene img{ display:block; width:100%; height:72px; object-fit:cover; opacity:.75; transition:opacity .25s var(--ease); }
+.tr-scene span{ display:block; padding:7px 8px; font-size:.78rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tr-scene:hover img, .tr-scene.is-on img{ opacity:1; }
+.tr-scene.is-on{ outline-color:var(--accent-light); }
+
+/* Navigatiepunten in het panorama */
+.pnlm-hotspot-base.tr-hs{ width:0; height:0; }
+.tr-hs-ring{
+  position:absolute; left:-30px; top:-30px; width:60px; height:60px; border-radius:50%; display:grid; place-items:center;
+  background:rgba(29,63,214,.55); border:3px solid #fff; box-shadow:0 0 0 10px rgba(255,255,255,.18), 0 10px 30px rgba(0,0,0,.35);
+  transition:transform .25s var(--ease), background .25s var(--ease); animation:trPulse 2.4s ease-out infinite;
+}
+.tr-hs-ring svg{ width:26px; height:26px; fill:none; stroke:#fff; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; }
+.tr-hs:hover .tr-hs-ring{ transform:scale(1.12); background:var(--accent); }
+@keyframes trPulse{ 0%{ box-shadow:0 0 0 0 rgba(255,255,255,.35), 0 10px 30px rgba(0,0,0,.35); } 70%{ box-shadow:0 0 0 16px rgba(255,255,255,0), 0 10px 30px rgba(0,0,0,.35); } 100%{ box-shadow:0 0 0 0 rgba(255,255,255,0), 0 10px 30px rgba(0,0,0,.35); } }
+.tr-hs-label{
+  position:absolute; left:50%; top:40px; transform:translateX(-50%); white-space:nowrap; padding:7px 13px; border-radius:999px;
+  font-size:.82rem; font-weight:600; color:#fff; background:var(--glass); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--line);
+}
+
+@media (max-width:600px){
+  .tr-title{ display:none; }
+  .tr-scene{ width:104px; }
+  .tr-scene img{ height:58px; }
+}
+@media (prefers-reduced-motion: reduce){ .tr-hs-ring, .tr-bar span, .tr-hint svg{ animation:none; } }
+.tr-pano .pnlm-panorama-info, .te-pano .pnlm-panorama-info{ display:none !important; }
+#te-pano{ height:min(62vh, 560px); }

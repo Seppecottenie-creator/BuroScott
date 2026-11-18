@@ -92,3 +92,22 @@ npm install && npm run dev       # API op http://127.0.0.1:8787
 ```
 Open daarna de site met `?api=http://127.0.0.1:8787` achter het adres van
 `klantenzone.html` of `klantenzone-beheer.html` (`?api=reset` om te wissen).
+
+## 360° tours (eigen hosting)
+
+- **Beheer:** `…/tours-beheer.html` (zelfde beheerwachtwoord, tabblad "360° tours").
+  1. Maak een tour aan (titel = adres).
+  2. Sleep de panorama's uit Insta360 Stitcher erin (JPG, verhouding 2:1).
+     Ze worden automatisch verkleind tot 6144 px breed.
+  3. Geef elke ruimte een naam, kies de startruimte.
+  4. Kies "Pijl naar: …", klik **+ Pijl plaatsen** en klik in het panorama op de deur.
+  5. Draai naar de mooiste blik en klik **Huidige blik = startblik**. Klik **Opslaan**.
+- **Delen:** de link `…/tour.html?id=<code>` **vervalt niet**. Er is ook een
+  insluitcode (`<iframe>`) voor de website van de makelaar.
+- **Koppelen aan een galerij:** in de galerij → Instellingen → "Eigen 360° tour koppelen".
+- **Opslag:** een tour met 8 ruimtes is ±15–25 MB. Tours tellen mee in de gratis 10 GB.
+
+## Voorbeelden
+
+- Galerij: code `voorbeeld-kerkstraat`, wachtwoord `voorbeeld-2026` (blijft 1 jaar staan).
+- Tour: `tour.html?id=voorbeeld-woning-waregem` (panorama's: Poly Haven, CC0).

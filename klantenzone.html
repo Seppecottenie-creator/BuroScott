@@ -56,29 +56,39 @@
     </div>
   </section>
 
-  <!-- ---------- Galerij ---------- -->
-  <section class="kz-gallery" id="kz-gallery-view" hidden>
-    <div class="kz-head">
-      <div class="kz-head-text">
-        <p class="kz-eyebrow">Jouw beelden</p>
-        <h1 id="kz-title"></h1>
-        <p class="kz-sub" id="kz-subtitle"></p>
-        <p class="kz-meta" id="kz-meta"></p>
+  <!-- ---------- Galerij (Picflow-stijl) ---------- -->
+  <section class="pf" id="kz-gallery-view" hidden>
+    <div class="pf-cover" id="pf-cover">
+      <img id="pf-cover-img" alt="">
+      <div class="pf-cover-shade" aria-hidden="true"></div>
+      <div class="pf-cover-top">
+        <span class="pf-cover-brand">BURO SCOTT<span>.</span></span>
+        <button type="button" class="pf-ghost" id="kz-logout-2">Afmelden</button>
       </div>
-      <div class="kz-actions">
-        <a class="kz-btn kz-btn-ghost" id="kz-tour" href="#" target="_blank" rel="noopener" hidden>
-          <span class="kz-360" aria-hidden="true">360°</span> Bekijk de virtuele tour<span class="visually-hidden"> (opent in een nieuw venster)</span>
-        </a>
-        <button type="button" class="kz-btn kz-btn-primary" id="kz-zip">
+      <div class="pf-cover-text">
+        <p class="pf-eyebrow" id="pf-date"></p>
+        <h1 id="kz-title"></h1>
+        <p class="pf-sub" id="kz-subtitle"></p>
+        <a href="#pf-grid-start" class="pf-cta" id="pf-cta">Bekijk de beelden <span aria-hidden="true">↓</span></a>
+      </div>
+    </div>
+
+    <div class="pf-bar" id="pf-bar">
+      <div class="pf-bar-title"><span class="pf-bar-brand">BURO SCOTT<span>.</span></span><span id="pf-bar-name"></span></div>
+      <nav class="pf-tabs" id="kz-tabs" aria-label="Soort beelden"></nav>
+      <div class="pf-bar-actions">
+        <a class="pf-btn pf-btn-ghost" id="kz-tour" href="#" target="_blank" rel="noopener" hidden><span class="kz-360" aria-hidden="true">360°</span><span class="pf-hide-sm">Virtuele tour</span><span class="visually-hidden"> (opent in een nieuw venster)</span></a>
+        <button type="button" class="pf-btn pf-btn-primary" id="kz-zip">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0 4.5-4.5M12 15l-4.5-4.5M5 19h14"/></svg>
-          <span>Download alles</span>
+          <span class="pf-hide-sm">Download alles</span>
         </button>
       </div>
     </div>
-    <p class="kz-zip-status" id="kz-zip-status" role="status" aria-live="polite"></p>
+    <p class="kz-zip-status pf-status" id="kz-zip-status" role="status" aria-live="polite"></p>
+    <p class="pf-meta" id="kz-meta"></p>
 
-    <div class="kz-tabs" id="kz-tabs" role="tablist" aria-label="Soort beelden"></div>
-    <ul class="kz-grid" id="kz-grid"></ul>
+    <div id="pf-grid-start"></div>
+    <div class="pf-sections" id="kz-grid"></div>
   </section>
 
   <!-- ---------- Nog niet ingesteld ---------- -->
@@ -90,12 +100,12 @@
 </main>
 
 <!-- ---------- Groot bekijken ---------- -->
-<dialog class="kz-lightbox" id="kz-lightbox" aria-label="Beeld groot bekijken">
+<dialog class="kz-lightbox pf-lb" id="kz-lightbox" aria-label="Beeld groot bekijken">
   <div class="kz-lb-bar">
     <span class="kz-lb-count" id="kz-lb-count"></span>
     <span class="kz-lb-name" id="kz-lb-name"></span>
     <a class="kz-lb-btn" id="kz-lb-download" href="#">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0 4.5-4.5M12 15l-4.5-4.5M5 19h14"/></svg>Origineel
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0 4.5-4.5M12 15l-4.5-4.5M5 19h14"/></svg>Download
     </a>
     <button type="button" class="kz-lb-btn kz-lb-close" id="kz-lb-close" aria-label="Sluiten">✕</button>
   </div>
@@ -104,6 +114,7 @@
     <img id="kz-lb-img" alt="">
     <button type="button" class="kz-lb-nav kz-lb-next" id="kz-lb-next" aria-label="Volgende">›</button>
   </div>
+  <div class="pf-strip" id="pf-strip" aria-label="Miniaturen"></div>
 </dialog>
 
 <footer class="kz-foot">
