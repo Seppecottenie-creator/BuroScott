@@ -100,14 +100,22 @@
 
       <div class="form-fieldset">
         <p class="fieldset-title">Het pand</p>
-        <div class="form-grid-2">
+        <div class="field o-addr">
+          <label for="o-adres">Adres van het pand*</label>
+          <div class="o-ac">
+            <input type="text" id="o-adres" data-error="Vul het adres van het pand in." name="adres" placeholder="Straat en nummer, bv. Kerkstraat 12" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="o-adres-list" required>
+            <ul class="o-ac-list" id="o-adres-list" role="listbox" aria-label="Voorstellen" hidden></ul>
+          </div>
+        </div>
+        <div class="form-grid-2 o-pcgrid">
           <div class="field">
-            <label for="o-adres">Adres van het pand*</label>
-            <input type="text" id="o-adres" data-error="Vul het adres van het pand in." name="adres" placeholder="Straat en nummer" autocomplete="street-address" required>
+            <label for="o-postcode">Postcode*</label>
+            <input type="text" id="o-postcode" name="postcode" inputmode="numeric" maxlength="4" placeholder="8790" autocomplete="postal-code" pattern="^[1-9][0-9]{3}$" data-error="Vul een postcode van 4 cijfers in." required>
           </div>
           <div class="field">
-            <label for="o-gemeente">Postcode en gemeente*</label>
-            <input type="text" id="o-gemeente" data-error="Vul postcode en gemeente in, bv. 8790 Waregem." name="gemeente" placeholder="8790 Waregem" pattern="^\s*[1-9][0-9]{3}\s+\S.*$" required>
+            <label for="o-gemeente">Gemeente*</label>
+            <input type="text" id="o-gemeente" name="gemeente" list="o-gemeenten" placeholder="Waregem" autocomplete="address-level2" data-error="Vul de gemeente in." required>
+            <datalist id="o-gemeenten"></datalist>
           </div>
         </div>
         <div class="form-grid-2">
@@ -171,17 +179,33 @@
       <div class="form-fieldset o-choice" data-required-group="keuze" data-error="Kies een pakket, stel zelf samen of vraag advies.">
         <p class="fieldset-title">Wat heb je nodig?*</p>
         <p class="fieldset-sub">Een pakket is voordeliger dan dezelfde diensten los. Stel je zelf samen, dan tonen we wanneer een pakket goedkoper is.</p>
+        <p class="o-step"><b>1</b> Hoe wil je bestellen?</p>
         <div class="o-modes">
           <label class="o-mode"><input type="radio" name="keuze" value="pakket"><b>Een pakket</b><span>Basic, Signature of Prestige</span></label>
           <label class="o-mode"><input type="radio" name="keuze" value="zelf"><b>Zelf samenstellen</b><span>Bv. enkel foto's of enkel een plan</span></label>
           <label class="o-mode"><input type="radio" name="keuze" value="advies"><b>Ik twijfel nog</b><span>We adviseren je vrijblijvend</span></label>
         </div>
 
+        <div class="o-stage" id="o-stage">
+        <p class="o-wait" id="o-wait">Kies eerst hierboven hoe je wil bestellen. Daarna verschijnen hier de keuzes.</p>
         <div class="o-panel" id="o-panel-pakket" hidden>
+          <p class="o-step"><b>2</b> Kies je pakket</p>
           <div class="o-packs" data-required-group="pakket" data-error="Kies een pakket.">
-            <label class="o-pack"><input type="radio" name="pakket" value="Basic"><b>Scott Basic</b><span class="o-pack-price" data-pk="Basic"></span><small>20 foto's</small></label>
-            <label class="o-pack"><input type="radio" name="pakket" value="Signature"><b>Scott Signature</b><span class="o-pack-price" data-pk="Signature"></span><small>30 foto's · 5 drone · plan tot 2 verdiepingen</small></label>
-            <label class="o-pack"><input type="radio" name="pakket" value="Prestige"><b>Scott Prestige</b><span class="o-pack-price" data-pk="Prestige"></span><small>40 foto's · 10 drone · 360° tour · plan tot 3 verdiepingen</small></label>
+            <div class="o-pack" data-pack="Basic">
+              <label><input type="radio" name="pakket" value="Basic"><b>Scott Basic</b><span class="o-pack-price" data-pk="Basic"></span><small class="o-pack-sum"></small></label>
+              <button type="button" class="o-info" aria-expanded="false" aria-controls="o-info-Basic" aria-label="Wat zit er in Scott Basic?">i</button>
+              <ul class="o-pack-info" id="o-info-Basic" hidden></ul>
+            </div>
+            <div class="o-pack" data-pack="Signature">
+              <label><input type="radio" name="pakket" value="Signature"><b>Scott Signature</b><span class="o-pack-price" data-pk="Signature"></span><small class="o-pack-sum"></small></label>
+              <button type="button" class="o-info" aria-expanded="false" aria-controls="o-info-Signature" aria-label="Wat zit er in Scott Signature?">i</button>
+              <ul class="o-pack-info" id="o-info-Signature" hidden></ul>
+            </div>
+            <div class="o-pack" data-pack="Prestige">
+              <label><input type="radio" name="pakket" value="Prestige"><b>Scott Prestige</b><span class="o-pack-price" data-pk="Prestige"></span><small class="o-pack-sum"></small></label>
+              <button type="button" class="o-info" aria-expanded="false" aria-controls="o-info-Prestige" aria-label="Wat zit er in Scott Prestige?">i</button>
+              <ul class="o-pack-info" id="o-info-Prestige" hidden></ul>
+            </div>
           </div>
           <p class="o-sub">Extra's bij je pakket <span class="hint">(optioneel)</span></p>
           <div class="o-opts">
@@ -194,6 +218,7 @@
         </div>
 
         <div class="o-panel" id="o-panel-zelf" hidden>
+          <p class="o-step"><b>2</b> Kies wat je nodig hebt</p>
           <div class="o-opts">
             <div class="field"><label for="o-z-foto">Fotografie</label><select id="o-z-foto" name="fotos"><option value="0">Geen foto's</option><option value="20">20 foto's</option><option value="30">30 foto's</option><option value="40">40 foto's</option></select></div>
             <div class="field"><label for="o-z-drone">Dronefoto's</label><select id="o-z-drone" name="drone"><option value="0">Geen</option><option value="5">5 dronefoto's</option><option value="10">10 dronefoto's</option></select></div>
@@ -204,9 +229,11 @@
         </div>
 
         <div class="o-panel" id="o-panel-advies" hidden>
+          <p class="o-step"><b>2</b> Advies op maat</p>
           <p class="o-advice">Geen probleem. Vertel hieronder kort wat je wil bereiken (bv. verkopen, verhuren, nieuwbouwproject in de kijker zetten). We bellen je en stellen een voorstel op maat voor.</p>
         </div>
 
+        </div>
         <p class="o-lot-note" id="o-lot-note" hidden>Voor grond of een perceel zijn dronebeelden en buitenfoto's het meest zinvol. Een 360° tour en een plattegrond zijn hier niet van toepassing.</p>
 
         <div class="o-summary" id="o-summary" hidden aria-live="polite">
