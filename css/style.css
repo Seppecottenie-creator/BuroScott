@@ -744,7 +744,6 @@ body.nav-is-hidden .bottom-page-blur{ opacity:0; }
   transition:transform .5s var(--ease);
 }
 .closing-cta:hover::before, .closing-cta:focus-visible::before{ transform:scaleX(1); }
-.closing-track span:nth-child(4n+2){ color:var(--accent-light); }
 .footer-col a:hover{ color:var(--accent-light); }
 
 /* Formulieren: foutmelding onder het veld zelf */
