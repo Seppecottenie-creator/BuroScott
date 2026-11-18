@@ -14,9 +14,12 @@ const MAIL_TO = 'info@buroscott.be';
 const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function fieldMessage(el){
+  if (el.disabled || el.closest('[hidden]')) return '';
   if (el.validity.valueMissing) return el.dataset.error || 'Dit veld is verplicht.';
-  if (el.validity.typeMismatch && el.type === 'email') return 'Dit e-mailadres lijkt niet te kloppen. Controleer het @-teken.';
+  if (el.type === 'email' && (el.validity.typeMismatch || el.validity.patternMismatch)) return 'Dit e-mailadres lijkt niet te kloppen, bv. naam@kantoor.be.';
   if (!el.validity.valid) return el.dataset.error || 'Controleer dit veld.';
+  const minDigits = +el.dataset.minDigits || 0;
+  if (minDigits && el.value.trim() && el.value.replace(/\D/g, '').length < minDigits) return el.dataset.error || 'Controleer dit veld.';
   return '';
 }
 function getErrorEl(container, baseId){
@@ -47,8 +50,10 @@ function validateControl(el){
   return !msg;
 }
 function validateGroup(group){
-  const boxes = group.querySelectorAll('input[type="checkbox"]');
-  const ok = Array.from(boxes).some(b => b.checked);
+  const name = group.dataset.requiredGroup;
+  const boxes = Array.from(group.querySelectorAll(`input[name="${name}"]`)).filter(b => !b.disabled);
+  const skip = group.closest('[hidden]') || !boxes.length;
+  const ok = skip || boxes.some(b => b.checked);
   const err = getErrorEl(group, group.dataset.requiredGroup);
   group.classList.toggle('is-invalid', !ok);
   err.textContent = ok ? '' : group.dataset.error;
@@ -58,26 +63,33 @@ function validateGroup(group){
 }
 
 document.querySelectorAll('form[data-form]').forEach(form => {
-  const controls = Array.from(form.querySelectorAll('input[required], select[required], textarea[required]'));
+  // Welke velden gecontroleerd worden, bepalen we telkens opnieuw (velden kunnen verschijnen/verdwijnen)
+  const checkable = () => Array.from(form.querySelectorAll('input, select, textarea')).filter(el =>
+    el.type !== 'hidden' && el.type !== 'checkbox' && el.type !== 'radio' && el.name !== '_gotcha' && el.closest('.field') &&
+    (el.required || el.pattern || el.min || el.max || el.type === 'email' || el.dataset.minDigits));
   const groups = Array.from(form.querySelectorAll('[data-required-group]'));
   let tried = false;
 
   // Na een eerste poging: meteen feedback terwijl de bezoeker verbetert
-  controls.forEach(el => {
-    el.addEventListener('blur', () => { if (tried) validateControl(el); });
-    el.addEventListener('input', () => { if (tried && el.closest('.field.is-invalid')) validateControl(el); });
-    el.addEventListener('change', () => { if (tried) validateControl(el); });
+  const isCheckable = (el) => checkable().includes(el);
+  form.addEventListener('focusout', (e) => { if (tried && isCheckable(e.target)) validateControl(e.target); });
+  form.addEventListener('input', (e) => { if (tried && e.target.closest && e.target.closest('.field.is-invalid') && isCheckable(e.target)) validateControl(e.target); });
+  form.addEventListener('change', (e) => {
+    if (!tried) return;
+    if (isCheckable(e.target)) validateControl(e.target);
+    groups.forEach(validateGroup);
+    if (form.bsValidate) form.bsValidate();
   });
-  groups.forEach(g => g.addEventListener('change', () => { if (tried) validateGroup(g); }));
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     tried = true;
     let firstInvalid = null;
-    controls.forEach(el => { if (!validateControl(el) && !firstInvalid) firstInvalid = el; });
+    checkable().forEach(el => { if (!validateControl(el) && !firstInvalid) firstInvalid = el; });
     groups.forEach(g => { if (!validateGroup(g) && !firstInvalid) firstInvalid = g.querySelector('input'); });
+    if (form.bsValidate) { const bad = form.bsValidate(); if (bad && !firstInvalid) firstInvalid = bad; }
     // Volgorde in de pagina respecteren voor de focus
-    const invalid = Array.from(form.querySelectorAll('[aria-invalid="true"], .form-fieldset.is-invalid input'));
+    const invalid = Array.from(form.querySelectorAll('[aria-invalid="true"], .is-invalid input, .is-invalid select')).filter(el => !el.disabled && !el.closest('[hidden]'));
     if (invalid.length) firstInvalid = invalid[0];
     if (firstInvalid){
       firstInvalid.focus({ preventScroll:true });
@@ -95,12 +107,13 @@ function readableFields(form){
   for (const [name] of data){
     if (name === '_gotcha' || seen.has(name)) continue;
     seen.add(name);
-    const el = form.querySelector(`[name="${name}"]`);
+    const el = form.querySelector(`[name="${name}"]:not(:disabled)`);
+    if (el && el.hasAttribute('data-mail-skip')) continue;
     // Toon wat de bezoeker zag (bv. "Nog te bepalen"), niet de interne waarde
     let values;
     if (el && el.tagName === 'SELECT') values = Array.from(el.selectedOptions).map(o => o.textContent.trim());
     else if (el && (el.type === 'checkbox' || el.type === 'radio'))
-      values = Array.from(form.querySelectorAll(`[name="${name}"]:checked`)).map(i => (i.closest('label') || i).textContent.trim() || i.value);
+      values = Array.from(form.querySelectorAll(`[name="${name}"]:checked`)).map(i => i.value && i.value !== 'ja' && i.value !== 'on' ? i.value : ((i.closest('label') || i).textContent.trim() || i.value));
     else values = data.getAll(name).map(v => String(v).trim());
     values = values.filter(Boolean);
     if (!values.length) continue;
@@ -113,10 +126,11 @@ function readableFields(form){
       if (title) label = title.childNodes[0].textContent;
     }
     label = label.replace('*', '').trim();
-    lines.push(`${label}: ${values.join(', ')}`);
+    lines.push([label, values.join(', ')]);
   }
   return lines;
 }
+const mailBody = (form) => readableFields(form).map(([k, v]) => v.includes('\n') ? `${k}:\n${v}` : `${k}: ${v}`).join('\n');
 
 function showSuccess(form, viaMail){
   const successEl = document.getElementById(form.dataset.success);
@@ -125,7 +139,17 @@ function showSuccess(form, viaMail){
   if (viaMail){
     const h = successEl.querySelector('h3'), p = successEl.querySelector('p');
     if (h) h.textContent = 'Nog één klik: verstuur de e-mail.';
-    if (p) p.innerHTML = `Je e-mailprogramma opent met je bericht al ingevuld. Druk daar op verzenden. Opent er niets? Mail ons dan rechtstreeks op <a href="mailto:${MAIL_TO}" style="text-decoration:underline">${MAIL_TO}</a>.`;
+    if (p) {
+      p.innerHTML = `Je e-mailprogramma opent met je bericht al ingevuld. Druk daar op verzenden. Opent er niets? Kopieer je aanvraag en mail ze naar <a href="mailto:${MAIL_TO}" style="text-decoration:underline">${MAIL_TO}</a>.`;
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'form-copy'; b.textContent = 'Kopieer mijn aanvraag';
+      b.addEventListener('click', async () => {
+        const text = mailBody(form);
+        try { await navigator.clipboard.writeText(text); b.textContent = 'Gekopieerd ✓'; }
+        catch (err) { window.prompt('Kopieer je aanvraag:', text); }
+      });
+      p.after(b);
+    }
   }
   successEl.classList.add('is-visible');
   successEl.focus({ preventScroll:true });
@@ -146,7 +170,7 @@ async function sendForm(form){
 
   if (!endpoint){
     const subject = isOfferte ? 'Offerteaanvraag via buroscott.be' : 'Bericht via buroscott.be';
-    const body = readableFields(form).join('\n');
+    const body = mailBody(form);
     window.location.href = `mailto:${MAIL_TO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     showSuccess(form, true);
     return;
@@ -157,7 +181,13 @@ async function sendForm(form){
   if (btn){ btn.disabled = true; btn.setAttribute('aria-busy', 'true'); }
   if (label) label.textContent = 'Bezig met versturen…';
   try {
-    const res = await fetch(endpoint, { method:'POST', body:new FormData(form), headers:{ Accept:'application/json' } });
+    // Leesbare velden versturen (zoals de bezoeker ze zag)
+    const fd = new FormData();
+    readableFields(form).forEach(([k, v]) => fd.append(k, v));
+    const mail = form.querySelector('[type="email"]');
+    if (mail) fd.append('email', mail.value);
+    fd.append('_subject', isOfferte ? 'Offerteaanvraag via buroscott.be' : 'Bericht via buroscott.be');
+    const res = await fetch(endpoint, { method:'POST', body:fd, headers:{ Accept:'application/json' } });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     showSuccess(form, false);
   } catch (err) {
@@ -171,24 +201,6 @@ async function sendForm(form){
   }
 }
 
-/* ---- Offerteformulier: dienst/pakket voorinvullen op basis van waar de bezoeker vandaan komt ---- */
-(function prefillOfferteForm(){
-  const form = document.getElementById('offerte-form');
-  if (!form) return;
-  const params = new URLSearchParams(window.location.search);
-
-  const dienst = params.get('dienst');
-  if (dienst) {
-    const checkbox = form.querySelector(`input[name="diensten"][value="${dienst}"]`);
-    if (checkbox) checkbox.checked = true;
-  }
-
-  const pakket = params.get('pakket');
-  if (pakket) {
-    const radio = form.querySelector(`input[name="pakket"][value="${pakket}"]`);
-    if (radio) radio.checked = true;
-  }
-})();
 
 const yearEl = document.getElementById('year');
 if (yearEl) yearEl.textContent = new Date().getFullYear();
