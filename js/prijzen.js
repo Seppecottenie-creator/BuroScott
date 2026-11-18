@@ -31,13 +31,24 @@ BS_PRICES.tourExtra = function (pts) { var P = BS_PRICES; return Math.max(0, Mat
 window.BSPrice = (function () {
   var KEY = 'bs-price-mode';
   function mode() { try { return localStorage.getItem(KEY) === 'pro' ? 'pro' : 'part'; } catch (e) { return 'part'; } }
-  function gross(v) { return mode() === 'pro' ? v : v * (1 + BS_PRICES.vat); }
+  function gross(v, m) { return (m || mode()) === 'pro' ? v : v * (1 + BS_PRICES.vat); }
+  // Mooi afgeronde prijs zoals de klant ze ziet:
+  // particulier (incl. btw): vanaf €50 op €5, €10–50 op €1, onder €10 op €0,50
+  // professioneel (excl. btw): hele euro's, onder €10 op de cent
+  function nice(v, m) {
+    m = m || mode();
+    var g = gross(v, m);
+    if (m === 'pro') return g < 10 ? Math.round(g * 100) / 100 : Math.round(g);
+    if (g >= 50) return Math.round(g / 5) * 5;
+    if (g >= 10) return Math.round(g);
+    return Math.round(g * 2) / 2;
+  }
   function fmt(v, exact) {
     var r = exact ? Math.round(v * 100) / 100 : Math.round(v);
     var s = r % 1 ? r.toFixed(2).replace('.', ',') : String(r);
     return '€' + s.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   }
-  function show(v) { return fmt(gross(v), v % 1 !== 0); }
+  function show(v) { var n = nice(v); return fmt(n, Math.round(n * 100) % 100 !== 0); }
   function render(root) {
     (root || document).querySelectorAll('[data-price]').forEach(function (el) {
       var v = parseFloat(el.dataset.price);
@@ -61,5 +72,5 @@ window.BSPrice = (function () {
   });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { render(); });
   else render();
-  return { mode: mode, set: set, gross: gross, fmt: fmt, show: show, render: render };
+  return { mode: mode, set: set, gross: gross, nice: nice, fmt: fmt, show: show, render: render };
 })();
