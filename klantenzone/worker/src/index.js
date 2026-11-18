@@ -83,7 +83,9 @@ async function route(request, env, ctx) {
   // --- 360°-tours (openbaar te bekijken, vaste link) ---
   if (p === '/api/tour' && m === 'GET') {
     const t = await publicTour(env, url.searchParams.get('id'));
-    track(`t/${t.id}/`, { type: 'tour', dedupe: 30 });
+    // Jouw eigen bezoeken (ingelogd als beheerder) tellen niet mee
+    const adm = await verify(env, url.searchParams.get('a') || '');
+    if (!(adm && adm.c === 'admin')) track(`t/${t.id}/`, { type: 'tour', dedupe: 30 });
     return json(t, 200, { 'Cache-Control': 'no-store' });
   }
   if (p === '/api/tourfile' && m === 'GET') return serveTourFile(env, url);

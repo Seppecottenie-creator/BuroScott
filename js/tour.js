@@ -144,7 +144,14 @@
   });
 
   if (!API || !id) { $('tr-brand-big').classList.add('is-ready'); fail(!id ? 'Er ontbreekt een tourcode in de link.' : 'De tourdienst is nog niet gekoppeld.'); return; }
-  fetch(API + '/api/tour?id=' + encodeURIComponent(id))
+  var adminTok = '';
+  try {
+    ['localStorage', 'sessionStorage'].forEach(function (k) {
+      var v = JSON.parse(window[k].getItem('kz-admin') || 'null');
+      if (v && v.expiresAt > Date.now()) adminTok = v.token;
+    });
+  } catch (e) {}
+  fetch(API + '/api/tour?id=' + encodeURIComponent(id) + (adminTok ? '&a=' + encodeURIComponent(adminTok) : ''))
     .then(function (r) { return r.json().then(function (d) { if (!r.ok) { var e = new Error(d.error || 'Tour niet gevonden.'); e.inactive = r.status === 410; throw e; } return d; }); })
     .then(function (d) {
       tour = d;
