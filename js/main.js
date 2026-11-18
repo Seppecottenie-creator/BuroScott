@@ -614,3 +614,19 @@ document.querySelectorAll('.service-card').forEach(card => {
     card.addEventListener('pointermove', e => { x = e.clientX; y = e.clientY; if (!raf) raf = requestAnimationFrame(loop); });
   });
 })();
+
+/* ---- Dienstpagina: foto zoomt traag uit tijdens het scrollen ---- */
+(function serviceParallax(){
+  const media = document.querySelector('.sd-media:not(.is-contain)');
+  if (!media || prefersReduced) return;
+  let ticking = false;
+  function update(){
+    ticking = false;
+    const r = media.getBoundingClientRect();
+    const vh = window.innerHeight;
+    const p = Math.min(Math.max((vh - r.top) / (vh + r.height), 0), 1);
+    media.style.setProperty('--z', (1.14 - p * 0.14).toFixed(4));
+  }
+  window.addEventListener('scroll', () => { if (!ticking){ ticking = true; requestAnimationFrame(update); } }, { passive:true });
+  update();
+})();
