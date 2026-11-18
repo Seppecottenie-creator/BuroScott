@@ -6,23 +6,27 @@
 ============================================================ */
 window.BS_PRICES = {
   vat: 0.21,
-  foto: { 20: 179, 30: 228, 40: 277 },   // fotografie: 20 foto's, elke 10 extra = 49
-  fotoExtra10: 49,
-  drone: { 5: 99, 10: 169 },             // dronefoto's
-  tour: 199,                             // 360° tour, 3 maanden online
+  fotoBase: 179, fotoMin: 20, fotoPer: 4.9,   // fotografie: 20 foto's €179, elke extra foto €4,90 (10 = €49)
+  droneBase: 99, droneMin: 5, dronePer: 14,   // drone: 5 foto's €99, elke extra €14 (10 = €169)
+  tour: 199, tourPts: 10, tourPer5: 49,       // 360° tour tot 10 punten, per 5 extra punten €49; 3 maanden online
   plan: 89,                              // 2D-plattegrond per verdieping
   spoed: 49,                             // levering binnen 24 u
   tourMonth: 7.5, tourQuarter: 19, tourYear: 59,
   // vanafprijzen gelden tot deze grootte; daarboven offerte op maat
   bigHouse: 250, bigLot: 1000,
   // verplaatsing: tot 20 km (enkele rit, vertrek Desselgem; op de site 'Waregem') gratis, daarna per km heen én terug
-  kmFree: 20, kmRate: 0.5, base: [50.883, 3.367], roadFactor: 1.35,
+  kmFree: 20, kmRate: 0.4132, base: [50.883, 3.367], roadFactor: 1.35,
   packages: {
     Basic:     { price: 179, foto: 20, drone: 0,  tour: false, plan: 0, label: 'Scott Basic' },
-    Signature: { price: 389, foto: 30, drone: 5,  tour: false, plan: 1, label: 'Scott Signature' },
-    Prestige:  { price: 699, foto: 40, drone: 10, tour: true,  plan: 2, label: 'Scott Prestige', voorrang: true },
+    Signature: { price: 389, foto: 30, drone: 5,  tour: false, plan: 2, label: 'Scott Signature' },
+    Prestige:  { price: 699, foto: 40, drone: 10, tour: true,  plan: 3, label: 'Scott Prestige', voorrang: true },
   },
 };
+
+// Prijsregels (excl. btw)
+BS_PRICES.fotoCost = function (n) { var P = BS_PRICES; return n > 0 ? P.fotoBase + Math.max(0, n - P.fotoMin) * P.fotoPer : 0; };
+BS_PRICES.droneCost = function (n) { var P = BS_PRICES; return n > 0 ? P.droneBase + Math.max(0, n - P.droneMin) * P.dronePer : 0; };
+BS_PRICES.tourExtra = function (pts) { var P = BS_PRICES; return Math.max(0, Math.ceil((pts - P.tourPts) / 5)) * P.tourPer5; };
 
 window.BSPrice = (function () {
   var KEY = 'bs-price-mode';

@@ -13,7 +13,6 @@
   var val = function (name) { var el = q('[name="' + name + '"]:checked'); return el ? el.value : ''; };
   var num = function (id) { var v = parseInt($(id).value, 10); return isFinite(v) ? v : 0; };
   var show = function (v) { return BSPrice.show(v); };
-  var NAMES = { foto: "foto's", drone: "dronefoto's" };
 
   // Alles in het keuzeblok hoort niet los in de mail: het overzicht vat het samen
   qa('.o-choice input, .o-choice select').forEach(function (el) { el.setAttribute('data-mail-skip', ''); });
@@ -22,7 +21,7 @@
   function packItems(P) {
     var L = [P.foto + " professionele foto's, binnen en buiten"];
     if (P.drone) L.push(P.drone + " dronefoto's van pand, tuin en omgeving");
-    if (P.tour) L.push('Volledige 360° tour, 3 maanden online');
+    if (P.tour) L.push('Volledige 360° tour (tot ' + PR.tourPts + ' punten), 3 maanden online');
     if (P.plan) L.push('2D-plattegrond, tot ' + P.plan + (P.plan === 1 ? ' verdieping' : ' verdiepingen'));
     L.push('Lichtbewerking en rechte lijnen');
     if (P.voorrang) L.push('Voorrang bij de planning');
@@ -89,30 +88,69 @@
   });
 
   /* ---------- Keuze: pakket / zelf / advies ---------- */
+  function setVis(el, on) { el.hidden = !on; el.querySelectorAll('input,select,button').forEach(function (i) { i.disabled = !on; }); if (el.matches('input,select')) el.disabled = !on; }
+  var pendingDienst = null;
   function syncPanels() {
-    var mode = val('keuze');
+    var mode = val('keuze'), lot = isLot();
+    if (mode === 'zelf' && pendingDienst) { applyDienst(pendingDienst); pendingDienst = null; }
     ['pakket', 'zelf', 'advies'].forEach(function (m) {
       var p = $('o-panel-' + m), on = m === mode;
       p.hidden = !on;
-      $('o-wait').hidden = !!mode;
-      $('o-stage').classList.toggle('is-on', !!mode);
-      var mc = mode && q('[name="keuze"][value="' + mode + '"]').closest('.o-mode');
-      if (mc) { var sb = $('o-stage').getBoundingClientRect(), mb = mc.getBoundingClientRect(); $('o-stage').style.setProperty('--arrow-x', (mb.left + mb.width / 2 - sb.left) + 'px'); }
-      p.querySelectorAll('input,select').forEach(function (i) {
+      p.querySelectorAll('input,select,button').forEach(function (i) {
         if (!on) i.disabled = true;
-        else i.disabled = !!(i.closest('.o-not-lot') && isLot()) || (i.name === 'pakket' && isLot() && i.value !== 'Basic');
+        else i.disabled = !!(i.closest('.o-not-lot') && lot) || (i.name === 'pakket' && lot && i.value !== 'Basic');
       });
     });
-    // extra's die al in het gekozen pakket zitten, verbergen
-    var P = PK[val('pakket')];
-    qa('.o-need-drone').forEach(function (el) { el.hidden = !!(P && P.drone); el.querySelector('select').disabled = !!(P && P.drone) || mode !== 'pakket'; });
-    qa('.o-need-tour').forEach(function (el) { var hide = !!(P && P.tour) || isLot(); el.hidden = hide; el.querySelector('input').disabled = hide || mode !== 'pakket'; });
-    qa('.o-need-plan').forEach(function (el) { var hide = !!(P && P.plan) || isLot(); el.hidden = hide; el.querySelector('input').disabled = hide || mode !== 'pakket'; });
+    $('o-wait').hidden = !!mode;
+    $('o-stage').classList.toggle('is-on', !!mode);
+    var mc = mode && q('[name="keuze"][value="' + mode + '"]').closest('.o-mode');
+    if (mc) { var sb = $('o-stage').getBoundingClientRect(), mb = mc.getBoundingClientRect(); $('o-stage').style.setProperty('--arrow-x', (mb.left + mb.width / 2 - sb.left) + 'px'); }
+    var P = PK[val('pakket')], inP = mode === 'pakket', inZ = mode === 'zelf';
+    if (inP) {
+      q('label[for="o-p-drone"]').textContent = P && P.drone ? "Extra dronefoto's" : "Dronefoto's";
+      setVis(q('.o-need-tour'), !lot && !(P && P.tour));
+      setVis(q('.o-p-pts'), !lot && !!P && (P.tour || $('o-p-tour').checked));
+      setVis(q('.o-need-plan'), !lot && !(P && P.plan));
+      setVis(q('.o-p-fl'), !lot && !!P && (P.plan || $('o-p-plan').checked));
+      q('label[for="o-p-fl"]').textContent = 'Verdiepingen op het plan' + (P && P.plan ? ' (' + P.plan + ' inbegrepen)' : '');
+      q('#o-panel-pakket .o-pts-tip').hidden = !(!lot && P && (P.tour || $('o-p-tour').checked));
+    }
+    if (inZ) {
+      setVis(q('.o-z-pts'), !lot && $('o-z-tour').checked);
+      setVis(q('.o-z-fl'), !lot && $('o-z-plan').checked);
+      q('#o-panel-zelf .o-pts-tip').hidden = !(!lot && $('o-z-tour').checked);
+    }
     update();
   }
-  qa('[name="keuze"], [name="pakket"]').forEach(function (r) { r.addEventListener('change', syncPanels); });
-  qa('#o-panel-pakket select, #o-panel-pakket input[type=checkbox], #o-panel-zelf select, #o-panel-zelf input, #o-verdiepingen, #o-oppervlakte, #o-perceel')
+  qa('[name="keuze"]').forEach(function (r) { r.setAttribute('autocomplete', 'off'); });
+  qa('[name="keuze"], [name="pakket"], #o-p-tour, #o-p-plan, #o-z-tour, #o-z-plan').forEach(function (r) { r.addEventListener('change', syncPanels); });
+  qa('#o-panel-pakket select, #o-panel-pakket input, #o-panel-zelf select, #o-panel-zelf input, #o-verdiepingen, #o-oppervlakte, #o-perceel')
     .forEach(function (el) { el.addEventListener('input', update); el.addEventListener('change', update); });
+
+  /* ---------- Aantallen: −/+ knoppen en minimums ---------- */
+  var MINS = { 'o-z-foto': PR.fotoMin, 'o-z-drone': PR.droneMin };
+  function clampNum(inp) {
+    var v = parseInt(inp.value, 10); if (!isFinite(v) || v < 0) v = 0;
+    var mx = +inp.max || 999; if (v > mx) v = mx;
+    var mn = MINS[inp.id]; if (mn && v > 0 && v < mn) v = mn;
+    inp.value = v;
+  }
+  form.addEventListener('click', function (e) {
+    var b = e.target.closest('.o-num [data-step]'); if (!b) return;
+    var inp = b.parentNode.querySelector('input'), st = +b.dataset.step, v = parseInt(inp.value, 10) || 0, mn = MINS[inp.id];
+    if (mn && st > 0 && v < mn) v = mn; else if (mn && st < 0 && v <= mn) v = 0; else v += st;
+    inp.value = v; clampNum(inp);
+    if (inp.id === 'o-p-fl' || inp.id === 'o-z-fl') inp.dataset.touched = '1';
+    update();
+  });
+  qa('.o-num input').forEach(function (inp) {
+    inp.addEventListener('change', function () { clampNum(inp); if (inp.id === 'o-p-fl' || inp.id === 'o-z-fl') inp.dataset.touched = '1'; update(); });
+  });
+  // verdiepingen op het plan volgen het aantal verdiepingen van het pand (tot je ze zelf aanpast)
+  $('o-verdiepingen').addEventListener('input', function () {
+    ['o-p-fl', 'o-z-fl'].forEach(function (id) { if (!$(id).dataset.touched) $(id).value = Math.min(8, Math.max(1, num('o-verdiepingen') || 1)); });
+    update();
+  });
 
   /* ---------- Verplaatsing (schatting via postcode) ---------- */
   function distance() {
@@ -213,25 +251,26 @@
   acInput.addEventListener('blur', function () { setTimeout(acClose, 150); });
 
   /* ---------- Berekening ---------- */
-  function floors() { return Math.min(8, Math.max(1, num('o-verdiepingen') || 1)); }
-  function planCost(n) { return n * PR.plan; }
-  function fotoCost(n) { return n ? PR.foto[n] : 0; }
+  function fl(id) { return Math.min(8, Math.max(1, num(id) || 1)); }
+  function verd(n) { return n + (n === 1 ? ' verdieping' : ' verdiepingen'); }
+  function tourLine(pts, base) { return ['360° tour, ' + (pts <= PR.tourPts ? 'tot ' + PR.tourPts : pts) + ' punten', (base ? PR.tour : 0) + PR.tourExtra(pts)]; }
   function customLines(c) {
     var L = [];
-    if (c.foto) L.push([c.foto + " foto's", fotoCost(c.foto)]);
-    if (c.drone) L.push([c.drone + " dronefoto's", PR.drone[c.drone]]);
-    if (c.tour) L.push(['360° tour (3 maanden online)', PR.tour]);
-    if (c.plan) L.push(['2D-plattegrond, ' + c.floors + (c.floors === 1 ? ' verdieping' : ' verdiepingen'), planCost(c.floors)]);
+    if (c.foto) L.push([c.foto + " foto's", PR.fotoCost(c.foto)]);
+    if (c.drone) L.push([c.drone + " dronefoto's", PR.droneCost(c.drone)]);
+    if (c.tour) L.push(tourLine(c.pts, true));
+    if (c.plan) L.push(['2D-plattegrond, ' + verd(c.fl), c.fl * PR.plan]);
     if (c.spoed) L.push(['Spoedlevering (24 u)', PR.spoed]);
     return L;
   }
   function packageLines(key, x) {
     var P = PK[key], L = [[P.label, P.price]];
-    if (x.extraFoto) L.push(['+' + x.extraFoto + " extra foto's", x.extraFoto / 10 * PR.fotoExtra10]);
-    if (!P.drone && x.drone) L.push([x.drone + " dronefoto's", PR.drone[x.drone]]);
-    if (!P.tour && x.tour) L.push(['360° tour (3 maanden online)', PR.tour]);
-    if (P.plan && !x.lot && x.floors > P.plan) L.push(['Plattegrond: ' + (x.floors - P.plan) + ' extra verdieping' + (x.floors - P.plan > 1 ? 'en' : ''), planCost(x.floors - P.plan)]);
-    if (!P.plan && x.plan) L.push(['2D-plattegrond, ' + x.floors + (x.floors === 1 ? ' verdieping' : ' verdiepingen'), planCost(x.floors)]);
+    if (x.extraFoto) L.push(['+' + x.extraFoto + " extra foto's", x.extraFoto * PR.fotoPer]);
+    if (x.drone) L.push(P.drone ? ['+' + x.drone + " extra dronefoto's", x.drone * PR.dronePer] : [x.drone + " dronefoto's", PR.droneCost(x.drone)]);
+    if (P.tour && PR.tourExtra(x.pts) > 0) L.push(['360° tour: ' + x.pts + ' punten (meer dan ' + PR.tourPts + ')', PR.tourExtra(x.pts)]);
+    if (!P.tour && x.tour) L.push(tourLine(x.pts, true));
+    if (P.plan && !x.lot && x.planFl > P.plan) L.push(['Plattegrond: ' + (x.planFl - P.plan) + ' extra ' + (x.planFl - P.plan > 1 ? 'verdiepingen' : 'verdieping'), (x.planFl - P.plan) * PR.plan]);
+    if (!P.plan && x.plan) L.push(['2D-plattegrond, ' + verd(x.planFl), x.planFl * PR.plan]);
     if (x.spoed) L.push(['Spoedlevering (24 u)', PR.spoed]);
     return L;
   }
@@ -239,7 +278,7 @@
   // zoals de klant het ziet: elke regel afgerond, totaal = som van die regels
   var rg = function (v) { var g = BSPrice.gross(v); return v % 1 ? Math.round(g * 100) / 100 : Math.round(g); };
   var dsum = function (L) { return L.reduce(function (s, l) { return s + rg(l[1]); }, 0); };
-  var money = function (v) { return BSPrice.fmt(v, v % 1 !== 0); };
+  var money = function (v) { return BSPrice.fmt(v, Math.round(v * 100) % 100 !== 0); };
 
   // Welk pakket dekt de eigen keuze, en wat kost het dan?
   function packageFor(c) {
@@ -248,8 +287,7 @@
       var P = PK[k];
       if (c.lot && k !== 'Basic') return;
       if (P.foto < c.foto || P.drone < c.drone || (c.tour && !P.tour)) return;
-      var L = packageLines(k, { floors: c.floors, plan: c.plan && !P.plan, spoed: c.spoed, lot: c.lot });
-      if (P.plan && !c.plan) L = L.filter(function (l) { return l[0].indexOf('extra verdieping') < 0; });
+      var L = packageLines(k, { pts: c.tour ? c.pts : PR.tourPts, plan: c.plan && !P.plan, planFl: c.plan ? c.fl : P.plan, spoed: c.spoed, lot: c.lot });
       var price = dsum(L), more = [];
       if (P.foto > c.foto) more.push((P.foto - c.foto) + " foto's extra");
       if (P.drone > c.drone) more.push((P.drone - c.drone) + " dronefoto's extra");
@@ -262,17 +300,19 @@
 
   function update() {
     var mode = val('keuze');
-    var lot = isLot(), fl = floors();
+    var lot = isLot();
     var L = [], tip = '';
     $('o-tip').hidden = true;
     if (mode === 'pakket' && val('pakket')) {
       L = packageLines(val('pakket'), {
-        extraFoto: +$('o-p-foto').value, drone: $('o-p-drone').disabled ? 0 : +$('o-p-drone').value,
-        tour: !$('o-p-tour').disabled && $('o-p-tour').checked, plan: !$('o-p-plan').disabled && $('o-p-plan').checked,
-        spoed: $('o-p-spoed').checked, floors: fl, lot: lot,
+        extraFoto: num('o-p-foto'), drone: num('o-p-drone'),
+        tour: !$('o-p-tour').disabled && $('o-p-tour').checked, pts: +$('o-p-pts').value || PR.tourPts,
+        plan: !$('o-p-plan').disabled && $('o-p-plan').checked, planFl: fl('o-p-fl'),
+        spoed: $('o-p-spoed').checked, lot: lot,
       });
     } else if (mode === 'zelf') {
-      var c = { foto: +$('o-z-foto').value, drone: +$('o-z-drone').value, tour: !lot && $('o-z-tour').checked, plan: !lot && $('o-z-plan').checked, spoed: $('o-z-spoed').checked, floors: fl, lot: lot };
+      var c = { foto: num('o-z-foto') ? Math.max(PR.fotoMin, num('o-z-foto')) : 0, drone: num('o-z-drone') ? Math.max(PR.droneMin, num('o-z-drone')) : 0,
+        tour: !lot && $('o-z-tour').checked, pts: +$('o-z-pts').value || PR.tourPts, plan: !lot && $('o-z-plan').checked, fl: fl('o-z-fl'), spoed: $('o-z-spoed').checked, lot: lot };
       L = customLines(c);
       if (L.length && (c.foto || c.drone || c.tour || c.plan)) {
         var own = dsum(L), best = packageFor(c);
@@ -286,7 +326,7 @@
         if (tip) {
           $('o-tip').innerHTML = tip + ' <button type="button" class="o-tip-btn" data-take="' + best.key + '">Neem ' + PK[best.key].label + ' →</button>';
           $('o-tip').hidden = false;
-          $('o-tip').dataset.plan = c.plan ? '1' : ''; $('o-tip').dataset.spoed = c.spoed ? '1' : '';
+          $('o-tip').dataset.plan = c.plan ? String(c.fl) : ''; $('o-tip').dataset.spoed = c.spoed ? '1' : ''; $('o-tip').dataset.pts = c.tour ? String(c.pts) : '';
         }
       }
     }
@@ -315,14 +355,15 @@
     BSPrice.render($('o-summary'));
 
     // overzicht voor de mail (excl. én incl. btw)
-    var ex = function (v) { return BSPrice.fmt(v, v % 1 !== 0); };
-    var incTotal = L.reduce(function (s, l) { return s + (l[1] % 1 ? Math.round(l[1] * (1 + PR.vat) * 100) / 100 : Math.round(l[1] * (1 + PR.vat))); }, 0);
+    var r2 = function (v) { return Math.round(v * 100) / 100; };
+    var exTotal = L.reduce(function (s, l) { return s + r2(l[1]); }, 0);
+    var incTotal = L.reduce(function (s, l) { return s + r2(l[1] * (1 + PR.vat)); }, 0);
     var lines = [];
     if (mode === 'advies') lines.push('Keuze: twijfelt nog, wil advies');
     else if (L.length) {
       lines.push('Keuze: ' + (mode === 'pakket' ? 'pakket' : 'zelf samengesteld'));
-      L.forEach(function (l) { lines.push('- ' + l[0] + ': ' + ex(l[1]) + ' excl. btw'); });
-      lines.push('Totaal vanaf: ' + ex(total) + ' excl. btw / ' + money(incTotal) + ' incl. btw');
+      L.forEach(function (l) { lines.push('- ' + l[0] + ': ' + money(r2(l[1])) + ' excl. btw'); });
+      lines.push('Totaal vanaf: ' + money(r2(exTotal)) + ' excl. btw / ' + money(r2(incTotal)) + ' incl. btw');
       if (tip) lines.push('Getoonde tip: ' + $('o-tip').textContent.replace(/Neem .*→/, '').trim());
       if (big.length) lines.push('Let op: ' + big.join(' en '));
     }
@@ -332,13 +373,15 @@
 
   $('o-tip').addEventListener('click', function (e) {
     var b = e.target.closest('[data-take]'); if (!b) return;
-    var plan = this.dataset.plan, spoed = this.dataset.spoed;
+    var d = this.dataset, P = PK[b.dataset.take];
     q('[name="keuze"][value="pakket"]').checked = true;
     q('[name="pakket"][value="' + b.dataset.take + '"]').checked = true;
+    $('o-p-spoed').checked = !!d.spoed;
+    $('o-p-plan').checked = !!d.plan && !P.plan;
+    if (d.plan) { $('o-p-fl').value = d.plan; $('o-p-fl').dataset.touched = '1'; }
+    if (d.pts) $('o-p-pts').value = d.pts;
+    $('o-p-foto').value = 0; $('o-p-drone').value = 0;
     syncPanels();
-    $('o-p-spoed').checked = !!spoed;
-    if (!$('o-p-plan').disabled) $('o-p-plan').checked = !!plan;
-    update();
     $('o-panel-pakket').scrollIntoView({ behavior: 'smooth', block: 'center' });
   });
 
@@ -357,7 +400,7 @@
     var mode = val('keuze');
     var box = $('o-panel-zelf').querySelector('.o-opts');
     var err = box.querySelector('.field-error') || box.appendChild(Object.assign(document.createElement('p'), { className: 'field-error o-err', id: 'o-zelf-error' }));
-    var bad = mode === 'zelf' && !(+$('o-z-foto').value || +$('o-z-drone').value || $('o-z-tour').checked || $('o-z-plan').checked);
+    var bad = mode === 'zelf' && !(num('o-z-foto') || num('o-z-drone') || $('o-z-tour').checked || $('o-z-plan').checked);
     err.textContent = bad ? 'Kies minstens één dienst (spoedlevering alleen kan niet).' : '';
     err.hidden = !bad;
     box.classList.toggle('is-invalid', bad);
@@ -371,11 +414,14 @@
     q('[name="keuze"][value="pakket"]').checked = true;
     q('[name="pakket"][value="' + pk + '"]').checked = true;
   } else if (dienst) {
-    q('[name="keuze"][value="zelf"]').checked = true;
-    if (dienst === 'fotografie') $('o-z-foto').value = '20';
-    if (dienst === 'drone') $('o-z-drone').value = '5';
-    if (dienst === '360-tours') $('o-z-tour').checked = true;
-    if (dienst === 'plannen') $('o-z-plan').checked = true;
+    // de klant kiest zelf eerst hoe hij bestelt; kiest hij "zelf samenstellen", dan staat deze dienst al aangeduid
+    pendingDienst = dienst;
+  }
+  function applyDienst(d) {
+    if (d === 'fotografie' && !num('o-z-foto')) $('o-z-foto').value = PR.fotoMin;
+    if (d === 'drone' && !num('o-z-drone')) $('o-z-drone').value = PR.droneMin;
+    if (d === '360-tours') $('o-z-tour').checked = true;
+    if (d === 'plannen') $('o-z-plan').checked = true;
   }
   syncKlant(); syncType(); syncDate();
 })();
