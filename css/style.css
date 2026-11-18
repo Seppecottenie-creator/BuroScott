@@ -1363,3 +1363,8 @@ html.is-construction body::after{ opacity:.06; }
 .sd-title .sd-w{ display:inline-block; white-space:nowrap; }
 .sd-title .sd-w > span{ display:inline-block; animation:sdLetter .9s var(--ease) both; animation-delay:calc(var(--i) * 45ms + 100ms); }
 @media (prefers-reduced-motion: reduce){ .sd-title .sd-w > span{ animation:none; } }
+
+/* Alles onder de hero ligt erboven en heeft een eigen achtergrond,
+   zodat de hero nergens meer doorschijnt */
+.services, .pk-teaser, .stats-band{ background:var(--paper); }
+.services, .process, .pk-teaser, .stats-band, .closing, .site-footer{ position:relative; z-index:2; }
