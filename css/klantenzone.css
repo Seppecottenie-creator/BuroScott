@@ -357,3 +357,8 @@ body.is-gallery .kz-foot{ border-top:none; }
 .ad-file-cover{ position:absolute; left:8px; top:8px; border:0; border-radius:999px; padding:6px 10px; font-size:.75rem; font-weight:700; background:rgba(255,255,255,.92); box-shadow:0 2px 8px rgba(0,0,0,.15); }
 .ad-file-cover:hover, .ad-file-cover.is-on{ background:var(--accent); color:#fff; }
 .ad-settings-grid select{ flex:1; min-width:0; padding:14px 16px; border-radius:12px; border:1px solid var(--line-light); font:inherit; background:var(--paper); }
+.ad-pill.is-warn{ background:#FFF4E5; color:#9A5B00; }
+.te-online-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:14px; }
+.te-online-text{ color:var(--grey-dark); margin-top:-8px; }
+.te-online-actions{ display:flex; flex-wrap:wrap; gap:8px; margin:16px 0 12px; }
+.te-soon{ padding:14px 18px; border-radius:14px; background:#FFF4E5; color:#7A4A00; font-weight:600; margin:10px 0 -10px; }

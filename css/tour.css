@@ -95,3 +95,5 @@ button{ font:inherit; cursor:pointer; }
 @media (prefers-reduced-motion: reduce){ .tr-hs-ring, .tr-bar span, .tr-hint svg{ animation:none; } }
 .tr-pano .pnlm-panorama-info, .te-pano .pnlm-panorama-info{ display:none !important; }
 #te-pano{ height:min(62vh, 560px); }
+.tr-contact{ display:block; margin-top:14px; font-size:.85rem; color:#9A988F; line-height:1.6; }
+.tr-contact a{ color:#fff; text-decoration:underline; }

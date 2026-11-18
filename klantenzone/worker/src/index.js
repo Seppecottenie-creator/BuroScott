@@ -81,6 +81,7 @@ async function route(request, env) {
       if (parts.length === 2 && m === 'GET') return json(await adminGetTour(env, id));
       if (parts.length === 2 && m === 'PUT') return json(await adminSaveTour(request, env, id));
       if (parts.length === 2 && m === 'DELETE') { await deletePrefix(env, `t/${id}/`); return json({ ok: true }); }
+      if (parts[2] === 'online' && parts.length === 3 && m === 'POST') return json(await adminTourOnline(request, env, id));
       if (parts[2] === 'scenes' && parts.length === 4 && m === 'PUT') return json(await adminUploadScene(request, env, id, parts[3], url), 201);
       if (parts[2] === 'scenes' && parts.length === 4 && m === 'DELETE') return json(await adminDeleteScene(env, id, parts[3]));
     }
@@ -272,19 +273,28 @@ async function publicTour(env, id) {
   if (!CODE_RE.test(id || '')) throw new HttpError(400, 'Ongeldige tour.');
   const t = await readTour(env, id);
   if (!t) throw new HttpError(404, 'Deze tour bestaat niet (meer).');
+  if (!tourActive(t)) throw new HttpError(410, 'Deze virtuele tour is momenteel niet online.');
   return t;
 }
+const TOUR_INCLUDED_DAYS = 90; // 3 maanden online inbegrepen
+const tourActive = (t) => !t.activeUntil || t.activeUntil > Date.now();
 async function serveTourFile(env, url) {
   const id = url.searchParams.get('id');
   const scene = url.searchParams.get('s');
   const kind = url.searchParams.get('k') === 'p' ? 'p' : 's';
   if (!CODE_RE.test(id || '') || !SCENE_RE.test(scene || '')) throw new HttpError(400, 'Ongeldig bestand.');
+  // Beheer mag altijd kijken (ook als de tour gepauzeerd is), bezoekers enkel als ze online is
+  const admin = await verify(env, url.searchParams.get('t') || '');
+  if (!(admin && admin.c === 'admin')) {
+    const t = await readTour(env, id);
+    if (!t || !tourActive(t)) throw new HttpError(410, 'Deze virtuele tour is momenteel niet online.');
+  }
   const obj = await env.GALLERIES.get(`t/${id}/${kind}/${scene}.jpg`);
   if (!obj) throw new HttpError(404, 'Bestand niet gevonden.');
   const headers = new Headers();
   obj.writeHttpMetadata(headers);
   headers.set('etag', obj.httpEtag);
-  headers.set('Cache-Control', 'public, max-age=86400');
+  headers.set('Cache-Control', 'public, max-age=3600');
   headers.set('Content-Length', String(obj.size));
   return new Response(obj.body, { headers });
 }
@@ -294,7 +304,7 @@ async function adminListTours(env) {
   const out = [];
   for (const id of ids) {
     const t = await readTour(env, id);
-    if (t) out.push({ id, title: t.title, created: t.created, scenes: (t.scenes || []).length });
+    if (t) out.push({ id, title: t.title, created: t.created, activeUntil: t.activeUntil || 0, scenes: (t.scenes || []).length });
   }
   out.sort((a, b) => b.created - a.created);
   return { tours: out };
@@ -306,7 +316,7 @@ async function adminCreateTour(request, env) {
   const id = String(body.id || '').trim().toLowerCase();
   if (!CODE_RE.test(id)) throw new HttpError(400, 'Ongeldige tourcode.');
   if (await readTour(env, id)) throw new HttpError(409, 'Deze tourcode bestaat al.');
-  const t = { id, title, created: Date.now(), updated: Date.now(), firstScene: '', scenes: [] };
+  const t = { id, title, created: Date.now(), updated: Date.now(), activeUntil: Date.now() + TOUR_INCLUDED_DAYS * 86400e3, firstScene: '', scenes: [] };
   await writeTour(env, id, t);
   return t;
 }
@@ -354,6 +364,22 @@ async function adminDeleteScene(env, id, scene) {
   if (!SCENE_RE.test(scene)) throw new HttpError(400, 'Ongeldige ruimte.');
   await env.GALLERIES.delete([`t/${id}/s/${scene}.jpg`, `t/${id}/p/${scene}.jpg`]);
   return { ok: true };
+}
+// Online-periode verlengen ({ months }) of de tour pauzeren ({ pause: true })
+async function adminTourOnline(request, env, id) {
+  const t = await readTour(env, id);
+  if (!t) throw new HttpError(404, 'Tour niet gevonden.');
+  const body = await readJson(request);
+  if (body.pause) t.activeUntil = Date.now() - 1000;
+  else {
+    const months = clampInt(body.months, 1, 36, 3);
+    const d = new Date(Math.max(Date.now(), t.activeUntil || 0));
+    d.setMonth(d.getMonth() + months);
+    t.activeUntil = d.getTime();
+  }
+  t.updated = Date.now();
+  await writeTour(env, id, t);
+  return t;
 }
 async function writeTour(env, id, t) {
   await env.GALLERIES.put(`t/${id}/tour.json`, JSON.stringify(t), { httpMetadata: { contentType: 'application/json' } });

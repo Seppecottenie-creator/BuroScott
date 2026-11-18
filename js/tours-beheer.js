@@ -21,8 +21,16 @@ function rand(n) { const c = 'abcdefghjkmnpqrstuvwxyz23456789'; return Array.fro
 function slug(s, max = 30) { return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, max).replace(/-+$/, ''); }
 const tourLink = (id) => location.href.replace(/tours-beheer\.html.*$/, 'tour.html') + '?id=' + encodeURIComponent(id);
 const embedCode = (id) => `<iframe src="${tourLink(id)}" width="100%" height="560" style="border:0;border-radius:12px" allow="fullscreen; accelerometer; gyroscope" allowfullscreen loading="lazy" title="Virtuele tour"></iframe>`;
-const fileUrl = (id, scene, kind) => `${API}/api/tourfile?id=${encodeURIComponent(id)}&s=${encodeURIComponent(scene)}${kind ? '&k=' + kind : ''}&v=${state.tour ? state.tour.updated : 0}`;
+const fileUrl = (id, scene, kind) => `${API}/api/tourfile?id=${encodeURIComponent(id)}&s=${encodeURIComponent(scene)}${kind ? '&k=' + kind : ''}&v=${state.tour ? state.tour.updated : 0}&t=${encodeURIComponent(state.token || '')}`;
 function status(msg) { $('te-status').textContent = msg; }
+const DAY = 86400e3;
+function onlineState(until) {
+  if (!until) return { cls: '', label: 'Altijd online', text: 'Deze tour heeft geen einddatum.' };
+  const days = Math.ceil((until - Date.now()) / DAY);
+  if (days <= 0) return { cls: 'is-off', label: 'Gepauzeerd', text: `Niet online sinds ${fmtDate(until)}. Verleng om de link weer te activeren.` };
+  if (days <= 14) return { cls: 'is-warn', label: `Nog ${days} ${days === 1 ? 'dag' : 'dagen'}`, text: `Online tot ${fmtDate(until)}. Tijd om de klant te contacteren.` };
+  return { cls: '', label: `Tot ${fmtDate(until)}`, text: `Online tot ${fmtDate(until)}.` };
+}
 function markDirty() { state.dirty = true; status('Niet-opgeslagen wijzigingen. Klik op "Opslaan".'); }
 
 async function api(path, opts = {}) {
@@ -61,9 +69,14 @@ async function openList() {
   const r = await api('/api/admin/tours');
   ul.innerHTML = '';
   if (!r.tours.length) { ul.innerHTML = '<li class="ad-empty">Nog geen tours. Maak er hierboven een aan.</li>'; return; }
+  const soon = r.tours.filter((t) => t.activeUntil && t.activeUntil > Date.now() && t.activeUntil - Date.now() < 14 * DAY);
+  $('te-soon').hidden = !soon.length;
+  $('te-soon').textContent = soon.length ? `⚠ ${soon.length} ${soon.length === 1 ? 'tour vervalt' : 'tours vervallen'} binnen 14 dagen: ${soon.map((t) => t.title).join(', ')}.` : '';
+  r.tours.sort((a, b) => (a.activeUntil || Infinity) - (b.activeUntil || Infinity));
   for (const t of r.tours) {
+    const st = onlineState(t.activeUntil);
     const li = document.createElement('li'); li.className = 'ad-item';
-    li.innerHTML = `<button type="button" class="ad-item-main"><span class="ad-item-title">${esc(t.title)}</span><span class="ad-item-meta">${esc(t.id)} · ${t.scenes} ${t.scenes === 1 ? 'ruimte' : 'ruimtes'} · ${fmtDate(t.created)}</span></button><span class="ad-pill">Vaste link</span>`;
+    li.innerHTML = `<button type="button" class="ad-item-main"><span class="ad-item-title">${esc(t.title)}</span><span class="ad-item-meta">${esc(t.id)} · ${t.scenes} ${t.scenes === 1 ? 'ruimte' : 'ruimtes'} · gemaakt ${fmtDate(t.created)}</span></button><span class="ad-pill ${st.cls}">${st.label}</span>`;
     li.querySelector('button').addEventListener('click', () => openTour(t.id));
     ul.appendChild(li);
   }
@@ -93,6 +106,7 @@ async function openTour(id) {
   $('te-open').href = tourLink(state.tour.id);
   $('te-link').value = tourLink(state.tour.id);
   $('te-embed').value = embedCode(state.tour.id);
+  renderOnline();
   renderScenes();
   if (state.tour.scenes.length) selectScene(state.tour.firstScene || state.tour.scenes[0].id);
   else { $('te-editor-card').hidden = true; destroyViewer(); }
@@ -103,6 +117,26 @@ document.querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('clic
   catch (e) { input.select(); b.textContent = 'Ctrl+C'; }
   setTimeout(() => { b.textContent = 'Kopieer'; }, 2000);
 }));
+
+function renderOnline() {
+  const st = onlineState(state.tour.activeUntil);
+  $('te-online-text').textContent = st.text;
+  const pill = $('te-online-pill'); pill.className = 'ad-pill ' + st.cls; pill.textContent = st.label;
+  $('te-pause').disabled = st.cls === 'is-off';
+}
+document.querySelectorAll('[data-months]').forEach((b) => b.addEventListener('click', async () => {
+  try {
+    state.tour = await api(`/api/admin/tours/${encodeURIComponent(state.tour.id)}/online`, { method: 'POST', body: JSON.stringify({ months: +b.dataset.months }) });
+    renderOnline(); status('Online-periode verlengd ✓');
+  } catch (e) { status(e.message); }
+}));
+$('te-pause').addEventListener('click', async () => {
+  if (!(await confirmBox('Tour pauzeren?', 'Bezoekers zien dan "niet online". De tour blijft bewaard; verlengen zet hem meteen terug online.'))) return;
+  try {
+    state.tour = await api(`/api/admin/tours/${encodeURIComponent(state.tour.id)}/online`, { method: 'POST', body: JSON.stringify({ pause: true }) });
+    renderOnline(); status('Tour gepauzeerd.');
+  } catch (e) { status(e.message); }
+});
 
 function renderScenes() {
   const t = state.tour;

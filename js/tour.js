@@ -12,9 +12,11 @@
   function file(sceneId, kind) {
     return API + '/api/tourfile?id=' + encodeURIComponent(id) + '&s=' + encodeURIComponent(sceneId) + (kind ? '&k=' + kind : '');
   }
-  function fail(msg) {
+  function fail(msg, inactive) {
     $('tr-loading').classList.add('is-error');
-    $('tr-loading-text').textContent = msg;
+    $('tr-loading-text').innerHTML = inactive
+      ? 'Deze virtuele tour is momenteel niet online.<br><span class="tr-contact">Interesse in dit pand? Neem contact op met de verkoper of makelaar.<br>Tour door <a href="index.html" target="_blank" rel="noopener">Buro Scott</a> · <a href="mailto:info@buroscott.be">info@buroscott.be</a></span>'
+      : escapeHtml(msg);
   }
   function done() {
     $('tr-loading').classList.add('is-done');
@@ -117,7 +119,7 @@
 
   if (!API || !id) { fail(!id ? 'Er ontbreekt een tourcode in de link.' : 'De tourdienst is nog niet gekoppeld.'); return; }
   fetch(API + '/api/tour?id=' + encodeURIComponent(id))
-    .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || 'Tour niet gevonden.'); return d; }); })
+    .then(function (r) { return r.json().then(function (d) { if (!r.ok) { var e = new Error(d.error || 'Tour niet gevonden.'); e.inactive = r.status === 410; throw e; } return d; }); })
     .then(function (d) {
       tour = d;
       if (!tour.scenes || !tour.scenes.length) throw new Error('Deze tour heeft nog geen ruimtes.');
@@ -125,5 +127,5 @@
       $('tr-title').textContent = tour.title;
       start();
     })
-    .catch(function (e) { fail(e.message); });
+    .catch(function (e) { fail(e.message, e.inactive); });
 })();
