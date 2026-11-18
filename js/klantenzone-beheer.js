@@ -99,7 +99,7 @@ $('ad-title').addEventListener('input', () => { if (!$('ad-code').dataset.touche
 $('ad-code').addEventListener('input', () => { $('ad-code').dataset.touched = '1'; });
 $('ad-pw-new').addEventListener('click', () => { $('ad-pw').value = newPassword(); });
 
-const lib = { galleries: [], folder: 'alle', query: '' };
+const lib = { galleries: [], folders: [], folder: new URLSearchParams(location.search).get('map') || 'alle', query: '' };
 function ago(ms) {
   const m = Math.round((Date.now() - ms) / 60000);
   if (m < 1) return 'zonet';
@@ -117,39 +117,53 @@ function statusOf(g) {
   if (days <= 7) return { cls: 'is-warn', label: `Nog ${days} ${days === 1 ? 'dag' : 'dagen'}` };
   return { cls: '', label: `Online · ${days} d` };
 }
-async function openList() {
+async function openList(folder) {
   show('ad-list-view');
   resetCreateForm();
+  if (folder) lib.folder = folder;
+  AdminShell.setActive(lib.folder);
   $('ad-list').innerHTML = '<li class="lib-empty">Laden…</li>';
+  await reloadLib();
+}
+async function reloadLib() {
   const r = await api('/api/admin/galleries');
   lib.galleries = r.galleries.sort((a, b) => (b.updated || b.created) - (a.updated || a.created));
-  const pct = Math.min(100, (r.totalBytes / r.limitBytes) * 100);
-  $('ad-storage').innerHTML = `<span class="lib-storage-label"><b>${fmtBytes(r.totalBytes)}</b> van 10 GB gratis</span><span class="ad-bar"><span style="width:${Math.max(1, pct).toFixed(1)}%"></span></span>`;
-  renderFolders();
+  lib.folders = r.folders || [];
+  AdminShell.setData(r);
+  if (lib.folder !== 'alle' && lib.folder !== 'geen' && lib.folder !== 'verlopen' && !lib.folders.some((f) => f.id === lib.folder)) lib.folder = 'alle';
+  fillFolderSelects();
   renderLibrary();
 }
-function renderFolders() {
-  const years = [...new Set(lib.galleries.map((g) => new Date(g.created).getFullYear()))].sort((a, b) => b - a);
-  const now = Date.now();
-  const items = [['alle', 'Alle galerijen', lib.galleries.length], ...years.map((y) => [String(y), String(y), lib.galleries.filter((g) => new Date(g.created).getFullYear() === y).length])];
-  const expired = lib.galleries.filter((g) => g.expires < now).length;
-  if (expired) items.push(['verlopen', 'Verlopen', expired]);
-  $('lib-folders').innerHTML = items.map(([key, label, n]) => `<li><button type="button" data-folder="${key}" ${lib.folder === key ? 'aria-current="true"' : ''}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>${label}</span><em>${n}</em></button></li>`).join('');
-  $('lib-folders').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { lib.folder = b.dataset.folder; renderFolders(); renderLibrary(); }));
+function fillFolderSelects() {
+  const opts = '<option value="">Zonder map</option>' + lib.folders.map((f) => `<option value="${esc(f.id)}">${esc(f.name)}</option>`).join('');
+  for (const id of ['ad-folder', 'ad-d-folder']) { const sel = $(id); const v = sel.value; sel.innerHTML = opts; sel.value = v; }
+  if (state.current) $('ad-d-folder').value = state.current.folder || '';
 }
+AdminShell.onSelect = (key) => {
+  lib.folder = key;
+  if ($('ad-list-view').hidden) { openList(key); return; }
+  renderLibrary();
+};
+AdminShell.onChange = async () => {
+  await reloadLib();
+  if (!$('ad-detail-view').hidden && state.current) await refreshDetail(state.current.code);
+};
 function renderLibrary() {
   const now = Date.now();
   const q = lib.query.toLowerCase();
   let list = lib.galleries;
+  const ids = new Set(lib.folders.map((f) => f.id));
   if (lib.folder === 'verlopen') list = list.filter((g) => g.expires < now);
-  else if (lib.folder !== 'alle') list = list.filter((g) => String(new Date(g.created).getFullYear()) === lib.folder);
+  else if (lib.folder === 'geen') list = list.filter((g) => !ids.has(g.folder));
+  else if (lib.folder !== 'alle') list = list.filter((g) => g.folder === lib.folder);
   if (q) list = list.filter((g) => [g.title, g.subtitle, g.code].join(' ').toLowerCase().includes(q));
-  $('lib-folder-title').textContent = lib.folder === 'alle' ? 'Alle galerijen' : lib.folder === 'verlopen' ? 'Verlopen galerijen' : `Map ${lib.folder}`;
+  const fo = lib.folders.find((f) => f.id === lib.folder);
+  $('lib-folder-title').textContent = lib.folder === 'alle' ? 'Alle galerijen' : lib.folder === 'verlopen' ? 'Verlopen galerijen' : lib.folder === 'geen' ? 'Zonder map' : fo ? fo.name : 'Galerijen';
   $('lib-count').textContent = `${list.length} ${list.length === 1 ? 'galerij' : 'galerijen'}`;
   const grid = $('ad-list');
   if (!list.length) {
     grid.innerHTML = lib.galleries.length
-      ? '<li class="lib-empty">Geen galerijen gevonden.</li>'
+      ? `<li class="lib-empty">${q ? 'Geen galerijen gevonden.' : 'Deze map is nog leeg. Sleep een galerij hierheen in de zijbalk, of maak een nieuwe aan.'}</li>`
       : '<li class="lib-empty lib-empty-big"><b>Nog geen galerijen.</b><span>Maak je eerste galerij aan met de blauwe knop.</span></li>';
     return;
   }
@@ -175,11 +189,20 @@ function renderLibrary() {
         <a href="activiteit.html?g=${encodeURIComponent(g.code)}">Activiteit</a>
       </div>`;
     li.querySelector('.lib-card-open').addEventListener('click', () => openDetail(g.code));
+    li.draggable = true;
+    li.addEventListener('dragstart', (e) => { e.dataTransfer.setData(AdminShell.DRAG, g.code); e.dataTransfer.effectAllowed = 'move'; li.classList.add('is-dragging'); document.body.classList.add('is-dragging'); });
+    li.addEventListener('dragend', () => { li.classList.remove('is-dragging'); document.body.classList.remove('is-dragging'); });
     grid.appendChild(li);
   });
 }
 $('lib-search').addEventListener('input', (e) => { lib.query = e.target.value.trim(); renderLibrary(); });
-$('lib-new').addEventListener('click', () => { resetCreateForm(); $('ad-new-dialog').showModal(); $('ad-title').focus(); });
+function openNew() {
+  resetCreateForm();
+  $('ad-folder').value = lib.folders.some((f) => f.id === lib.folder) ? lib.folder : '';
+  $('ad-new-dialog').showModal();
+  $('ad-title').focus();
+}
+$('lib-new').addEventListener('click', openNew);
 $('ad-new-close').addEventListener('click', () => $('ad-new-dialog').close());
 
 $('ad-create-form').addEventListener('submit', async (e) => {
@@ -193,6 +216,7 @@ $('ad-create-form').addEventListener('submit', async (e) => {
     password: $('ad-pw').value.trim(),
     days: Number($('ad-days').value),
     tourUrl: $('ad-tour').value.trim(),
+    folder: $('ad-folder').value,
   };
   try {
     const g = await api('/api/admin/galleries', { method: 'POST', body: JSON.stringify(body) });
@@ -203,6 +227,11 @@ $('ad-create-form').addEventListener('submit', async (e) => {
 
 /* ---------- Eén galerij ---------- */
 $('ad-back').addEventListener('click', () => openList());
+$('ad-d-folder-save').addEventListener('click', () => {
+  const v = $('ad-d-folder').value;
+  const f = lib.folders.find((x) => x.id === v);
+  patch({ folder: v }, f ? `Verplaatst naar map "${f.name}".` : 'Galerij staat nu zonder map.').then(() => reloadLib());
+});
 
 function shareText(g, password) {
   return `Dag,\n\nDe beelden van ${g.title} staan klaar in onze klantenzone. Je kan ze daar bekijken en downloaden (per stuk of alles in één keer).\n\nLink: ${clientLink(g.code)}\nGalerijcode: ${g.code}\nWachtwoord: ${password}\n\nDe galerij blijft beschikbaar tot ${fmtDate(g.expires)}.\n\nVriendelijke groeten,\nBuro Scott`;
@@ -223,6 +252,7 @@ async function openDetail(code, freshPassword) {
   $('ad-share').hidden = true;
   $('ad-progress').innerHTML = '';
   $('ad-d-status').textContent = '';
+  if (!AdminShell.folders.length && !lib.galleries.length) reloadLib().catch(() => {});
   await refreshDetail(code);
   if (freshPassword) showShare(state.current, freshPassword);
 }
@@ -237,6 +267,7 @@ async function refreshDetail(code) {
   $('ad-d-activity-link').href = 'activiteit.html?g=' + encodeURIComponent(g.code);
   loadGalleryActivity(g.code);
   $('ad-d-tour').value = g.tourUrl || '';
+  $('ad-d-folder').value = g.folder || '';
   $('ad-d-count').textContent = `(${g.files.length})`;
   const ul = $('ad-d-files');
   ul.innerHTML = '';
@@ -388,7 +419,7 @@ $('ad-d-delete').addEventListener('click', async () => {
       const q = new URLSearchParams(location.search);
       if (q.get('g')) { await openDetail(q.get('g')); return; }
       await openList();
-      if (q.get('nieuw')) { $('ad-new-dialog').showModal(); $('ad-title').focus(); }
+      if (q.get('nieuw')) openNew();
       return;
     }
   } catch (e) {}

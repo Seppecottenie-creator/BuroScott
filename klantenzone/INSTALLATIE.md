@@ -119,3 +119,9 @@ Open daarna de site met `?api=http://127.0.0.1:8787` achter het adres van
 - **Onthoud mij op dit toestel**: 30 dagen ingelogd blijven.
 - Op je gsm: open het beheer en kies "Zet op beginscherm". Je beheer opent dan als app.
 - Onderaan de klantenzone staat ook een discrete link "Beheer".
+
+## Mappen
+
+- In de zijbalk (op elke beheerpagina) onder **Mappen**: **+** maakt een map aan, **⋯** naast een map om te hernoemen of te verwijderen.
+- Galerij in een map steken: sleep de kaart op de map, kies de map bij "Nieuwe galerij", of via Instellingen → Map in de galerij.
+- Een map verwijderen verwijdert geen galerijen: die komen bij "Zonder map".

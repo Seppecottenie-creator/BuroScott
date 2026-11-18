@@ -18,18 +18,10 @@
 <script src="js/klantenzone-config.js"></script>
 <script src="js/admin-session.js"></script>
 </head>
-<body class="kz kz-admin">
+<body class="kz kz-admin adm">
 
-<header class="kz-top">
-  <a href="beheer.html" class="kz-brand">Buro Scott<span class="brand-dot" aria-hidden="true">.</span></a>
-  <nav class="ad-tabs" aria-label="Beheer">
-    <a href="beheer.html">Overzicht</a>
-    <a href="klantenzone-beheer.html">Galerijen</a>
-    <a href="tours-beheer.html">360° tours</a>
-    <a href="activiteit.html" aria-current="page">Activiteit</a>
-  </nav>
-  <button type="button" class="kz-logout" id="ac-logout" hidden>Afmelden</button>
-</header>
+<aside id="adm-side" data-page="activiteit" data-logout="ac-logout"></aside>
+<script src="js/admin-shell.js"></script>
 
 <main id="inhoud" class="ad-main">
   <section class="ad-card ad-login" id="ac-login-view" hidden>

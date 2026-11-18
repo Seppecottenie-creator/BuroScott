@@ -18,18 +18,10 @@
 <script src="js/klantenzone-config.js"></script>
 <script src="js/admin-session.js"></script>
 </head>
-<body class="kz kz-admin">
+<body class="kz kz-admin adm">
 
-<header class="kz-top">
-  <a href="beheer.html" class="kz-brand">Buro Scott<span class="brand-dot" aria-hidden="true">.</span></a>
-  <nav class="ad-tabs" aria-label="Beheer">
-    <a href="beheer.html">Overzicht</a>
-    <a href="klantenzone-beheer.html" aria-current="page">Galerijen</a>
-    <a href="tours-beheer.html">360° tours</a>
-    <a href="activiteit.html">Activiteit</a>
-  </nav>
-  <button type="button" class="kz-logout" id="ad-logout" hidden>Afmelden</button>
-</header>
+<aside id="adm-side" data-page="galerijen" data-logout="ad-logout"></aside>
+<script src="js/admin-shell.js"></script>
 
 <main id="inhoud" class="ad-main">
 
@@ -50,18 +42,6 @@
 
   <!-- Bibliotheek (Picflow-stijl) -->
   <section id="ad-list-view" class="lib" hidden>
-    <aside class="lib-side" aria-label="Beheer">
-      <a href="beheer.html" class="lib-brand">BURO SCOTT<span>.</span><small>Beheer</small></a>
-      <nav class="lib-nav">
-        <a href="beheer.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Overzicht</a>
-        <a href="klantenzone-beheer.html" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Galerijen</a>
-        <a href="tours-beheer.html"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18"/></svg>360° tours</a>
-        <a href="activiteit.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>Activiteit</a>
-      </nav>
-      <p class="lib-label">Mappen</p>
-      <ul class="lib-folders" id="lib-folders"></ul>
-      <div class="lib-storage" id="ad-storage" aria-label="Opslag"></div>
-    </aside>
 
     <div class="lib-main">
       <div class="lib-top">
@@ -119,6 +99,10 @@
           </select>
         </div>
         <div class="field">
+          <label for="ad-folder">Map</label>
+          <select id="ad-folder"><option value="">Zonder map</option></select>
+        </div>
+        <div class="field ad-span2">
           <label for="ad-tour">Link naar 360° tour <span class="hint">(optioneel)</span></label>
           <input type="url" id="ad-tour" placeholder="https://…">
         </div>
@@ -205,6 +189,13 @@
           <div class="kz-pw">
             <input type="url" id="ad-d-tour" placeholder="https://…">
             <button type="button" class="kz-pw-toggle" id="ad-d-tour-save">Opslaan</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="ad-d-folder">Map</label>
+          <div class="kz-pw">
+            <select id="ad-d-folder"><option value="">Zonder map</option></select>
+            <button type="button" class="kz-pw-toggle" id="ad-d-folder-save">Verplaats</button>
           </div>
         </div>
         <div class="field">

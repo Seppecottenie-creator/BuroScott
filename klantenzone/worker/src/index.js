@@ -119,6 +119,14 @@ async function route(request, env, ctx) {
       if (parts[2] === 'scenes' && parts.length === 4 && m === 'PUT') return json(await adminUploadScene(request, env, id, parts[3], url), 201);
       if (parts[2] === 'scenes' && parts.length === 4 && m === 'DELETE') return json(await adminDeleteScene(env, id, parts[3]));
     }
+    if (parts[0] === 'folders') {
+      if (parts.length === 1 && m === 'GET') return json({ folders: await readFolders(env) });
+      if (parts.length === 1 && m === 'POST') return json(await adminCreateFolder(request, env), 201);
+      const id = parts[1];
+      if (!FOLDER_RE.test(id || '')) throw new HttpError(400, 'Ongeldige map.');
+      if (parts.length === 2 && m === 'PATCH') return json(await adminRenameFolder(request, env, id));
+      if (parts.length === 2 && m === 'DELETE') return json(await adminDeleteFolder(env, id));
+    }
     if (parts[0] === 'galleries') {
       if (parts.length === 1 && m === 'GET') return json(await adminListGalleries(env));
       if (parts.length === 1 && m === 'POST') return json(await adminCreateGallery(request, env), 201);
@@ -220,10 +228,10 @@ async function adminListGalleries(env) {
     const imgs = files.filter(f => f.preview);
     const cover = (imgs.find(f => f.name === meta.cover) || imgs.find(f => f.cat === 'fotos') || imgs[0] || {}).name || '';
     const updated = files.reduce((m, f) => Math.max(m, f.uploaded || 0), meta.created || 0);
-    out.push({ code, title: meta.title, subtitle: meta.subtitle || '', created: meta.created, updated, expires: meta.expires, tourUrl: meta.tourUrl || '', fileCount: files.length, bytes, cover });
+    out.push({ code, title: meta.title, subtitle: meta.subtitle || '', created: meta.created, updated, expires: meta.expires, tourUrl: meta.tourUrl || '', folder: meta.folder || '', fileCount: files.length, bytes, cover });
   }
   out.sort((a, b) => b.created - a.created);
-  return { galleries: out, totalBytes, limitBytes: 10 * 1024 ** 3 };
+  return { galleries: out, folders: await readFolders(env), totalBytes, limitBytes: 10 * 1024 ** 3 };
 }
 
 async function adminCreateGallery(request, env) {
@@ -241,6 +249,7 @@ async function adminCreateGallery(request, env) {
     code, title,
     subtitle: String(body.subtitle || '').trim().slice(0, 160),
     tourUrl: cleanUrl(body.tourUrl),
+    folder: await validFolder(env, body.folder),
     salt, hash: await hashPassword(env, salt, password),
     created: Date.now(),
     expires: Date.now() + days * 86400e3,
@@ -263,6 +272,7 @@ async function adminUpdateGallery(request, env, code) {
   if (body.subtitle !== undefined) meta.subtitle = String(body.subtitle).trim().slice(0, 160);
   if (body.tourUrl !== undefined) meta.tourUrl = cleanUrl(body.tourUrl);
   if (body.cover !== undefined) meta.cover = validName(String(body.cover)) ? String(body.cover) : '';
+  if (body.folder !== undefined) meta.folder = await validFolder(env, body.folder);
   if (body.days !== undefined) meta.expires = Date.now() + clampInt(body.days, 1, 365, 30) * 86400e3;
   if (body.password) {
     if (String(body.password).length < 8) throw new HttpError(400, 'Het wachtwoord moet minstens 8 tekens hebben.');
@@ -499,6 +509,58 @@ async function adminActivity(env, url) {
   out.sort((a, b) => b.t - a.t);
   const limit = clampInt(url.searchParams.get('limit'), 1, 1000, 300);
   return { events: out.slice(0, limit), stats };
+}
+
+/* ---------------- Mappen ---------------- */
+
+const FOLDER_RE = /^[a-z0-9]{6,16}$/;
+async function readFolders(env) {
+  const obj = await env.GALLERIES.get('cfg/folders.json');
+  return obj ? obj.json() : [];
+}
+async function writeFolders(env, list) {
+  await env.GALLERIES.put('cfg/folders.json', JSON.stringify(list), { httpMetadata: { contentType: 'application/json' } });
+}
+function folderName(v) {
+  const name = String(v || '').replace(/\s+/g, ' ').trim().slice(0, 40);
+  if (!name) throw new HttpError(400, 'Geef de map een naam.');
+  return name;
+}
+async function validFolder(env, v) {
+  const id = String(v || '');
+  if (!id) return '';
+  return (await readFolders(env)).some(f => f.id === id) ? id : '';
+}
+async function adminCreateFolder(request, env) {
+  const name = folderName((await readJson(request)).name);
+  const list = await readFolders(env);
+  if (list.length >= 100) throw new HttpError(400, 'Maximum 100 mappen.');
+  if (list.some(f => f.name.toLowerCase() === name.toLowerCase())) throw new HttpError(409, 'Er bestaat al een map met deze naam.');
+  const folder = { id: randomHex(5), name };
+  list.push(folder);
+  await writeFolders(env, list);
+  return folder;
+}
+async function adminRenameFolder(request, env, id) {
+  const name = folderName((await readJson(request)).name);
+  const list = await readFolders(env);
+  const f = list.find(x => x.id === id);
+  if (!f) throw new HttpError(404, 'Map niet gevonden.');
+  if (list.some(x => x.id !== id && x.name.toLowerCase() === name.toLowerCase())) throw new HttpError(409, 'Er bestaat al een map met deze naam.');
+  f.name = name;
+  await writeFolders(env, list);
+  return f;
+}
+async function adminDeleteFolder(env, id) {
+  const list = await readFolders(env);
+  if (!list.some(x => x.id === id)) throw new HttpError(404, 'Map niet gevonden.');
+  await writeFolders(env, list.filter(x => x.id !== id));
+  // Galerijen in deze map blijven bestaan, ze komen bij "Zonder map"
+  for (const code of await listGalleryCodes(env)) {
+    const meta = await readMeta(env, code);
+    if (meta && meta.folder === id) { meta.folder = ''; await writeMeta(env, code, meta); }
+  }
+  return { ok: true };
 }
 
 /* ---------------- Opslag ---------------- */
