@@ -12,7 +12,7 @@ const CAT_LABEL = { fotos: "Foto's", drone: 'Drone', plannen: 'Plannen', overig:
 const ORDER = Object.keys(CAT_LABEL);
 const GAP = 6;
 const $ = (id) => document.getElementById(id);
-const state = { token: null, code: null, gallery: null, viewable: [], index: 0 };
+const state = { token: null, code: null, gallery: null, viewable: [], index: 0, admin: false };
 
 $('year').textContent = new Date().getFullYear();
 
@@ -79,7 +79,7 @@ $('kz-logout-2').addEventListener('click', logout);
 
 /* ---------- Galerij ---------- */
 async function openGallery() {
-  try { state.gallery = await api('/api/gallery'); }
+  try { state.gallery = await api('/api/gallery' + (state.admin ? '?g=' + encodeURIComponent(state.code) : '')); }
   catch (ex) { if (ex.status === 401) { clearSession(); show('login'); return; } throw ex; }
   const g = state.gallery;
   g.files.sort((a, b) => (ORDER.indexOf(a.cat) - ORDER.indexOf(b.cat)) || a.name.localeCompare(b.name, 'nl', { numeric: true }));
@@ -275,6 +275,7 @@ $('kz-zip').addEventListener('click', async () => {
       setTimeout(() => URL.revokeObjectURL(a.href), 60000);
     }
     status.textContent = `Klaar. ${files.length} bestanden staan in ${zipName}.`;
+    if (!state.admin) api('/api/activity', { method: 'POST', body: JSON.stringify({ type: 'zip', n: files.length }) }).catch(() => {});
   } catch (ex) { status.textContent = `Downloaden is niet gelukt (${ex.message}). Probeer opnieuw of download de beelden apart.`; }
   finally { btn.disabled = false; }
 });
@@ -284,6 +285,18 @@ $('kz-zip').addEventListener('click', async () => {
   if (!API) { show('setup'); return; }
   const g = new URLSearchParams(location.search).get('g');
   if (g) $('kz-code').value = g;
+  // Ingelogde beheerder: meteen bekijken, zonder wachtwoord
+  const adm = window.AdminSession && AdminSession.get();
+  if (g && adm && new URLSearchParams(location.search).get('beheer')) {
+    state.token = adm.token; state.code = g.toLowerCase(); state.admin = true;
+    try {
+      await openGallery();
+      $('pf-adminbar').hidden = false;
+      $('kz-logout-2').hidden = true;
+      $('pf-adminbar-back').href = 'klantenzone-beheer.html?g=' + encodeURIComponent(state.code);
+      return;
+    } catch (e) { state.admin = false; state.token = null; }
+  }
   const s = loadSession();
   if (s && (!g || g === s.code)) {
     state.token = s.token; state.code = s.code;

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Activiteit — Buro Scott</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0E0F0D">
+<link rel="manifest" href="manifest-beheer.json">
+<link rel="apple-touch-icon" href="assets/icons/beheer-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/klantenzone.css">
+<link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+<script>document.documentElement.classList.add('js')</script>
+<script src="js/klantenzone-config.js"></script>
+<script src="js/admin-session.js"></script>
+</head>
+<body class="kz kz-admin">
+
+<header class="kz-top">
+  <a href="beheer.html" class="kz-brand">Buro Scott<span class="brand-dot" aria-hidden="true">.</span></a>
+  <nav class="ad-tabs" aria-label="Beheer">
+    <a href="beheer.html">Overzicht</a>
+    <a href="klantenzone-beheer.html">Galerijen</a>
+    <a href="tours-beheer.html">360° tours</a>
+    <a href="activiteit.html" aria-current="page">Activiteit</a>
+  </nav>
+  <button type="button" class="kz-logout" id="ac-logout" hidden>Afmelden</button>
+</header>
+
+<main id="inhoud" class="ad-main">
+  <section class="ad-card ad-login" id="ac-login-view" hidden>
+    <h1>Beheer</h1>
+    <p class="kz-lede">Log in met je beheerwachtwoord.</p>
+    <form id="ac-login-form" class="kz-form" novalidate>
+      <div class="field">
+        <label for="ac-password">Beheerwachtwoord</label>
+        <input type="password" id="ac-password" autocomplete="current-password" required>
+      </div>
+      <label class="ad-remember"><input type="checkbox" id="ac-remember" checked> Onthoud mij op dit toestel (30 dagen)</label>
+      <p class="form-alert" id="ac-login-error" role="alert" hidden></p>
+      <button type="submit" class="form-submit"><span>Inloggen</span><span class="arrow" aria-hidden="true">→</span></button>
+    </form>
+  </section>
+
+  <section id="ac-view" hidden>
+    <div class="ad-head">
+      <div>
+        <p class="kz-eyebrow">Wie keek en downloadde</p>
+        <h1>Activiteit</h1>
+      </div>
+      <div class="ad-head-actions">
+        <label class="visually-hidden" for="ac-filter">Toon</label>
+        <select id="ac-filter" class="ac-select"><option value="">Alle galerijen en tours</option></select>
+        <button type="button" class="kz-btn kz-btn-ghost" id="ac-refresh">Vernieuwen</button>
+      </div>
+    </div>
+
+    <div class="hb-tiles ac-tiles">
+      <div class="hb-tile"><span class="hb-tile-num" id="ac-visits">–</span><span class="hb-tile-label">bezoeken aan galerijen</span></div>
+      <div class="hb-tile"><span class="hb-tile-num" id="ac-downloads">–</span><span class="hb-tile-label">downloads (los + zip)</span></div>
+      <div class="hb-tile"><span class="hb-tile-num" id="ac-tours">–</span><span class="hb-tile-label">bezoeken aan 360° tours</span></div>
+    </div>
+
+    <div class="ac-chips" id="ac-chips" role="group" aria-label="Soort activiteit">
+      <button type="button" class="ac-chip" data-type="" aria-pressed="true">Alles</button>
+      <button type="button" class="ac-chip" data-type="visit" aria-pressed="false">Bezoeken</button>
+      <button type="button" class="ac-chip" data-type="download" aria-pressed="false">Downloads</button>
+      <button type="button" class="ac-chip" data-type="login-fail" aria-pressed="false">Mislukte logins</button>
+      <button type="button" class="ac-chip" data-type="tour" aria-pressed="false">360° tours</button>
+    </div>
+
+    <div class="ad-card ac-feed-card">
+      <ol class="ac-feed" id="ac-feed"><li class="ad-empty">Laden…</li></ol>
+    </div>
+
+    <div class="ac-foot">
+      <p class="hint">Plaats en toestel worden afgeleid uit het internetverkeer en zijn een benadering. Er worden geen IP-adressen bewaard. Jouw eigen bezoeken als beheerder tellen niet mee.</p>
+      <button type="button" class="kz-btn kz-btn-ghost" id="ac-clear">Activiteit wissen</button>
+    </div>
+  </section>
+
+  <section class="kz-notice" id="ac-setup" hidden><h1>De klantenzone is nog niet gekoppeld.</h1></section>
+</main>
+
+<dialog class="ad-confirm" id="ac-confirm">
+  <form method="dialog">
+    <h2>Activiteit wissen?</h2>
+    <p id="ac-confirm-text"></p>
+    <div class="ad-confirm-actions">
+      <button value="cancel" class="kz-btn kz-btn-ghost">Annuleren</button>
+      <button value="ok" class="kz-btn kz-btn-danger">Wissen</button>
+    </div>
+  </form>
+</dialog>
+
+<script type="module" src="js/activiteit.js"></script>
+</body>
+</html>
