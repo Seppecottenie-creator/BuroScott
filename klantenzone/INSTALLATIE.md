@@ -132,3 +132,13 @@ Open daarna de site met `?api=http://127.0.0.1:8787` achter het adres van
   op dezelfde pagina als de foto's, met "Open apart" en "Kopieer link" om de tour los te delen.
 - **Eigen huisstijl** (tours-beheer, kaart "Eigen huisstijl"): kleur, naam, website en logo van de makelaar.
   Optioneel een kleine vermelding "360° door Buro Scott".
+
+## Plannen tekenen
+
+- **…/plannen.html** (ook in de zijbalk). Op iPad: Safari → deelknop → "Zet op beginscherm" = aparte app "Plannen".
+- **Schets**: teken de ruimte met je vinger, de hoeken worden recht gezet. **Kamer**: sleep een rechthoek.
+- Daarna vraagt het paneel muur per muur de **binnenmaat** (bv. `4,25`, Enter = volgende muur).
+  De laatste horizontale en verticale muur worden berekend.
+- Per ruimte: functie, naam, hoogte, muurdikte (ook per muur). Deuren, ramen en meubels via de knoppen links.
+- **Exporteren**: PNG van een verdieping, of PDF/afdrukken van alle verdiepingen.
+- Plannen worden automatisch bewaard in Cloudflare (en tijdelijk op het toestel als je offline bent).

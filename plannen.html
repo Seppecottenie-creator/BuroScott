@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Plannen — Buro Scott</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0E0F0D">
+<link rel="manifest" href="manifest-plannen.json">
+<link rel="apple-touch-icon" href="assets/icons/plannen-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Plannen">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/klantenzone.css">
+<link rel="stylesheet" href="css/plannen.css">
+<link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+<script>document.documentElement.classList.add('js')</script>
+<script src="js/klantenzone-config.js"></script>
+<script src="js/admin-session.js"></script>
+</head>
+<body class="kz kz-admin adm pl">
+
+<aside id="adm-side" data-page="plannen" data-logout="pl-logout"></aside>
+<script src="js/admin-shell.js"></script>
+
+<main id="inhoud" class="ad-main">
+  <section class="ad-card ad-login" id="pl-login-view" hidden>
+    <h1>Plannen</h1>
+    <p class="kz-lede">Log in met je beheerwachtwoord.</p>
+    <form id="pl-login-form" class="kz-form" novalidate>
+      <div class="field">
+        <label for="pl-password">Beheerwachtwoord</label>
+        <input type="password" id="pl-password" autocomplete="current-password" required>
+      </div>
+      <label class="ad-remember"><input type="checkbox" id="pl-remember" checked> Onthoud mij op dit toestel (30 dagen)</label>
+      <p class="form-alert" id="pl-login-error" role="alert" hidden></p>
+      <button type="submit" class="form-submit"><span>Inloggen</span><span class="arrow" aria-hidden="true">→</span></button>
+    </form>
+  </section>
+
+  <section id="pl-list-view" hidden>
+    <div class="ad-head">
+      <div>
+        <p class="kz-eyebrow">Schetsen · maten invullen · exporteren</p>
+        <h1>Plannen</h1>
+      </div>
+      <div class="ad-head-actions">
+        <button type="button" class="kz-btn kz-btn-primary" id="pl-new">+ Nieuw plan</button>
+      </div>
+    </div>
+    <ul class="pl-grid" id="pl-list"><li class="ad-empty">Laden…</li></ul>
+    <p class="hint pl-tip">Tip: open deze pagina op je iPad in Safari, tik op de deelknop en kies "Zet op beginscherm". Dan staat "Plannen" als aparte app op je iPad.</p>
+  </section>
+
+  <section class="kz-notice" id="pl-setup" hidden><h1>De klantenzone is nog niet gekoppeld.</h1></section>
+</main>
+
+<!-- ============ Editor ============ -->
+<section class="pe" id="pe" hidden aria-label="Plan tekenen">
+  <header class="pe-top">
+    <button type="button" class="pe-back" id="pe-back" aria-label="Terug naar plannen">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <input type="text" class="pe-title" id="pe-title" aria-label="Naam van het plan" maxlength="120">
+    <nav class="pe-floors" id="pe-floors" aria-label="Verdiepingen"></nav>
+    <button type="button" class="pe-floor-add" id="pe-floor-add" title="Verdieping toevoegen" aria-label="Verdieping toevoegen">+</button>
+    <div class="pe-top-right">
+      <span class="pe-save" id="pe-save" role="status" aria-live="polite"></span>
+      <button type="button" class="pe-icon" id="pe-undo" title="Ongedaan maken" aria-label="Ongedaan maken"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
+      <button type="button" class="pe-icon" id="pe-redo" title="Opnieuw" aria-label="Opnieuw"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg></button>
+      <button type="button" class="pe-export-btn" id="pe-export">Exporteren</button>
+    </div>
+  </header>
+
+  <div class="pe-tools" role="toolbar" aria-label="Gereedschap">
+    <button type="button" data-tool="select" aria-pressed="true" title="Selecteren"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l14 8-6 2-3 6z"/></svg><span>Kies</span></button>
+    <button type="button" data-tool="sketch" aria-pressed="false" title="Ruimte schetsen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20c3-1 4-6 8-7s5 2 8-1"/><path d="M15 4l5 5-9 9H6v-5z"/></svg><span>Schets</span></button>
+    <button type="button" data-tool="rect" aria-pressed="false" title="Rechthoekige ruimte"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="1"/></svg><span>Kamer</span></button>
+    <button type="button" data-tool="door" aria-pressed="false" title="Deur"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16M6 20V6"/><path d="M6 6a14 14 0 0 1 14 14"/></svg><span>Deur</span></button>
+    <button type="button" data-tool="window" aria-pressed="false" title="Raam"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="9" width="18" height="6"/><path d="M3 12h18"/></svg><span>Raam</span></button>
+    <button type="button" data-tool="furniture" aria-pressed="false" title="Meubel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 11V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3"/><path d="M3 12a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v6H3z"/></svg><span>Meubel</span></button>
+  </div>
+
+  <svg class="pe-svg" id="pe-svg" role="application" aria-label="Tekenvlak">
+    <defs>
+      <pattern id="pe-grid" width="100" height="100" patternUnits="userSpaceOnUse">
+        <path d="M100 0H0V100" fill="none" stroke="#D9D6CC" id="pe-grid-major"/>
+        <path d="M50 0V100M0 50H100" fill="none" stroke="#E9E6DE" id="pe-grid-minor"/>
+      </pattern>
+    </defs>
+    <g id="pe-view">
+      <rect x="-100000" y="-100000" width="200000" height="200000" fill="url(#pe-grid)"/>
+      <g id="pe-world"></g>
+      <g id="pe-overlay"></g>
+    </g>
+  </svg>
+
+  <p class="pe-hint" id="pe-hint"></p>
+  <div class="pe-toast" id="pe-toast" role="status" aria-live="polite"></div>
+
+  <div class="pe-zoom">
+    <button type="button" class="pe-icon" id="pe-zoom-out" aria-label="Uitzoomen">−</button>
+    <button type="button" class="pe-icon" id="pe-fit" aria-label="Alles tonen" title="Alles tonen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    <button type="button" class="pe-icon" id="pe-zoom-in" aria-label="Inzoomen">+</button>
+  </div>
+
+  <aside class="pe-panel" id="pe-panel" hidden aria-live="polite"></aside>
+</section>
+
+<!-- Meubels -->
+<dialog class="lib-dialog pe-dlg" id="pe-lib" aria-labelledby="pe-lib-title">
+  <div class="lib-dialog-head"><h2 id="pe-lib-title">Meubel toevoegen</h2><button type="button" class="lib-dialog-close" data-close aria-label="Sluiten">✕</button></div>
+  <div class="pe-lib-grid" id="pe-lib-grid"></div>
+</dialog>
+
+<!-- Verdieping -->
+<dialog class="lib-dialog pe-dlg pe-small" id="pe-floor-dlg" aria-labelledby="pe-floor-title">
+  <form method="dialog" id="pe-floor-form">
+    <div class="lib-dialog-head"><h2 id="pe-floor-title">Verdieping</h2><button type="button" class="lib-dialog-close" data-close aria-label="Sluiten">✕</button></div>
+    <div class="pe-dlg-body">
+      <div class="field"><label for="pe-floor-name">Naam</label>
+        <input type="text" id="pe-floor-name" list="pe-floor-names" maxlength="40" autocomplete="off">
+        <datalist id="pe-floor-names"><option value="Gelijkvloers"><option value="Verdieping 1"><option value="Verdieping 2"><option value="Zolder"><option value="Kelder"></datalist>
+      </div>
+      <div class="pe-dlg-actions">
+        <button type="button" class="kz-btn kz-btn-ghost lib-fdel" id="pe-floor-del">Verwijder verdieping</button>
+        <button type="submit" class="kz-btn kz-btn-primary">Opslaan</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<!-- Exporteren -->
+<dialog class="lib-dialog pe-dlg pe-small" id="pe-export-dlg" aria-labelledby="pe-export-title">
+  <div class="lib-dialog-head"><h2 id="pe-export-title">Exporteren</h2><button type="button" class="lib-dialog-close" data-close aria-label="Sluiten">✕</button></div>
+  <div class="pe-dlg-body">
+    <label class="ad-remember"><input type="checkbox" id="pe-x-furn" checked> Meubels tonen</label>
+    <label class="ad-remember"><input type="checkbox" id="pe-x-dims" checked> Maten tonen</label>
+    <div class="pe-x-buttons">
+      <button type="button" class="kz-btn kz-btn-primary" id="pe-x-png">Afbeelding (PNG) · deze verdieping</button>
+      <button type="button" class="kz-btn kz-btn-ghost" id="pe-x-pdf">PDF / afdrukken · alle verdiepingen</button>
+    </div>
+    <p class="hint">PDF op iPad: kies "Afdrukken", knijp de voorvertoning open en bewaar via de deelknop.</p>
+  </div>
+</dialog>
+
+<dialog class="ad-confirm" id="pe-confirm">
+  <form method="dialog">
+    <h2 id="pe-confirm-title">Zeker?</h2>
+    <p id="pe-confirm-text"></p>
+    <div class="ad-confirm-actions">
+      <button value="cancel" class="kz-btn kz-btn-ghost">Annuleren</button>
+      <button value="ok" class="kz-btn kz-btn-danger">Verwijderen</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="pe-print" id="pe-print" aria-hidden="true"></div>
+
+<script type="module" src="js/plannen.js"></script>
+</body>
+</html>
