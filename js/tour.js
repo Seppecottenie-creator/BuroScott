@@ -18,6 +18,32 @@
       ? 'Deze virtuele tour is momenteel niet online.<br><span class="tr-contact">Interesse in dit pand? Neem contact op met de verkoper of makelaar.<br>Tour door <a href="index.html" target="_blank" rel="noopener">Buro Scott</a> · <a href="mailto:info@buroscott.be">info@buroscott.be</a></span>'
       : escapeHtml(msg);
   }
+  // Eigen huisstijl van de makelaar (kleur, logo, naam)
+  function hexRgb(h) { var n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+  function applyBrand(b) {
+    var big = $('tr-brand-big');
+    if (!b || !b.on) { big.classList.add('is-ready'); return; }
+    var rgb = hexRgb(b.color || '#1D3FD6');
+    var lum = (0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]) / 255;
+    var light = rgb.map(function (c) { return Math.round(c + (255 - c) * 0.45); });
+    var r = document.documentElement.style;
+    r.setProperty('--accent', b.color);
+    r.setProperty('--accent-rgb', rgb.join(','));
+    r.setProperty('--accent-light', 'rgb(' + light.join(',') + ')');
+    r.setProperty('--on-accent', lum > 0.6 ? '#0E0F0D' : '#fff');
+    document.body.classList.add('is-branded');
+    var logo = b.logo ? API + '/api/tourfile?id=' + encodeURIComponent(id) + '&k=logo&v=' + b.logo : '';
+    var name = b.name || '';
+    var pill = $('tr-brand');
+    if (logo) { pill.innerHTML = '<img src="' + logo + '" alt="' + escapeHtml(name || 'Logo') + '">'; pill.classList.add('has-logo'); }
+    else if (name) pill.textContent = name;
+    else pill.hidden = true;
+    if (b.url) pill.href = b.url; else { pill.removeAttribute('href'); pill.removeAttribute('target'); }
+    big.innerHTML = logo ? '<span class="tr-big-logo"><img src="' + logo + '" alt="' + escapeHtml(name || 'Logo') + '"></span>' : escapeHtml(name);
+    big.classList.add('is-ready');
+    $('tr-credit').hidden = !b.credit;
+    if (name) document.title = tour.title + ' — virtuele tour — ' + name;
+  }
   function done() {
     $('tr-loading').classList.add('is-done');
     setTimeout(function () { $('tr-hint').classList.add('is-gone'); }, 6000);
@@ -117,7 +143,7 @@
     if (on) viewer.startAutoRotate(-3); else viewer.stopAutoRotate();
   });
 
-  if (!API || !id) { fail(!id ? 'Er ontbreekt een tourcode in de link.' : 'De tourdienst is nog niet gekoppeld.'); return; }
+  if (!API || !id) { $('tr-brand-big').classList.add('is-ready'); fail(!id ? 'Er ontbreekt een tourcode in de link.' : 'De tourdienst is nog niet gekoppeld.'); return; }
   fetch(API + '/api/tour?id=' + encodeURIComponent(id))
     .then(function (r) { return r.json().then(function (d) { if (!r.ok) { var e = new Error(d.error || 'Tour niet gevonden.'); e.inactive = r.status === 410; throw e; } return d; }); })
     .then(function (d) {
@@ -125,7 +151,8 @@
       if (!tour.scenes || !tour.scenes.length) throw new Error('Deze tour heeft nog geen ruimtes.');
       document.title = tour.title + ' — virtuele tour — Buro Scott';
       $('tr-title').textContent = tour.title;
+      applyBrand(tour.brand);
       start();
     })
-    .catch(function (e) { fail(e.message, e.inactive); });
+    .catch(function (e) { $('tr-brand-big').classList.add('is-ready'); fail(e.message, e.inactive); });
 })();

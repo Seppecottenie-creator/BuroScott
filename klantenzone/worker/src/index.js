@@ -116,6 +116,9 @@ async function route(request, env, ctx) {
       if (parts.length === 2 && m === 'PUT') return json(await adminSaveTour(request, env, id));
       if (parts.length === 2 && m === 'DELETE') { await deletePrefix(env, `t/${id}/`); return json({ ok: true }); }
       if (parts[2] === 'online' && parts.length === 3 && m === 'POST') return json(await adminTourOnline(request, env, id));
+      if (parts[2] === 'brand' && parts.length === 3 && m === 'POST') return json(await adminTourBrand(request, env, id));
+      if (parts[2] === 'logo' && parts.length === 3 && m === 'PUT') return json(await adminTourLogo(request, env, id));
+      if (parts[2] === 'logo' && parts.length === 3 && m === 'DELETE') return json(await adminTourLogo(null, env, id));
       if (parts[2] === 'scenes' && parts.length === 4 && m === 'PUT') return json(await adminUploadScene(request, env, id, parts[3], url), 201);
       if (parts[2] === 'scenes' && parts.length === 4 && m === 'DELETE') return json(await adminDeleteScene(env, id, parts[3]));
     }
@@ -331,15 +334,16 @@ const tourActive = (t) => !t.activeUntil || t.activeUntil > Date.now();
 async function serveTourFile(env, url) {
   const id = url.searchParams.get('id');
   const scene = url.searchParams.get('s');
+  const logo = url.searchParams.get('k') === 'logo';
   const kind = url.searchParams.get('k') === 'p' ? 'p' : 's';
-  if (!CODE_RE.test(id || '') || !SCENE_RE.test(scene || '')) throw new HttpError(400, 'Ongeldig bestand.');
+  if (!CODE_RE.test(id || '') || (!logo && !SCENE_RE.test(scene || ''))) throw new HttpError(400, 'Ongeldig bestand.');
   // Beheer mag altijd kijken (ook als de tour gepauzeerd is), bezoekers enkel als ze online is
   const admin = await verify(env, url.searchParams.get('t') || '');
   if (!(admin && admin.c === 'admin')) {
     const t = await readTour(env, id);
     if (!t || !tourActive(t)) throw new HttpError(410, 'Deze virtuele tour is momenteel niet online.');
   }
-  const obj = await env.GALLERIES.get(`t/${id}/${kind}/${scene}.jpg`);
+  const obj = await env.GALLERIES.get(logo ? `t/${id}/logo` : `t/${id}/${kind}/${scene}.jpg`);
   if (!obj) throw new HttpError(404, 'Bestand niet gevonden.');
   const headers = new Headers();
   obj.writeHttpMetadata(headers);
@@ -354,7 +358,7 @@ async function adminListTours(env) {
   const out = [];
   for (const id of ids) {
     const t = await readTour(env, id);
-    if (t) out.push({ id, title: t.title, created: t.created, activeUntil: t.activeUntil || 0, scenes: (t.scenes || []).length });
+    if (t) out.push({ id, title: t.title, created: t.created, activeUntil: t.activeUntil || 0, scenes: (t.scenes || []).length, brand: !!(t.brand && t.brand.on) });
   }
   out.sort((a, b) => b.created - a.created);
   return { tours: out };
@@ -400,6 +404,41 @@ async function adminSaveTour(request, env, id) {
   const existing = await readTour(env, id);
   if (!existing) throw new HttpError(404, 'Tour niet gevonden.');
   const t = cleanTour(await readJson(request), existing);
+  await writeTour(env, id, t);
+  return t;
+}
+// Eigen huisstijl voor professionals: kleur, naam, website, logo, vermelding Buro Scott
+async function adminTourBrand(request, env, id) {
+  const t = await readTour(env, id);
+  if (!t) throw new HttpError(404, 'Tour niet gevonden.');
+  const b = await readJson(request);
+  const color = /^#[0-9a-fA-F]{6}$/.test(String(b.color || '')) ? String(b.color).toUpperCase() : '#1D3FD6';
+  t.brand = {
+    on: !!b.on,
+    color,
+    name: String(b.name || '').trim().slice(0, 60),
+    url: cleanUrl(b.url),
+    credit: b.credit !== false,
+    logo: (t.brand && t.brand.logo) || 0,
+  };
+  await writeTour(env, id, t);
+  return t;
+}
+async function adminTourLogo(request, env, id) {
+  const t = await readTour(env, id);
+  if (!t) throw new HttpError(404, 'Tour niet gevonden.');
+  t.brand = t.brand || { on: false, color: '#1D3FD6', name: '', url: '', credit: true, logo: 0 };
+  if (!request) {
+    await env.GALLERIES.delete(`t/${id}/logo`);
+    t.brand.logo = 0;
+  } else {
+    const type = (request.headers.get('Content-Type') || '').split(';')[0];
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(type)) throw new HttpError(400, 'Logo moet PNG, JPG of WebP zijn.');
+    const buf = await request.arrayBuffer();
+    if (buf.byteLength > 2 * 1024 * 1024) throw new HttpError(400, 'Logo is te groot (max 2 MB).');
+    await env.GALLERIES.put(`t/${id}/logo`, buf, { httpMetadata: { contentType: type } });
+    t.brand.logo = Date.now();
+  }
   await writeTour(env, id, t);
   return t;
 }

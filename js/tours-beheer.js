@@ -108,6 +108,7 @@ async function openTour(id) {
   $('te-link').value = tourLink(state.tour.id);
   $('te-embed').value = embedCode(state.tour.id);
   renderOnline();
+  renderBrand();
   renderScenes();
   if (state.tour.scenes.length) selectScene(state.tour.firstScene || state.tour.scenes[0].id);
   else { $('te-editor-card').hidden = true; destroyViewer(); }
@@ -118,6 +119,71 @@ document.querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('clic
   catch (e) { input.select(); b.textContent = 'Ctrl+C'; }
   setTimeout(() => { b.textContent = 'Kopieer'; }, 2000);
 }));
+
+/* ---------- Eigen huisstijl ---------- */
+const LOGO_MAX = 800;
+function renderBrand() {
+  const b = state.tour.brand || {};
+  $('te-b-on').checked = !!b.on;
+  $('te-b-color').value = $('te-b-hex').value = b.color || '#1D3FD6';
+  $('te-b-name').value = b.name || '';
+  $('te-b-url').value = b.url || '';
+  $('te-b-credit').checked = b.credit !== false;
+  $('te-b-view').href = tourLink(state.tour.id);
+  $('te-b-fields').classList.toggle('is-off', !b.on);
+  const prev = $('te-b-prev');
+  prev.innerHTML = b.logo ? `<img src="${API}/api/tourfile?id=${encodeURIComponent(state.tour.id)}&k=logo&v=${b.logo}&t=${encodeURIComponent(state.token)}" alt="Logo">` : 'Geen logo';
+  prev.style.setProperty('--brand', b.color || '#1D3FD6');
+  $('te-b-del').hidden = !b.logo;
+  $('te-b-status').textContent = '';
+}
+$('te-b-on').addEventListener('change', (e) => $('te-b-fields').classList.toggle('is-off', !e.target.checked));
+$('te-b-color').addEventListener('input', (e) => { $('te-b-hex').value = e.target.value.toUpperCase(); });
+$('te-b-hex').addEventListener('input', (e) => { if (/^#[0-9a-f]{6}$/i.test(e.target.value)) $('te-b-color').value = e.target.value; });
+$('te-b-save').addEventListener('click', async () => {
+  const hex = $('te-b-hex').value.trim();
+  if (!/^#[0-9a-f]{6}$/i.test(hex)) { $('te-b-status').textContent = 'Kleur moet een code zijn zoals #1D3FD6.'; return; }
+  try {
+    state.tour = await api(`/api/admin/tours/${encodeURIComponent(state.tour.id)}/brand`, { method: 'POST', body: JSON.stringify({ on: $('te-b-on').checked, color: hex, name: $('te-b-name').value, url: $('te-b-url').value, credit: $('te-b-credit').checked }) });
+    renderBrand();
+    $('te-b-status').textContent = state.tour.brand.on ? 'Huisstijl opgeslagen ✓ De tour toont nu de kleur en het logo van je klant.' : 'Opgeslagen ✓ De tour gebruikt de Buro Scott-stijl.';
+  } catch (e) { $('te-b-status').textContent = e.message; }
+});
+async function shrinkLogo(file) {
+  try {
+    const bmp = await createImageBitmap(file);
+    const scale = Math.min(1, LOGO_MAX / Math.max(bmp.width, bmp.height));
+    if (scale === 1 && file.size < 400e3) return file;
+    const c = document.createElement('canvas');
+    c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    return await new Promise((r) => c.toBlob(r, 'image/png'));
+  } catch (e) { return file; }
+}
+$('te-b-file').addEventListener('change', async (e) => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  $('te-b-status').textContent = 'Logo uploaden…';
+  try {
+    const blob = await shrinkLogo(f);
+    const res = await fetch(`${API}/api/admin/tours/${encodeURIComponent(state.tour.id)}/logo`, { method: 'PUT', headers: { Authorization: 'Bearer ' + state.token, 'Content-Type': blob.type || f.type }, body: blob });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(d.error || 'Upload mislukt.');
+    state.tour.brand = d.brand;
+    const keep = { on: $('te-b-on').checked, name: $('te-b-name').value, url: $('te-b-url').value, hex: $('te-b-hex').value, credit: $('te-b-credit').checked };
+    renderBrand();
+    $('te-b-on').checked = keep.on; $('te-b-name').value = keep.name; $('te-b-url').value = keep.url; $('te-b-hex').value = keep.hex; $('te-b-credit').checked = keep.credit;
+    $('te-b-fields').classList.toggle('is-off', !keep.on);
+    $('te-b-status').textContent = 'Logo opgeslagen ✓' + (keep.on ? '' : ' Zet de huisstijl "Aan" en klik op Opslaan om het te tonen.');
+  } catch (ex) { $('te-b-status').textContent = ex.message; }
+});
+$('te-b-del').addEventListener('click', async () => {
+  try {
+    const t = await api(`/api/admin/tours/${encodeURIComponent(state.tour.id)}/logo`, { method: 'DELETE' });
+    state.tour.brand = t.brand; renderBrand();
+    $('te-b-status').textContent = 'Logo verwijderd.';
+  } catch (e) { $('te-b-status').textContent = e.message; }
+});
 
 function renderOnline() {
   const st = onlineState(state.tour.activeUntil);

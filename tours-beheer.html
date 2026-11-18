@@ -88,6 +88,44 @@
       </div>
     </div>
 
+    <div class="ad-card te-brand">
+      <div class="te-online-head">
+        <div>
+          <h2>Eigen huisstijl</h2>
+          <p class="te-online-text">Voor makelaars en professionals: hun logo en kleur in de tour.</p>
+        </div>
+        <label class="te-switch"><input type="checkbox" id="te-b-on"><span aria-hidden="true"></span><b>Aan</b></label>
+      </div>
+      <div class="te-brand-grid" id="te-b-fields">
+        <div class="field">
+          <label for="te-b-hex">Kleur</label>
+          <div class="te-color"><input type="color" id="te-b-color" value="#1D3FD6" aria-label="Kies kleur"><input type="text" id="te-b-hex" value="#1D3FD6" maxlength="7" spellcheck="false"></div>
+        </div>
+        <div class="field">
+          <label for="te-b-name">Naam <span class="hint">(bv. Immo Vandenberghe)</span></label>
+          <input type="text" id="te-b-name" maxlength="60">
+        </div>
+        <div class="field">
+          <label for="te-b-url">Website <span class="hint">(logo linkt hierheen)</span></label>
+          <input type="url" id="te-b-url" placeholder="https://…">
+        </div>
+        <div class="field">
+          <label for="te-b-file">Logo <span class="hint">(PNG met transparante achtergrond is best)</span></label>
+          <div class="te-logo">
+            <span class="te-logo-prev" id="te-b-prev">Geen logo</span>
+            <label class="kz-btn kz-btn-ghost te-logo-pick">Kies logo<input type="file" id="te-b-file" accept="image/png,image/jpeg,image/webp" hidden></label>
+            <button type="button" class="kz-btn kz-btn-ghost" id="te-b-del" hidden>Verwijder</button>
+          </div>
+        </div>
+        <label class="ad-remember te-span2"><input type="checkbox" id="te-b-credit" checked> Toon kleine vermelding "360° door Buro Scott"</label>
+      </div>
+      <div class="te-online-actions">
+        <button type="button" class="kz-btn kz-btn-primary" id="te-b-save">Huisstijl opslaan</button>
+        <a class="kz-btn kz-btn-ghost" id="te-b-view" target="_blank" rel="noopener">Bekijk tour ↗</a>
+      </div>
+      <p class="hint" id="te-b-status" role="status" aria-live="polite"></p>
+    </div>
+
     <div class="ad-card te-online">
       <div class="te-online-head">
         <div>

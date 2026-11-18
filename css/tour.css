@@ -1,7 +1,7 @@
 /* ============================================================
    BURO SCOTT — 360°-TOUR
 ============================================================ */
-:root{ --ink:#0E0F0D; --accent:#1D3FD6; --accent-light:#8FA2FF; --glass:rgba(14,15,13,.6); --line:rgba(255,255,255,.16); --ease:cubic-bezier(.22,.61,.36,1); }
+:root{ --ink:#0E0F0D; --accent:#1D3FD6; --accent-rgb:29,63,214; --on-accent:#fff; --accent-light:#8FA2FF; --glass:rgba(14,15,13,.6); --line:rgba(255,255,255,.16); --ease:cubic-bezier(.22,.61,.36,1); }
 *{ box-sizing:border-box; margin:0; padding:0; }
 html, body{ height:100%; }
 body.tr{ background:var(--ink); color:#fff; font-family:"Archivo", "Helvetica Neue", Arial, sans-serif; overflow:hidden; -webkit-font-smoothing:antialiased; }
@@ -12,7 +12,7 @@ button{ font:inherit; cursor:pointer; }
 /* Laadscherm */
 .tr-loading{
   position:fixed; inset:0; z-index:30; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px;
-  background:radial-gradient(800px circle at 70% 20%, rgba(29,63,214,.35), transparent 60%), var(--ink);
+  background:radial-gradient(800px circle at 70% 20%, rgba(var(--accent-rgb),.35), transparent 60%), var(--ink);
   transition:opacity .8s var(--ease), visibility .8s;
 }
 .tr-loading.is-done{ opacity:0; visibility:hidden; }
@@ -33,7 +33,7 @@ button{ font:inherit; cursor:pointer; }
 }
 .tr-brand{ font-weight:900; letter-spacing:-.01em; }
 .tr-title{ font-weight:600; font-size:.92rem; min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
-.tr-360{ flex:0 0 auto; font-weight:900; font-size:.7rem; background:var(--accent); padding:4px 8px; border-radius:999px; }
+.tr-360{ flex:0 0 auto; font-weight:900; font-size:.7rem; background:var(--accent); color:var(--on-accent); padding:4px 8px; border-radius:999px; }
 .tr-ctrls{ margin-left:auto; display:flex; gap:8px; }
 .tr-btn{
   width:48px; height:48px; border-radius:50%; display:grid; place-items:center; color:#fff;
@@ -41,7 +41,7 @@ button{ font:inherit; cursor:pointer; }
   transition:background .25s var(--ease);
 }
 .tr-btn svg{ width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
-.tr-btn:hover, .tr-btn[aria-pressed="true"]{ background:var(--accent); border-color:var(--accent); }
+.tr-btn:hover, .tr-btn[aria-pressed="true"]{ background:var(--accent); border-color:var(--accent); color:var(--on-accent); }
 .tr-btn:focus-visible, .tr-scene:focus-visible, .tr-pill:focus-visible{ outline:2px solid var(--accent-light); outline-offset:3px; }
 
 /* Tip */
@@ -76,7 +76,7 @@ button{ font:inherit; cursor:pointer; }
 .pnlm-hotspot-base.tr-hs{ width:0; height:0; }
 .tr-hs-ring{
   position:absolute; left:-30px; top:-30px; width:60px; height:60px; border-radius:50%; display:grid; place-items:center;
-  background:rgba(29,63,214,.55); border:3px solid #fff; box-shadow:0 0 0 10px rgba(255,255,255,.18), 0 10px 30px rgba(0,0,0,.35);
+  background:rgba(var(--accent-rgb),.6); border:3px solid #fff; box-shadow:0 0 0 10px rgba(255,255,255,.18), 0 10px 30px rgba(0,0,0,.35);
   transition:transform .25s var(--ease), background .25s var(--ease); animation:trPulse 2.4s ease-out infinite;
 }
 .tr-hs-ring svg{ width:26px; height:26px; fill:none; stroke:#fff; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; }
@@ -97,3 +97,19 @@ button{ font:inherit; cursor:pointer; }
 #te-pano{ height:min(62vh, 560px); }
 .tr-contact{ display:block; margin-top:14px; font-size:.85rem; color:#9A988F; line-height:1.6; }
 .tr-contact a{ color:#fff; text-decoration:underline; }
+
+/* Eigen huisstijl */
+.tr-brand-big{ opacity:0; transition:opacity .4s var(--ease); }
+.tr-brand-big.is-ready{ opacity:1; }
+.tr-big-logo{ display:inline-flex; padding:18px 28px; border-radius:20px; background:#fff; }
+.tr-big-logo img{ display:block; max-height:84px; max-width:min(320px, 70vw); object-fit:contain; }
+.tr-brand.has-logo{ background:#fff; border-color:#fff; padding:6px 14px; }
+.tr-brand.has-logo img{ display:block; height:30px; max-width:150px; object-fit:contain; }
+.tr-brand:not([href]){ cursor:default; }
+body.is-branded .tr-hs:hover .tr-hs-ring{ background:var(--accent); }
+.tr-credit{
+  position:fixed; z-index:20; right:max(16px, env(safe-area-inset-right)); top:calc(max(16px, env(safe-area-inset-top)) + 58px);
+  padding:6px 11px; border-radius:999px; font-size:.7rem; color:#D9D7CF; text-decoration:none;
+  background:var(--glass); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid var(--line);
+}
+.tr-credit b{ color:#fff; }
