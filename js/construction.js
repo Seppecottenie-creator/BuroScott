@@ -14,25 +14,41 @@
 
   var root = document.documentElement;
   var preview = false;
-  try {
-    var params = new URLSearchParams(window.location.search);
-    var v = params.get('voorbeeld');
-    if (v === CODE) localStorage.setItem(KEY, '1');
-    if (v === 'uit') localStorage.removeItem(KEY);
-    if (v !== null) {
-      params.delete('voorbeeld');
-      var q = params.toString();
-      history.replaceState(null, '', window.location.pathname + (q ? '?' + q : '') + window.location.hash);
-    }
-    preview = localStorage.getItem(KEY) === '1';
-  } catch (e) {
-    preview = /[?&]voorbeeld=buroscott\b/.test(window.location.search);
+  var v = null;
+  try { v = new URLSearchParams(window.location.search).get('voorbeeld'); } catch (e) {}
+
+  // Op 3 manieren onthouden (localStorage, sessionStorage, cookie): sommige
+  // gsm-browsers en ingebouwde app-browsers wissen er één van.
+  function remember(on) {
+    try { on ? localStorage.setItem(KEY, '1') : localStorage.removeItem(KEY); } catch (e) {}
+    try { on ? sessionStorage.setItem(KEY, '1') : sessionStorage.removeItem(KEY); } catch (e) {}
+    try { document.cookie = KEY + '=' + (on ? '1; max-age=31536000' : '; max-age=0') + '; path=/; SameSite=Lax'; } catch (e) {}
   }
+  function remembered() {
+    try { if (localStorage.getItem(KEY) === '1') return true; } catch (e) {}
+    try { if (sessionStorage.getItem(KEY) === '1') return true; } catch (e) {}
+    try { if (document.cookie.indexOf(KEY + '=1') !== -1) return true; } catch (e) {}
+    return false;
+  }
+  if (v === CODE) remember(true);
+  if (v === 'uit') remember(false);
+  preview = v === CODE || (v !== 'uit' && remembered());
 
   root.classList.add(preview ? 'is-preview' : 'is-construction');
 
   document.addEventListener('DOMContentLoaded', function () {
     if (preview) {
+      // Zet de voorbeeldcode op elke interne link, zodat ook een browser die
+      // niets onthoudt op elke pagina de volledige site toont.
+      Array.prototype.forEach.call(document.querySelectorAll('a[href]'), function (a) {
+        var href = a.getAttribute('href');
+        if (!href || /^(https?:|mailto:|tel:|#|javascript:)/i.test(href)) return;
+        if (!/\.html(\?|#|$)/.test(href) || /[?&]voorbeeld=/.test(href)) return;
+        var hash = '';
+        var i = href.indexOf('#');
+        if (i !== -1) { hash = href.slice(i); href = href.slice(0, i); }
+        a.setAttribute('href', href + (href.indexOf('?') === -1 ? '?' : '&') + 'voorbeeld=' + CODE + hash);
+      });
       var bar = document.createElement('div');
       bar.className = 'preview-bar';
       bar.innerHTML = '<span><b>Voorbeeldmodus</b> · bezoekers zien "Website in opbouw"</span>' +
