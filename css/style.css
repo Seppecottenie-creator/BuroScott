@@ -1368,3 +1368,6 @@ html.is-construction body::after{ opacity:.06; }
    zodat de hero nergens meer doorschijnt */
 .services, .pk-teaser, .stats-band{ background:var(--paper); }
 .services, .process, .pk-teaser, .stats-band, .closing, .site-footer{ position:relative; z-index:2; }
+/* Plannen: plattegrond krijgt dezelfde zoom als de andere dienstfoto's */
+.sd-media.is-contain img{ transform:scale(var(--z, 1.12)); }
+.sd-body{ padding-bottom:150px; }
