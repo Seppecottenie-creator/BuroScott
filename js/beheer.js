@@ -43,7 +43,8 @@ $('hb-login-form').addEventListener('submit', async (e) => {
 async function load() {
   show('hb-view');
   $('hb-date').textContent = new Date().toLocaleDateString('nl-BE', { weekday: 'long', day: 'numeric', month: 'long' });
-  const [g, t] = await Promise.all([api('/api/admin/galleries'), api('/api/admin/tours')]);
+  const [g, t, act] = await Promise.all([api('/api/admin/galleries'), api('/api/admin/tours'), api('/api/admin/activity?limit=6')]);
+  renderActivity(act.events);
   const now = Date.now();
   const liveG = g.galleries.filter((x) => x.expires > now);
   const liveT = t.tours.filter((x) => !x.activeUntil || x.activeUntil > now);
@@ -80,6 +81,15 @@ async function load() {
       <span class="ad-item-title">${esc(x.title)}</span><span class="ad-item-meta">${x.scenes} ${x.scenes === 1 ? 'ruimte' : 'ruimtes'}</span></a>
       <span class="ad-pill ${off ? 'is-off' : warn ? 'is-warn' : ''}">${off ? 'Gepauzeerd' : x.activeUntil ? 'Tot ' + fmtDate(x.activeUntil) : 'Altijd online'}</span></li>`;
   }).join('') || '<li class="ad-empty">Nog geen tours.</li>';
+}
+
+function renderActivity(events) {
+  const label = { login: 'Klant logde in op', 'login-fail': 'Mislukte login op', visit: 'Bekeken:', download: 'Gedownload uit', zip: 'Alles (zip) gedownload uit', tour: 'Tour bekeken:' };
+  $('hb-activity').innerHTML = events.length ? events.map((e) => `
+    <li class="ac-item"><div class="ac-body"><span class="ac-text">${label[e.type] || e.type} <b>${esc(e.title)}</b>${e.file ? ` · ${esc(e.file)}` : ''}</span>
+    <span class="ac-meta">${[e.loc, e.dev].filter(Boolean).map(esc).join(' · ')}</span></div>
+    <time class="ac-time">${new Date(e.t).toLocaleString('nl-BE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</time></li>`).join('')
+    : '<li class="ad-empty">Nog geen activiteit van klanten.</li>';
 }
 
 (async function init() {

@@ -22,11 +22,11 @@ const CODE_RE = /^[a-z0-9-]{4,40}$/;
 const CATEGORIES = ['fotos', 'drone', 'plannen', 'overig'];
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const cors = corsHeaders(request, env);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
     try {
-      const res = await route(request, env);
+      const res = await route(request, env, ctx);
       for (const [k, v] of Object.entries(cors)) res.headers.set(k, v);
       return res;
     } catch (err) {
@@ -49,7 +49,9 @@ export default {
 
 /* ---------------- Routering ---------------- */
 
-async function route(request, env) {
+async function route(request, env, ctx) {
+  // Activiteit loggen zonder het antwoord te vertragen
+  const track = (prefix, ev) => { const job = logEvent(env, request, prefix, ev).catch(() => {}); if (ctx && ctx.waitUntil) ctx.waitUntil(job); };
   const url = new URL(request.url);
   const p = url.pathname.replace(/\/+$/, '');
   const m = request.method;
@@ -57,15 +59,33 @@ async function route(request, env) {
   if (p === '' || p === '/api') return json({ ok: true, service: 'Buro Scott klantenzone' });
 
   // --- Klant ---
-  if (p === '/api/login' && m === 'POST') return clientLogin(request, env);
+  if (p === '/api/login' && m === 'POST') return clientLogin(request, env, track);
   if (p === '/api/gallery' && m === 'GET') {
-    const code = await requireClient(request, env);
-    return json(await galleryForClient(env, code, url));
+    // Klant met eigen toegang, of beheerder die "bekijkt als klant" (?g=code)
+    const payload = await verify(env, bearer(request));
+    if (!payload) throw new HttpError(401, 'Je sessie is verlopen. Log opnieuw in.');
+    const asAdmin = payload.c === 'admin';
+    const code = asAdmin ? String(url.searchParams.get('g') || '') : payload.c;
+    if (!CODE_RE.test(code)) throw new HttpError(400, 'Ongeldige galerijcode.');
+    const g = await galleryForClient(env, code, url);
+    if (!asAdmin) track(`g/${code}/`, { type: 'visit', dedupe: 30 });
+    return json({ ...g, asAdmin });
   }
-  if (p === '/api/file' && m === 'GET') return serveFile(request, env, url);
+  if (p === '/api/file' && m === 'GET') return serveFile(request, env, url, track);
+  if (p === '/api/activity' && m === 'POST') {
+    const payload = await verify(env, bearer(request));
+    if (!payload || payload.c === 'admin') return json({ ok: true });
+    const body = await readJson(request);
+    if (body.type === 'zip') track(`g/${payload.c}/`, { type: 'zip', n: clampInt(body.n, 0, 100000, 0) });
+    return json({ ok: true });
+  }
 
   // --- 360°-tours (openbaar te bekijken, vaste link) ---
-  if (p === '/api/tour' && m === 'GET') return json(await publicTour(env, url.searchParams.get('id')), 200, { 'Cache-Control': 'public, max-age=60' });
+  if (p === '/api/tour' && m === 'GET') {
+    const t = await publicTour(env, url.searchParams.get('id'));
+    track(`t/${t.id}/`, { type: 'tour', dedupe: 30 });
+    return json(t, 200, { 'Cache-Control': 'no-store' });
+  }
   if (p === '/api/tourfile' && m === 'GET') return serveTourFile(env, url);
 
   // --- Beheer ---
@@ -73,6 +93,20 @@ async function route(request, env) {
   if (p.startsWith('/api/admin/')) {
     await requireAdmin(request, env);
     const parts = p.split('/').slice(3).map(decodeURIComponent); // na /api/admin/
+    if (parts[0] === 'activity' && parts.length === 1 && m === 'GET') return json(await adminActivity(env, url));
+    if (parts[0] === 'activity' && parts.length === 1 && m === 'DELETE') {
+      // Logboek wissen: van één galerij (?g=), één tour (?t=) of alles
+      const g = url.searchParams.get('g'), t = url.searchParams.get('t');
+      if (g && CODE_RE.test(g)) { await deletePrefix(env, `g/${g}/act/`); await env.GALLERIES.delete(`g/${g}/activity.json`); }
+      else if (t && CODE_RE.test(t)) { await deletePrefix(env, `t/${t}/act/`); await env.GALLERIES.delete(`t/${t}/activity.json`); }
+      else {
+        for (const pre of ['g/', 't/']) {
+          const pages = await listAll(env, pre, { delimiter: '/' });
+          for (const id of pages.flatMap(p => p.delimitedPrefixes)) { await deletePrefix(env, `${id}act/`); await env.GALLERIES.delete(`${id}activity.json`); }
+        }
+      }
+      return json({ ok: true });
+    }
     if (parts[0] === 'tours') {
       if (parts.length === 1 && m === 'GET') return json(await adminListTours(env));
       if (parts.length === 1 && m === 'POST') return json(await adminCreateTour(request, env), 201);
@@ -102,7 +136,7 @@ async function route(request, env) {
 
 /* ---------------- Klant ---------------- */
 
-async function clientLogin(request, env) {
+async function clientLogin(request, env, track) {
   const body = await readJson(request);
   const code = String(body.code || '').trim().toLowerCase();
   const password = String(body.password || '');
@@ -113,7 +147,8 @@ async function clientLogin(request, env) {
   if (!meta) throw new HttpError(401, 'Code of wachtwoord klopt niet.');
   if (meta.expires && meta.expires < Date.now()) throw new HttpError(410, 'Deze galerij is verlopen. Neem contact op als je de beelden nog nodig hebt.');
   const ok = await safeEqual(await hashPassword(env, meta.salt, password), meta.hash);
-  if (!ok) throw new HttpError(401, 'Code of wachtwoord klopt niet.');
+  if (!ok) { track(`g/${code}/`, { type: 'login-fail' }); throw new HttpError(401, 'Code of wachtwoord klopt niet.'); }
+  track(`g/${code}/`, { type: 'login' });
   const exp = Math.min(Date.now() + CLIENT_TOKEN_HOURS * 3600e3, meta.expires || Infinity);
   return json({ token: await sign(env, { c: code, e: exp }), expiresAt: exp });
 }
@@ -134,7 +169,7 @@ async function galleryForClient(env, code, url) {
   };
 }
 
-async function serveFile(request, env, url) {
+async function serveFile(request, env, url, track) {
   // Afbeeldingen en downloads kunnen geen headers meesturen: het bewijs zit in ?t=
   const token = url.searchParams.get('t') || bearer(request);
   const payload = await verify(env, token);
@@ -154,6 +189,7 @@ async function serveFile(request, env, url) {
   headers.set('Cache-Control', 'private, max-age=3600');
   headers.set('Content-Length', String(obj.size));
   if (url.searchParams.get('download') === '1') {
+    if (payload.c !== 'admin' && kind === 'o') track(`g/${code}/`, { type: 'download', file: name });
     headers.set('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(name)}`);
   }
   return new Response(obj.body, { headers });
@@ -389,6 +425,77 @@ async function deletePrefix(env, prefix) {
   const pages = await listAll(env, prefix);
   const keys = pages.flatMap(p => p.objects).map(o => o.key);
   for (let i = 0; i < keys.length; i += 1000) await env.GALLERIES.delete(keys.slice(i, i + 1000));
+}
+
+/* ---------------- Activiteit ----------------
+   Per galerij/tour een logbestand (laatste 500 gebeurtenissen):
+   g/<code>/activity.json  ·  t/<id>/activity.json
+   Bevat: tijdstip, soort, bestand, plaats (stad, land) en toestel.
+   IP-adressen worden niet bewaard, enkel een korte, gezouten hash om
+   herhaalde bezoeken binnen 30 minuten samen te nemen. */
+// Elke gebeurtenis is een eigen klein object (geen overschrijven bij gelijktijdige
+// bezoeken). De sleutel sorteert van nieuw naar oud; de gegevens zitten in de
+// metadata, zodat één lijst-opvraging volstaat om alles te tonen.
+const REV = (t) => String(9e15 - t).padStart(16, '0');
+async function logEvent(env, request, prefix, ev) {
+  const cf = request.cf || {};
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  const who = ip ? (await sha256(`${env.SIGNING_KEY}:${ip}`)).slice(0, 10) : '';
+  const now = Date.now();
+  if (ev.dedupe) {
+    const recent = await readActivity(env, prefix, 30);
+    if (recent.some(e => e.type === ev.type && e.who === who && now - e.t < ev.dedupe * 60e3)) return;
+  }
+  const meta = { t: String(now), type: ev.type, who, loc: [cf.city, cf.country].filter(Boolean).join(', '), dev: device(request.headers.get('user-agent') || '') };
+  if (ev.file) meta.file = String(ev.file).slice(0, 160);
+  if (ev.n) meta.n = String(ev.n);
+  await env.GALLERIES.put(`${prefix}act/${REV(now)}-${randomHex(3)}`, '', { customMetadata: meta });
+  // Af en toe opruimen: enkel de laatste 500 bewaren
+  if (Math.random() < 0.05) {
+    const r = await env.GALLERIES.list({ prefix: `${prefix}act/`, limit: 1000 });
+    const old = r.objects.slice(500).map(o => o.key);
+    if (old.length) await env.GALLERIES.delete(old);
+  }
+}
+function device(ua) {
+  const os = /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad' : /Android/.test(ua) ? (/Mobile/.test(ua) ? 'Android-gsm' : 'Android-tablet')
+    : /Windows/.test(ua) ? 'Windows' : /Macintosh/.test(ua) ? 'Mac' : /Linux/.test(ua) ? 'Linux' : 'Onbekend';
+  const br = /Edg\//.test(ua) ? 'Edge' : /OPR\//.test(ua) ? 'Opera' : /Firefox\//.test(ua) ? 'Firefox' : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : '';
+  return br ? `${os} · ${br}` : os;
+}
+async function readActivity(env, prefix, limit = 500) {
+  const r = await env.GALLERIES.list({ prefix: `${prefix}act/`, limit, include: ['customMetadata'] });
+  return r.objects.map(o => {
+    const m = o.customMetadata || {};
+    return { t: Number(m.t) || 0, type: m.type, file: m.file, n: m.n ? Number(m.n) : undefined, who: m.who, loc: m.loc || '', dev: m.dev || '' };
+  });
+}
+async function adminActivity(env, url) {
+  const only = url.searchParams.get('g');
+  const out = [];
+  const stats = {};
+  const gPages = await listAll(env, 'g/', { delimiter: '/' });
+  for (const code of gPages.flatMap(p => p.delimitedPrefixes).map(s => s.slice(2, -1))) {
+    if (only && only !== code) continue;
+    const meta = await readMeta(env, code);
+    if (!meta) continue;
+    const ev = await readActivity(env, `g/${code}/`);
+    stats[code] = { title: meta.title, kind: 'galerij', visits: ev.filter(e => e.type === 'visit').length, downloads: ev.filter(e => e.type === 'download').length, zips: ev.filter(e => e.type === 'zip').length, last: ev[0] ? ev[0].t : 0 };
+    ev.forEach(e => out.push({ ...e, kind: 'galerij', ref: code, title: meta.title }));
+  }
+  if (!only) {
+    const tPages = await listAll(env, 't/', { delimiter: '/' });
+    for (const id of tPages.flatMap(p => p.delimitedPrefixes).map(s => s.slice(2, -1))) {
+      const t = await readTour(env, id);
+      if (!t) continue;
+      const ev = await readActivity(env, `t/${id}/`);
+      stats['tour:' + id] = { title: t.title, kind: 'tour', visits: ev.length, last: ev[0] ? ev[0].t : 0 };
+      ev.forEach(e => out.push({ ...e, kind: 'tour', ref: id, title: t.title }));
+    }
+  }
+  out.sort((a, b) => b.t - a.t);
+  const limit = clampInt(url.searchParams.get('limit'), 1, 1000, 300);
+  return { events: out.slice(0, limit), stats };
 }
 
 /* ---------------- Opslag ---------------- */

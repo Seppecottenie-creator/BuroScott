@@ -173,7 +173,9 @@ async function refreshDetail(code) {
   $('ad-d-title').textContent = g.title;
   const total = g.files.reduce((s, f) => s + f.size, 0);
   $('ad-d-meta').textContent = `${g.subtitle ? g.subtitle + ' · ' : ''}${g.files.length} bestanden · ${fmtBytes(total)} · beschikbaar tot ${fmtDate(g.expires)}`;
-  $('ad-d-open').href = clientLink(g.code);
+  $('ad-d-open').href = clientLink(g.code) + '&beheer=1';
+  $('ad-d-activity-link').href = 'activiteit.html?g=' + encodeURIComponent(g.code);
+  loadGalleryActivity(g.code);
   $('ad-d-tour').value = g.tourUrl || '';
   $('ad-d-count').textContent = `(${g.files.length})`;
   const ul = $('ad-d-files');
@@ -199,6 +201,18 @@ async function refreshDetail(code) {
     ul.appendChild(li);
   }
   loadTourPicker(g);
+}
+
+async function loadGalleryActivity(code) {
+  const ul = $('ad-d-activity');
+  try {
+    const r = await api('/api/admin/activity?limit=8&g=' + encodeURIComponent(code));
+    const label = { login: 'Klant logde in', 'login-fail': 'Mislukte login (fout wachtwoord)', visit: 'Galerij bekeken', download: 'Gedownload:', zip: 'Alles gedownload (zip)' };
+    const st = r.stats[code] || {};
+    $('ad-d-activity-sum').textContent = `${st.visits || 0} bezoeken · ${(st.downloads || 0) + (st.zips || 0)} downloads`;
+    ul.innerHTML = r.events.length ? r.events.map((e) => `<li class="ac-item"><div class="ac-body"><span class="ac-text">${label[e.type] || e.type}${e.file ? ` <b>${esc(e.file)}</b>` : ''}${e.n ? ` · ${e.n} bestanden` : ''}</span><span class="ac-meta">${[e.loc, e.dev].filter(Boolean).map(esc).join(' · ')}</span></div><time class="ac-time">${new Date(e.t).toLocaleString('nl-BE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</time></li>`).join('')
+      : '<li class="ad-empty">Je klant heeft de galerij nog niet geopend.</li>';
+  } catch (e) { ul.innerHTML = '<li class="ad-empty">Activiteit kon niet geladen worden.</li>'; }
 }
 
 async function loadTourPicker(g) {

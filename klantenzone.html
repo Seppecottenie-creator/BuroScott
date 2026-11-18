@@ -15,6 +15,7 @@
 <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
 <script>document.documentElement.classList.add('js')</script>
 <script src="js/klantenzone-config.js"></script>
+<script src="js/admin-session.js"></script>
 </head>
 <body class="kz">
 
@@ -58,6 +59,10 @@
 
   <!-- ---------- Galerij (Picflow-stijl) ---------- -->
   <section class="pf" id="kz-gallery-view" hidden>
+    <div class="pf-adminbar" id="pf-adminbar" hidden>
+      <span><b>Beheerweergave</b> · je ziet wat je klant ziet. Jouw bezoek telt niet mee in de activiteit.</span>
+      <a href="klantenzone-beheer.html" id="pf-adminbar-back">← Terug naar beheer</a>
+    </div>
     <div class="pf-cover" id="pf-cover">
       <img id="pf-cover-img" alt="">
       <div class="pf-cover-shade" aria-hidden="true"></div>
