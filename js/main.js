@@ -578,6 +578,8 @@ document.querySelectorAll('.service-card').forEach(card => {
     const vh = window.innerHeight;
     const p = prefersReduced ? 1 : Math.min(Math.max((vh * 0.8 - r.top) / (r.height + vh * 0.35), 0), 1);
     track.style.setProperty('--p', p.toFixed(3));
+    const sec = track.closest('.process');
+    if (sec) sec.style.setProperty('--p', p.toFixed(3));
     steps.forEach((s, i) => s.classList.toggle('is-active', p >= (i + 0.15) / steps.length));
   }
   window.addEventListener('scroll', () => { if (!ticking){ ticking = true; requestAnimationFrame(update); } }, { passive:true });
