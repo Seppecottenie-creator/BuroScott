@@ -111,3 +111,11 @@ Open daarna de site met `?api=http://127.0.0.1:8787` achter het adres van
 
 - Galerij: code `voorbeeld-kerkstraat`, wachtwoord `voorbeeld-2026` (blijft 1 jaar staan).
 - Tour: `tour.html?id=voorbeeld-woning-waregem` (panorama's: Poly Haven, CC0).
+
+## Snel naar je beheer
+
+- Kort adres: **…/BuroScott/beheer** (of `beheer.html`): overzicht met meldingen,
+  tellers, opslag en snelle knoppen "Nieuwe galerij" / "Nieuwe tour".
+- **Onthoud mij op dit toestel**: 30 dagen ingelogd blijven.
+- Op je gsm: open het beheer en kies "Zet op beginscherm". Je beheer opent dan als app.
+- Onderaan de klantenzone staat ook een discrete link "Beheer".

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Beheer — Buro Scott</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0E0F0D">
+<link rel="manifest" href="manifest-beheer.json">
+<link rel="apple-touch-icon" href="assets/icons/beheer-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Beheer">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/klantenzone.css">
+<link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+<script>document.documentElement.classList.add('js')</script>
+<script src="js/klantenzone-config.js"></script>
+<script src="js/admin-session.js"></script>
+</head>
+<body class="kz kz-admin">
+
+<header class="kz-top">
+  <a href="beheer.html" class="kz-brand">Buro Scott<span class="brand-dot" aria-hidden="true">.</span></a>
+  <nav class="ad-tabs" aria-label="Beheer">
+    <a href="beheer.html" aria-current="page">Overzicht</a>
+    <a href="klantenzone-beheer.html">Galerijen</a>
+    <a href="tours-beheer.html">360° tours</a>
+  </nav>
+  <button type="button" class="kz-logout" id="hb-logout" hidden>Afmelden</button>
+</header>
+
+<main id="inhoud" class="ad-main">
+
+  <section class="ad-card ad-login" id="hb-login-view" hidden>
+    <h1>Beheer</h1>
+    <p class="kz-lede">Log in met je beheerwachtwoord.</p>
+    <form id="hb-login-form" class="kz-form" novalidate>
+      <div class="field">
+        <label for="hb-password">Beheerwachtwoord</label>
+        <input type="password" id="hb-password" autocomplete="current-password" required>
+      </div>
+      <label class="ad-remember"><input type="checkbox" id="hb-remember" checked> Onthoud mij op dit toestel (30 dagen)</label>
+      <p class="form-alert" id="hb-login-error" role="alert" hidden></p>
+      <button type="submit" class="form-submit"><span>Inloggen</span><span class="arrow" aria-hidden="true">→</span></button>
+    </form>
+  </section>
+
+  <section id="hb-view" hidden>
+    <div class="ad-head">
+      <div>
+        <p class="kz-eyebrow" id="hb-date"></p>
+        <h1>Welkom terug.</h1>
+      </div>
+      <div class="ad-head-actions">
+        <a class="kz-btn kz-btn-primary" href="klantenzone-beheer.html?nieuw=1">+ Nieuwe galerij</a>
+        <a class="kz-btn kz-btn-primary" href="tours-beheer.html?nieuw=1">+ Nieuwe tour</a>
+      </div>
+    </div>
+
+    <ul class="hb-alerts" id="hb-alerts"></ul>
+
+    <div class="hb-tiles">
+      <a class="hb-tile" href="klantenzone-beheer.html"><span class="hb-tile-num" id="hb-g-count">–</span><span class="hb-tile-label">galerijen online</span></a>
+      <a class="hb-tile" href="tours-beheer.html"><span class="hb-tile-num" id="hb-t-count">–</span><span class="hb-tile-label">tours online</span></a>
+      <div class="hb-tile">
+        <span class="hb-tile-num" id="hb-storage">–</span><span class="hb-tile-label">van 10 GB gratis opslag</span>
+        <span class="ad-bar"><span id="hb-storage-bar" style="width:0"></span></span>
+      </div>
+    </div>
+
+    <div class="hb-cols">
+      <div class="ad-card">
+        <div class="hb-card-head"><h2>Recente galerijen</h2><a href="klantenzone-beheer.html" class="inline-link">Alle →</a></div>
+        <ul class="ad-list" id="hb-galleries"><li class="ad-empty">Laden…</li></ul>
+      </div>
+      <div class="ad-card">
+        <div class="hb-card-head"><h2>360° tours</h2><a href="tours-beheer.html" class="inline-link">Alle →</a></div>
+        <ul class="ad-list" id="hb-tours"><li class="ad-empty">Laden…</li></ul>
+      </div>
+    </div>
+
+    <div class="ad-card">
+      <h2>Handige links</h2>
+      <div class="hb-links">
+        <a href="index.html?voorbeeld=buroscott" target="_blank" rel="noopener">Website (voorbeeldmodus) ↗</a>
+        <a href="klantenzone.html" target="_blank" rel="noopener">Klantenzone als klant ↗</a>
+        <a href="klantenzone.html?g=voorbeeld-kerkstraat" target="_blank" rel="noopener">Voorbeeldgalerij ↗</a>
+        <a href="tour.html?id=voorbeeld-woning-waregem" target="_blank" rel="noopener">Voorbeeldtour ↗</a>
+        <a href="https://dash.cloudflare.com" target="_blank" rel="noopener">Cloudflare ↗</a>
+      </div>
+      <p class="hint hb-tip">Tip: op je gsm kan je deze pagina op je beginscherm zetten (deelknop → "Zet op beginscherm"). Dan open je je beheer als een app.</p>
+    </div>
+  </section>
+
+  <section class="kz-notice" id="hb-setup" hidden><h1>De klantenzone is nog niet gekoppeld.</h1></section>
+</main>
+
+<script type="module" src="js/beheer.js"></script>
+</body>
+</html>

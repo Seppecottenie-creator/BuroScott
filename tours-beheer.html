@@ -6,6 +6,8 @@
 <title>Beheer 360° tours — Buro Scott</title>
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#0E0F0D">
+<link rel="manifest" href="manifest-beheer.json">
+<link rel="apple-touch-icon" href="assets/icons/beheer-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -16,12 +18,14 @@
 <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
 <script>document.documentElement.classList.add('js')</script>
 <script src="js/klantenzone-config.js"></script>
+<script src="js/admin-session.js"></script>
 </head>
 <body class="kz kz-admin te">
 
 <header class="kz-top">
-  <a href="index.html" class="kz-brand">Buro Scott<span class="brand-dot" aria-hidden="true">.</span></a>
+  <a href="beheer.html" class="kz-brand">Buro Scott<span class="brand-dot" aria-hidden="true">.</span></a>
   <nav class="ad-tabs" aria-label="Beheer">
+    <a href="beheer.html">Overzicht</a>
     <a href="klantenzone-beheer.html">Galerijen</a>
     <a href="tours-beheer.html" aria-current="page">360° tours</a>
   </nav>
@@ -38,6 +42,7 @@
         <label for="te-password">Beheerwachtwoord</label>
         <input type="password" id="te-password" autocomplete="current-password" required>
       </div>
+      <label class="ad-remember"><input type="checkbox" id="te-remember" checked> Onthoud mij op dit toestel (30 dagen)</label>
       <p class="form-alert" id="te-login-error" role="alert" hidden></p>
       <button type="submit" class="form-submit"><span>Inloggen</span><span class="arrow" aria-hidden="true">→</span></button>
     </form>

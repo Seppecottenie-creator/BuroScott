@@ -68,7 +68,7 @@ function confirmBox(title, text, okLabel = 'Verwijderen') {
 
 /* ---------- Inloggen ---------- */
 function logout() {
-  try { sessionStorage.removeItem(KEY); } catch (e) {}
+  AdminSession.clear();
   state.token = null;
   show('ad-login-view');
 }
@@ -78,10 +78,11 @@ $('ad-login-form').addEventListener('submit', async (e) => {
   const err = $('ad-login-error');
   err.hidden = true;
   try {
-    const r = await api('/api/admin/login', { method: 'POST', body: JSON.stringify({ password: $('ad-password').value }) });
+    const r = await api('/api/admin/login', { method: 'POST', body: JSON.stringify({ password: $('ad-password').value, remember: $('ad-remember').checked }) });
     state.token = r.token;
-    try { sessionStorage.setItem(KEY, JSON.stringify(r)); } catch (e2) {}
+    AdminSession.set(r, $('ad-remember').checked);
     $('ad-password').value = '';
+    if (location.search) { location.reload(); return; }
     await openList();
   } catch (ex) { err.textContent = ex.message; err.hidden = false; }
 });
@@ -307,8 +308,15 @@ $('ad-d-delete').addEventListener('click', async () => {
 (async function init() {
   if (!API) { show('ad-setup'); return; }
   try {
-    const s = JSON.parse(sessionStorage.getItem(KEY) || 'null');
-    if (s && s.expiresAt > Date.now()) { state.token = s.token; await openList(); return; }
+    const s = AdminSession.get();
+    if (s) {
+      state.token = s.token;
+      const q = new URLSearchParams(location.search);
+      if (q.get('g')) { await openDetail(q.get('g')); return; }
+      await openList();
+      if (q.get('nieuw')) $('ad-title').focus();
+      return;
+    }
   } catch (e) {}
   show('ad-login-view');
   $('ad-password').focus();
