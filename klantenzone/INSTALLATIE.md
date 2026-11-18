@@ -125,3 +125,10 @@ Open daarna de site met `?api=http://127.0.0.1:8787` achter het adres van
 - In de zijbalk (op elke beheerpagina) onder **Mappen**: **+** maakt een map aan, **⋯** naast een map om te hernoemen of te verwijderen.
 - Galerij in een map steken: sleep de kaart op de map, kies de map bij "Nieuwe galerij", of via Instellingen → Map in de galerij.
 - Een map verwijderen verwijdert geen galerijen: die komen bij "Zonder map".
+
+## Tour in de galerij + eigen huisstijl
+
+- Koppel een tour aan een galerij (Instellingen → "Eigen 360° tour koppelen"): de klant ziet de tour dan
+  op dezelfde pagina als de foto's, met "Open apart" en "Kopieer link" om de tour los te delen.
+- **Eigen huisstijl** (tours-beheer, kaart "Eigen huisstijl"): kleur, naam, website en logo van de makelaar.
+  Optioneel een kleine vermelding "360° door Buro Scott".

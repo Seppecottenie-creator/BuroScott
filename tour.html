@@ -20,13 +20,13 @@
 <div id="pano" class="tr-pano" aria-label="360° panorama"></div>
 
 <div class="tr-loading" id="tr-loading" aria-live="polite">
-  <div class="tr-brand-big">BURO SCOTT<span>.</span></div>
+  <div class="tr-brand-big" id="tr-brand-big">BURO SCOTT<span>.</span></div>
   <div class="tr-bar"><span></span></div>
   <p id="tr-loading-text">Tour laden…</p>
 </div>
 
 <header class="tr-top">
-  <a class="tr-pill tr-brand" href="index.html" target="_blank" rel="noopener">BURO SCOTT<span>.</span></a>
+  <a class="tr-pill tr-brand" id="tr-brand" href="index.html" target="_blank" rel="noopener">BURO SCOTT<span>.</span></a>
   <div class="tr-pill tr-title"><span class="tr-360">360°</span><span id="tr-title">Virtuele tour</span></div>
   <div class="tr-ctrls">
     <button type="button" class="tr-btn" id="tr-rotate" aria-pressed="false" aria-label="Automatisch draaien">
@@ -44,6 +44,8 @@
 </div>
 
 <nav class="tr-scenes" id="tr-scenes" aria-label="Ruimtes"></nav>
+
+<a class="tr-credit" id="tr-credit" href="index.html" target="_blank" rel="noopener" hidden>360° door <b>Buro Scott</b></a>
 
 <script src="js/vendor/pannellum/pannellum.js"></script>
 <script src="js/tour.js"></script>

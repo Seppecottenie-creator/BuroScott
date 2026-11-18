@@ -78,6 +78,12 @@ $('kz-logout').addEventListener('click', logout);
 $('kz-logout-2').addEventListener('click', logout);
 
 /* ---------- Galerij ---------- */
+$('pf-tour-copy').addEventListener('click', async (e) => {
+  const b = e.currentTarget, url = $('pf-tour-open').href;
+  try { await navigator.clipboard.writeText(url); b.textContent = 'Gekopieerd ✓'; }
+  catch (ex) { window.prompt('Kopieer de link:', url); }
+  setTimeout(() => { b.textContent = 'Kopieer link'; }, 2200);
+});
 async function openGallery() {
   try { state.gallery = await api('/api/gallery' + (state.admin ? '?g=' + encodeURIComponent(state.code) : '')); }
   catch (ex) { if (ex.status === 401) { clearSession(); show('login'); return; } throw ex; }
@@ -91,7 +97,16 @@ async function openGallery() {
   $('pf-date').textContent = `Beelden · ${fmtDate(g.created)}`;
   const total = g.files.reduce((s, f) => s + f.size, 0);
   $('kz-meta').textContent = `${g.files.length} ${g.files.length === 1 ? 'bestand' : 'bestanden'} · ${fmtBytes(total)} · beschikbaar tot ${fmtDate(g.expires)}`;
-  const tour = $('kz-tour'); tour.hidden = !g.tourUrl; if (g.tourUrl) tour.href = g.tourUrl;
+  $('kz-tour').hidden = !g.tourUrl;
+  $('pf-tour').hidden = !g.tourUrl;
+  if (g.tourUrl) {
+    // Eigen tours via dezelfde site laden (sneller, werkt ook in voorbeeldmodus)
+    const own = g.tourUrl.match(/\/tour\.html\?id=([a-z0-9-]+)/);
+    const src = own ? 'tour.html?id=' + own[1] : g.tourUrl;
+    const frame = $('pf-tour-frame');
+    if (frame.getAttribute('src') !== src) frame.src = src;
+    $('pf-tour-open').href = g.tourUrl;
+  }
   $('kz-zip').disabled = g.files.length === 0;
 
   // Omslag: gekozen omslagfoto, anders de eerste foto

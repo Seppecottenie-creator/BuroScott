@@ -82,7 +82,7 @@
       <div class="pf-bar-title"><span class="pf-bar-brand">BURO SCOTT<span>.</span></span><span id="pf-bar-name"></span></div>
       <nav class="pf-tabs" id="kz-tabs" aria-label="Soort beelden"></nav>
       <div class="pf-bar-actions">
-        <a class="pf-btn pf-btn-ghost" id="kz-tour" href="#" target="_blank" rel="noopener" hidden><span class="kz-360" aria-hidden="true">360°</span><span class="pf-hide-sm">Virtuele tour</span><span class="visually-hidden"> (opent in een nieuw venster)</span></a>
+        <a class="pf-btn pf-btn-ghost" id="kz-tour" href="#pf-tour" hidden><span class="kz-360" aria-hidden="true">360°</span><span class="pf-hide-sm">Virtuele tour</span></a>
         <button type="button" class="pf-btn pf-btn-primary" id="kz-zip">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0 4.5-4.5M12 15l-4.5-4.5M5 19h14"/></svg>
           <span class="pf-hide-sm">Download alles</span>
@@ -91,6 +91,18 @@
     </div>
     <p class="kz-zip-status pf-status" id="kz-zip-status" role="status" aria-live="polite"></p>
     <p class="pf-meta" id="kz-meta"></p>
+
+    <section class="pf-tour" id="pf-tour" aria-labelledby="pf-tour-title" hidden>
+      <div class="pf-tour-head">
+        <h2 id="pf-tour-title"><span class="kz-360" aria-hidden="true">360°</span> Virtuele tour</h2>
+        <div class="pf-tour-actions">
+          <button type="button" class="pf-btn pf-btn-ghost" id="pf-tour-copy">Kopieer link</button>
+          <a class="pf-btn pf-btn-ghost" id="pf-tour-open" target="_blank" rel="noopener">Open apart ↗</a>
+        </div>
+      </div>
+      <div class="pf-tour-frame"><iframe id="pf-tour-frame" title="Virtuele 360° tour" allow="fullscreen; accelerometer; gyroscope" allowfullscreen loading="lazy"></iframe></div>
+      <p class="pf-tour-note">Deze link kan je apart delen, bv. in je zoekertje of op je website.</p>
+    </section>
 
     <div id="pf-grid-start"></div>
     <div class="pf-sections" id="kz-grid"></div>
