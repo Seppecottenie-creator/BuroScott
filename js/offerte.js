@@ -276,7 +276,7 @@
   }
   var sum = function (L) { return L.reduce(function (s, l) { return s + l[1]; }, 0); };
   // zoals de klant het ziet: elke regel afgerond, totaal = som van die regels
-  var rg = function (v) { var g = BSPrice.gross(v); return v % 1 ? Math.round(g * 100) / 100 : Math.round(g); };
+  var rg = function (v) { return BSPrice.nice(v); };
   var dsum = function (L) { return L.reduce(function (s, l) { return s + rg(l[1]); }, 0); };
   var money = function (v) { return BSPrice.fmt(v, Math.round(v * 100) % 100 !== 0); };
 
@@ -356,13 +356,13 @@
 
     // overzicht voor de mail (excl. én incl. btw)
     var r2 = function (v) { return Math.round(v * 100) / 100; };
-    var exTotal = L.reduce(function (s, l) { return s + r2(l[1]); }, 0);
-    var incTotal = L.reduce(function (s, l) { return s + r2(l[1] * (1 + PR.vat)); }, 0);
+    var exTotal = L.reduce(function (s, l) { return s + BSPrice.nice(l[1], 'pro'); }, 0);
+    var incTotal = L.reduce(function (s, l) { return s + BSPrice.nice(l[1], 'part'); }, 0);
     var lines = [];
     if (mode === 'advies') lines.push('Keuze: twijfelt nog, wil advies');
     else if (L.length) {
       lines.push('Keuze: ' + (mode === 'pakket' ? 'pakket' : 'zelf samengesteld'));
-      L.forEach(function (l) { lines.push('- ' + l[0] + ': ' + money(r2(l[1])) + ' excl. btw'); });
+      L.forEach(function (l) { lines.push('- ' + l[0] + ': ' + money(BSPrice.nice(l[1], 'pro')) + ' excl. btw / ' + money(BSPrice.nice(l[1], 'part')) + ' incl. btw'); });
       lines.push('Totaal vanaf: ' + money(r2(exTotal)) + ' excl. btw / ' + money(r2(incTotal)) + ' incl. btw');
       if (tip) lines.push('Getoonde tip: ' + $('o-tip').textContent.replace(/Neem .*→/, '').trim());
       if (big.length) lines.push('Let op: ' + big.join(' en '));
