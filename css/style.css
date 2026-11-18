@@ -23,8 +23,8 @@
   --font-display: "Archivo", sans-serif;
   --font-body: "Archivo", sans-serif;
 
-  --container: 1240px;
-  --gutter: 32px;
+  --container: 1560px;
+  --gutter: clamp(20px, 4vw, 64px);
 
   --ease: cubic-bezier(.22,.61,.36,1);
 }
@@ -1117,26 +1117,13 @@ html.is-construction body::after{ opacity:.06; }
 @keyframes cueBob{ 50%{ transform:translateY(4px); } }
 @media (max-width:680px){ .scroll-cue{ bottom:104px; } }
 
-/* Diensten: elke kaart vult het scherm, foto altijd links */
+/* Diensten: foto altijd links, normale hoogte, volle breedte */
 @media (min-width:681px){
-  .services-grid{ gap:24px; }
-  .service-card,
-  .service-card:nth-child(even){
-    flex-direction:row; align-items:stretch;
-    min-height:calc(100svh - 150px); top:calc(64px + var(--i, 0) * 16px);
-    padding:22px; gap:clamp(28px,4vw,64px); border-radius:32px;
-  }
-  .service-card-media{ position:relative; flex:0 0 56%; width:56%; aspect-ratio:auto; border-radius:22px; }
-  .service-card-media img{ position:absolute; inset:0; width:100%; height:100%; }
-  .service-card-body{ justify-content:center; padding:20px clamp(8px,2vw,28px) 20px 0; }
-  .service-card h3{ font-size:clamp(2.2rem,4.2vw,3.6rem); letter-spacing:-.025em; }
-  .service-card p{ font-size:1.1rem; max-width:38ch; }
-  .service-card::after{ font-size:12rem; bottom:-46px; }
+  .service-card, .service-card:nth-child(even){ flex-direction:row; }
+  .service-card-media{ flex:0 0 42%; width:42%; aspect-ratio:16/10; }
+  .service-card h3{ font-size:clamp(1.8rem,2.8vw,2.6rem); }
+  .service-card p{ font-size:1.05rem; max-width:52ch; }
 }
-@media (min-width:681px) and (max-width:980px){
-  .service-card-media{ flex-basis:48%; width:48%; }
-}
-
 /* My Scott-knop in de navigatie */
 .floating-nav .nav-portal{
   display:inline-flex; align-items:center; gap:7px; color:var(--text-on-dark);
@@ -1166,11 +1153,93 @@ html.is-construction body::after{ opacity:.06; }
 @media (prefers-reduced-motion: reduce){
   .scroll-cue, .scroll-cue-mouse span, .scroll-cue-text{ animation:none; }
 }
-@media (min-width:681px){
-  .services .services-grid{ max-width:1560px; }
-  .services .section-head{ max-width:1560px; }
-}
 @media (max-width:680px){
   .hero-panel-bottom{ gap:6px 14px; font-size:.7rem; }
   .hero-panel-bottom span + span::before{ content:none; }
+}
+
+
+/* ============================================================
+   WERKWIJZE v2 — stappenkaarten met groot cijfer, icoon en
+   een lichtpunt dat over de lijn loopt tijdens het scrollen
+============================================================ */
+.process{ padding:150px var(--gutter) 160px; isolation:isolate; }
+.process::before{ display:none; }
+.process::after{
+  content:""; position:absolute; inset:0; z-index:-1; pointer-events:none;
+  background-image:linear-gradient(rgba(245,244,240,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(245,244,240,.05) 1px, transparent 1px);
+  background-size:64px 64px;
+  -webkit-mask-image:radial-gradient(ellipse 80% 70% at 50% 40%, #000 30%, transparent 75%);
+  mask-image:radial-gradient(ellipse 80% 70% at 50% 40%, #000 30%, transparent 75%);
+}
+.process-glow{
+  position:absolute; z-index:-1; width:900px; height:900px; top:20%; pointer-events:none;
+  left:calc(var(--p, 0) * 80% - 300px);
+  background:radial-gradient(circle, rgba(29,63,214,.42), transparent 62%);
+  transition:left .2s linear;
+}
+.process-head{ display:flex; justify-content:space-between; align-items:flex-end; gap:40px; flex-wrap:wrap; }
+.process-head h2{ font-size:clamp(2.6rem, 5.6vw, 5rem); max-width:none; }
+.process-hl{ background:linear-gradient(90deg, #8FA2FF, #fff 70%); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.process-intro{ max-width:380px; display:flex; flex-direction:column; gap:18px; }
+.process-intro p{ color:var(--muted-dark); line-height:1.65; }
+.process-cta{
+  align-self:flex-start; display:inline-flex; gap:10px; align-items:center;
+  padding:13px 22px; border-radius:999px; background:var(--accent); color:#fff; font-weight:600;
+  box-shadow:0 12px 30px -10px rgba(29,63,214,.8); transition:transform .3s var(--ease), background .3s var(--ease);
+}
+.process-cta:hover{ transform:translateY(-2px); background:#2B4DF0; }
+.process-cta span{ transition:transform .3s var(--ease); }
+.process-cta:hover span{ transform:translateX(4px); }
+
+.process-track{ margin-top:110px; }
+.process-steps{ gap:20px; }
+.process-line{ top:7px; height:2px; background:rgba(245,244,240,.12); }
+.process-line i{
+  position:absolute; top:50%; left:calc(var(--p, 0) * 100%); width:12px; height:12px; margin:-6px 0 0 -6px;
+  border-radius:50%; background:#fff; box-shadow:0 0 0 6px rgba(143,162,255,.35), 0 0 28px 8px rgba(143,162,255,.7);
+  opacity:calc(var(--p, 0) * 40);
+}
+.process-step{
+  position:relative; padding:64px 28px 28px; margin-top:34px; border-radius:24px; overflow:hidden;
+  background:linear-gradient(180deg, rgba(245,244,240,.06), rgba(245,244,240,.015));
+  border:1px solid rgba(245,244,240,.1);
+  transition:transform .6s var(--ease), border-color .6s var(--ease), background .6s var(--ease), box-shadow .6s var(--ease);
+}
+.process-step .process-dot{ left:28px; top:-41px; }
+.process-step.is-active{
+  transform:translateY(-8px);
+  border-color:rgba(143,162,255,.55);
+  background:linear-gradient(180deg, rgba(29,63,214,.28), rgba(29,63,214,.06));
+  box-shadow:0 30px 60px -30px rgba(29,63,214,.8);
+}
+.process-big{
+  position:absolute; right:-6px; top:-22px; font-family:var(--font-display); font-weight:900; font-size:9rem; line-height:1;
+  letter-spacing:-.05em; color:transparent; -webkit-text-stroke:1.5px rgba(245,244,240,.12);
+  transition:-webkit-text-stroke-color .6s var(--ease), transform .8s var(--ease);
+}
+.process-step.is-active .process-big{ -webkit-text-stroke-color:rgba(143,162,255,.55); transform:translateY(8px); }
+.process-icon{
+  display:grid; place-items:center; width:54px; height:54px; border-radius:16px; margin-bottom:26px;
+  background:rgba(245,244,240,.08); color:#fff; transition:background .5s var(--ease), transform .5s var(--ease);
+}
+.process-icon svg{ width:26px; height:26px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+.process-step.is-active .process-icon{ background:var(--accent); transform:rotate(-6deg) scale(1.05); }
+.process-step .process-num{ font-size:.75rem; letter-spacing:.14em; text-transform:uppercase; }
+.process-step h3{ font-size:1.9rem; margin:8px 0 12px; }
+.process-step p{ max-width:none; }
+.process-tag{
+  display:inline-block; margin-top:22px; font-size:.78rem; font-weight:600; padding:7px 12px; border-radius:999px;
+  border:1px solid rgba(245,244,240,.16); color:#D9D7CF;
+}
+.process-step.is-active .process-tag{ border-color:rgba(143,162,255,.5); color:#fff; }
+@media (max-width:980px){ .process-steps{ grid-template-columns:1fr 1fr; padding-left:0; } .process-line{ display:none; } .process-step .process-dot{ display:none; } .process-step{ margin-top:0; } }
+@media (max-width:620px){
+  .process{ padding:100px var(--gutter) 110px; }
+  .process-steps{ grid-template-columns:1fr; padding-left:0; }
+  .process-big{ font-size:7rem; }
+}
+@media (prefers-reduced-motion: reduce){
+  .process-step, .process-big, .process-icon, .process-glow{ transition:none; }
+  .process-step.is-active{ transform:none; }
 }
