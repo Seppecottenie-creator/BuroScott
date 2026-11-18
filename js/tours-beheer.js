@@ -49,15 +49,16 @@ function confirmBox(title, text) {
 }
 
 /* ---------- Inloggen (gedeeld met de galerijen) ---------- */
-function logout() { try { sessionStorage.removeItem(KEY); } catch (e) {} state.token = null; show('te-login-view'); }
+function logout() { AdminSession.clear(); state.token = null; show('te-login-view'); }
 $('te-logout').addEventListener('click', logout);
 $('te-login-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const err = $('te-login-error'); err.hidden = true;
   try {
-    const r = await api('/api/admin/login', { method: 'POST', body: JSON.stringify({ password: $('te-password').value }) });
+    const r = await api('/api/admin/login', { method: 'POST', body: JSON.stringify({ password: $('te-password').value, remember: $('te-remember').checked }) });
     state.token = r.token;
-    try { sessionStorage.setItem(KEY, JSON.stringify(r)); } catch (e2) {}
+    AdminSession.set(r, $('te-remember').checked);
+    if (location.search) { location.reload(); return; }
     await openList();
   } catch (ex) { err.textContent = ex.message; err.hidden = false; }
 });
@@ -307,8 +308,15 @@ async function uploadPanos(files) {
 (async function init() {
   if (!API) { show('te-setup'); return; }
   try {
-    const s = JSON.parse(sessionStorage.getItem(KEY) || 'null');
-    if (s && s.expiresAt > Date.now()) { state.token = s.token; await openList(); return; }
+    const s = AdminSession.get();
+    if (s) {
+      state.token = s.token;
+      const q = new URLSearchParams(location.search);
+      if (q.get('t')) { await openTour(q.get('t')); return; }
+      await openList();
+      if (q.get('nieuw')) $('te-title').focus();
+      return;
+    }
   } catch (e) {}
   show('te-login-view');
 })();

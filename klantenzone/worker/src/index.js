@@ -167,7 +167,8 @@ async function adminLogin(request, env) {
   if (!env.ADMIN_PASSWORD) throw new HttpError(500, 'ADMIN_PASSWORD is nog niet ingesteld.');
   const ok = await safeEqual(await sha256(String(body.password || '')), await sha256(env.ADMIN_PASSWORD));
   if (!ok) throw new HttpError(401, 'Wachtwoord klopt niet.');
-  const exp = Date.now() + ADMIN_TOKEN_HOURS * 3600e3;
+  // "Onthoud mij": 30 dagen ingelogd op dit toestel, anders 8 uur
+  const exp = Date.now() + (body.remember ? 30 * 24 : ADMIN_TOKEN_HOURS) * 3600e3;
   return json({ token: await sign(env, { c: 'admin', e: exp }), expiresAt: exp });
 }
 
