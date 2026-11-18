@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Aanvragen — Buro Scott</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0E0F0D">
+<link rel="manifest" href="manifest-beheer.json">
+<link rel="apple-touch-icon" href="assets/icons/beheer-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/klantenzone.css">
+<link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+<script>document.documentElement.classList.add('js')</script>
+<script src="js/klantenzone-config.js"></script>
+<script src="js/admin-session.js"></script>
+</head>
+<body class="kz kz-admin adm">
+
+<aside id="adm-side" data-page="aanvragen" data-logout="aq-logout"></aside>
+<script src="js/admin-shell.js"></script>
+
+<main id="inhoud" class="ad-main">
+  <section class="ad-card ad-login" id="aq-login-view" hidden>
+    <h1>Beheer</h1>
+    <p class="kz-lede">Log in met je beheerwachtwoord.</p>
+    <form id="aq-login-form" class="kz-form" novalidate>
+      <div class="field">
+        <label for="aq-password">Beheerwachtwoord</label>
+        <input type="password" id="aq-password" autocomplete="current-password" required>
+      </div>
+      <label class="ad-remember"><input type="checkbox" id="aq-remember" checked> Onthoud mij op dit toestel (30 dagen)</label>
+      <p class="form-alert" id="aq-login-error" role="alert" hidden></p>
+      <button type="submit" class="form-submit"><span>Inloggen</span><span class="arrow" aria-hidden="true">→</span></button>
+    </form>
+  </section>
+
+  <section id="aq-view" hidden>
+    <div class="ad-head">
+      <div>
+        <p class="kz-eyebrow">Offertes en berichten via de website</p>
+        <h1>Aanvragen</h1>
+      </div>
+      <div class="ad-head-actions">
+        <button type="button" class="kz-btn kz-btn-ghost" id="aq-refresh">Vernieuwen</button>
+      </div>
+    </div>
+    <div class="ac-chips" role="group" aria-label="Toon">
+      <button type="button" class="ac-chip" data-f="nieuw" aria-pressed="true">Nieuw <span id="aq-n-nieuw"></span></button>
+      <button type="button" class="ac-chip" data-f="behandeld" aria-pressed="false">Behandeld</button>
+      <button type="button" class="ac-chip" data-f="" aria-pressed="false">Alles</button>
+    </div>
+    <div class="aq-layout">
+      <ul class="aq-list" id="aq-list"><li class="ad-empty">Laden…</li></ul>
+      <article class="ad-card aq-detail" id="aq-detail" hidden></article>
+    </div>
+    <p class="hint aq-foot">Elke aanvraag komt ook in je mailbox (via Formspree). Hier wordt ze extra bewaard, zodat er nooit iets verloren gaat.</p>
+  </section>
+
+  <section class="kz-notice" id="aq-setup" hidden><h1>De klantenzone is nog niet gekoppeld.</h1></section>
+</main>
+
+<dialog class="ad-confirm" id="aq-confirm">
+  <form method="dialog">
+    <h2>Aanvraag verwijderen?</h2>
+    <p>Deze aanvraag wordt definitief verwijderd uit je beheer. De mail in je mailbox blijft bestaan.</p>
+    <div class="ad-confirm-actions">
+      <button value="cancel" class="kz-btn kz-btn-ghost">Annuleren</button>
+      <button value="ok" class="kz-btn kz-btn-danger">Verwijderen</button>
+    </div>
+  </form>
+</dialog>
+
+<script type="module" src="js/aanvragen.js"></script>
+</body>
+</html>

@@ -182,13 +182,21 @@ async function sendForm(form){
   if (label) label.textContent = 'Bezig met versturen…';
   try {
     // Leesbare velden versturen (zoals de bezoeker ze zag)
-    const fd = new FormData();
-    readableFields(form).forEach(([k, v]) => fd.append(k, v));
+    const pairs = readableFields(form);
     const mail = form.querySelector('[type="email"]');
+    const subject = isOfferte ? 'Offerteaanvraag via buroscott.be' : 'Bericht via buroscott.be';
+    // 1. naar je mailbox (Formspree)
+    const fd = new FormData();
+    pairs.forEach(([k, v]) => fd.append(k, v));
     if (mail) fd.append('email', mail.value);
-    fd.append('_subject', isOfferte ? 'Offerteaanvraag via buroscott.be' : 'Bericht via buroscott.be');
-    const res = await fetch(endpoint, { method:'POST', body:fd, headers:{ Accept:'application/json' } });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
+    fd.append('_subject', subject);
+    const toMail = fetch(endpoint, { method:'POST', body:fd, headers:{ Accept:'application/json' } }).then(r => r.ok);
+    // 2. bewaard in je beheer (Aanvragen), zodat er nooit iets verloren gaat
+    const api = (window.KLANTENZONE_API || '').replace(/\/+$/, '');
+    const toBeheer = api ? fetch(api + '/api/aanvraag', { method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ form: isOfferte ? 'offerte' : 'contact', email: mail ? mail.value : '', fields: pairs }) }).then(r => r.ok) : Promise.resolve(false);
+    const [a, b] = await Promise.all([toMail.catch(() => false), toBeheer.catch(() => false)]);
+    if (!a && !b) throw new Error('niet verstuurd');
     showSuccess(form, false);
   } catch (err) {
     if (alertEl){
