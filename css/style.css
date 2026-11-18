@@ -1462,7 +1462,8 @@ body.nav-is-compact .bottom-page-blur{ opacity:0; }
 .o-stage .o-panel{ margin-top:0; }
 .o-stage .o-step b{ background:var(--accent-dark); }
 .o-wait{ margin:16px 0 0; color:var(--grey-dark); font-size:.95rem; text-align:center; }
-.o-stage .o-pack, .o-stage .o-opts .check-option, .o-stage select{ background:#fff; }
+.o-stage .o-pack, .o-stage .o-opts .check-option{ background:#fff; }
+.o-stage select{ background-color:#fff; }
 
 /* Info-knop bij een pakket */
 .o-info{ position:absolute; top:12px; right:12px; width:26px; height:26px; border-radius:50%; border:1.5px solid var(--line-light); background:#fff; font:inherit; font-weight:800; font-size:.8rem; font-style:italic; font-family:Georgia, serif; color:var(--accent-dark); cursor:pointer; }
@@ -1478,3 +1479,15 @@ body.nav-is-compact .bottom-page-blur{ opacity:0; }
 .o-ac-list li:hover, .o-ac-list li[aria-selected="true"]{ background:var(--accent-soft); color:var(--accent-dark); }
 .o-pcgrid{ grid-template-columns:1fr 2fr; }
 @media (max-width:760px){ .o-pcgrid{ grid-template-columns:1fr 2fr !important; } }
+
+/* Adres + bus, aantallen met −/+ */
+.o-addr-row{ display:grid; grid-template-columns:1fr 120px; gap:20px; }
+.o-num{ display:flex; align-items:stretch; border:1px solid var(--line-light); border-radius:12px; overflow:hidden; background:#fff; }
+.o-num input{ flex:1; min-width:0; border:0 !important; border-radius:0 !important; text-align:center; font-weight:700; -moz-appearance:textfield; box-shadow:none !important; }
+.o-num input::-webkit-outer-spin-button, .o-num input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+.o-num button{ flex:0 0 46px; border:0; background:#F4F3EF; font:inherit; font-size:1.3rem; font-weight:700; color:var(--ink); cursor:pointer; }
+.o-num button:hover{ background:var(--accent-soft); color:var(--accent-dark); }
+.o-num:focus-within{ border-color:var(--accent-dark); }
+.o-pts-tip{ margin-top:10px; font-size:.82rem; color:var(--grey-dark); }
+.closing-only{ padding-bottom:40px; }
+@media (max-width:560px){ .o-addr-row{ grid-template-columns:1fr 90px; gap:12px; } }

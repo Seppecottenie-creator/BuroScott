@@ -101,12 +101,18 @@
 
       <div class="form-fieldset">
         <p class="fieldset-title">Het pand</p>
+        <div class="o-addr-row">
         <div class="field o-addr">
-          <label for="o-adres">Adres van het pand*</label>
+          <label for="o-adres">Straat en huisnummer*</label>
           <div class="o-ac">
             <input type="text" id="o-adres" data-error="Vul het adres van het pand in." name="adres" placeholder="Straat en nummer, bv. Kerkstraat 12" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="o-adres-list" required>
             <ul class="o-ac-list" id="o-adres-list" role="listbox" aria-label="Voorstellen" hidden></ul>
           </div>
+        </div>
+        <div class="field">
+          <label for="o-bus">Bus <span class="hint">(optioneel)</span></label>
+          <input type="text" id="o-bus" name="bus" maxlength="10" placeholder="bv. 2.1" autocomplete="off">
+        </div>
         </div>
         <div class="form-grid-2 o-pcgrid">
           <div class="field">
@@ -159,6 +165,7 @@
           <div class="field">
             <label for="o-bewoond">Is het pand bewoond?</label>
             <select id="o-bewoond" name="bewoond">
+              <option value="" selected>Kies…</option>
               <option>Ja, bewoond</option>
               <option>Nee, leeg</option>
               <option>In renovatie / werf</option>
@@ -168,7 +175,7 @@
         <div class="field">
           <label for="o-toegang">Wie laat ons binnen?</label>
           <select id="o-toegang" name="toegang">
-            <option>Ikzelf</option>
+            <option value="" selected>Kies…</option>
             <option>De eigenaar</option>
             <option>De huurder</option>
             <option>De makelaar</option>
@@ -210,23 +217,29 @@
           </div>
           <p class="o-sub">Extra's bij je pakket <span class="hint">(optioneel)</span></p>
           <div class="o-opts">
-            <div class="field"><label for="o-p-foto">Extra foto's</label><select id="o-p-foto" name="pakket_extra_fotos"><option value="0">Geen</option><option value="10">+10 foto's</option><option value="20">+20 foto's</option></select></div>
-            <div class="field o-need-drone"><label for="o-p-drone">Dronefoto's</label><select id="o-p-drone" name="pakket_drone"><option value="0">Geen</option><option value="5">5 dronefoto's</option><option value="10">10 dronefoto's</option></select></div>
+            <div class="field"><label for="o-p-foto">Extra foto's</label><div class="o-num"><button type="button" data-step="-5" aria-label="Minder">−</button><input type="number" id="o-p-foto" name="pakket_extra_fotos" min="0" max="200" value="0" inputmode="numeric"><button type="button" data-step="5" aria-label="Meer">+</button></div></div>
+            <div class="field"><label for="o-p-drone">Extra dronefoto's</label><div class="o-num"><button type="button" data-step="-1" aria-label="Minder">−</button><input type="number" id="o-p-drone" name="pakket_drone" min="0" max="60" value="0" inputmode="numeric"><button type="button" data-step="1" aria-label="Meer">+</button></div></div>
             <label class="check-option o-need-tour o-not-lot"><input type="checkbox" id="o-p-tour" name="pakket_tour" value="ja"><span>360° tour</span></label>
+            <div class="field o-p-pts o-not-lot"><label for="o-p-pts">360°-punten</label><select id="o-p-pts" name="pakket_punten"><option value="10">Tot 10 punten</option><option value="15">11 tot 15 punten</option><option value="20">16 tot 20 punten</option><option value="25">21 tot 25 punten</option><option value="30">26 tot 30 punten</option><option value="40">31 tot 40 punten</option></select></div>
             <label class="check-option o-need-plan o-not-lot"><input type="checkbox" id="o-p-plan" name="pakket_plan" value="ja"><span>2D-plattegrond</span></label>
+            <div class="field o-p-fl o-not-lot"><label for="o-p-fl">Verdiepingen op het plan</label><div class="o-num"><button type="button" data-step="-1" aria-label="Minder">−</button><input type="number" id="o-p-fl" name="pakket_verdiepingen" min="0" max="8" value="1" inputmode="numeric"><button type="button" data-step="1" aria-label="Meer">+</button></div></div>
             <label class="check-option"><input type="checkbox" id="o-p-spoed" name="pakket_spoed" value="ja"><span>Spoedlevering (24 u)</span></label>
           </div>
+          <p class="o-pts-tip o-not-lot">Een 360°-punt is een plek waar de camera staat: ongeveer 1 per ruimte, 2 in een grote leefruimte.</p>
         </div>
 
         <div class="o-panel" id="o-panel-zelf" hidden>
           <p class="o-step"><b>2</b> Kies wat je nodig hebt</p>
           <div class="o-opts">
-            <div class="field"><label for="o-z-foto">Fotografie</label><select id="o-z-foto" name="fotos"><option value="0">Geen foto's</option><option value="20">20 foto's</option><option value="30">30 foto's</option><option value="40">40 foto's</option></select></div>
-            <div class="field"><label for="o-z-drone">Dronefoto's</label><select id="o-z-drone" name="drone"><option value="0">Geen</option><option value="5">5 dronefoto's</option><option value="10">10 dronefoto's</option></select></div>
+            <div class="field"><label for="o-z-foto">Aantal foto's <span class="hint">(min. 20)</span></label><div class="o-num"><button type="button" data-step="-5" aria-label="Minder">−</button><input type="number" id="o-z-foto" name="fotos" min="0" max="200" value="0" inputmode="numeric"><button type="button" data-step="5" aria-label="Meer">+</button></div></div>
+            <div class="field"><label for="o-z-drone">Dronefoto's <span class="hint">(min. 5)</span></label><div class="o-num"><button type="button" data-step="-1" aria-label="Minder">−</button><input type="number" id="o-z-drone" name="drone" min="0" max="60" value="0" inputmode="numeric"><button type="button" data-step="1" aria-label="Meer">+</button></div></div>
             <label class="check-option o-not-lot"><input type="checkbox" id="o-z-tour" name="tour" value="ja"><span>360° tour</span></label>
+            <div class="field o-z-pts o-not-lot"><label for="o-z-pts">360°-punten</label><select id="o-z-pts" name="punten"><option value="10">Tot 10 punten</option><option value="15">11 tot 15 punten</option><option value="20">16 tot 20 punten</option><option value="25">21 tot 25 punten</option><option value="30">26 tot 30 punten</option><option value="40">31 tot 40 punten</option></select></div>
             <label class="check-option o-not-lot"><input type="checkbox" id="o-z-plan" name="plattegrond" value="ja"><span>2D-plattegrond</span></label>
+            <div class="field o-z-fl o-not-lot"><label for="o-z-fl">Verdiepingen op het plan</label><div class="o-num"><button type="button" data-step="-1" aria-label="Minder">−</button><input type="number" id="o-z-fl" name="verdiepingen_plan" min="0" max="8" value="1" inputmode="numeric"><button type="button" data-step="1" aria-label="Meer">+</button></div></div>
             <label class="check-option"><input type="checkbox" id="o-z-spoed" name="spoed" value="ja"><span>Spoedlevering (24 u)</span></label>
           </div>
+          <p class="o-pts-tip o-not-lot">Een 360°-punt is een plek waar de camera staat: ongeveer 1 per ruimte, 2 in een grote leefruimte.</p>
         </div>
 
         <div class="o-panel" id="o-panel-advies" hidden>
@@ -249,10 +262,19 @@
       </div>
 
       <div class="form-fieldset">
-        <p class="fieldset-title">Timing</p>
+        <p class="fieldset-title">Bijkomende info <span class="hint">(optioneel)</span></p>
+        <div class="field">
+          <label for="o-bericht">Extra wensen, aandachtspunten of context</label>
+          <textarea id="o-bericht" name="bericht" placeholder="Bv. bijzondere toegang, deadline voor publicatie op een portaal, wat je zeker in beeld wil…"></textarea>
+        </div>
+      </div>
+
+      <div class="form-fieldset">
+        <p class="fieldset-title">Wanneer wil je de opnames?</p>
+        <p class="fieldset-sub">Bedoeld is de dag waarop we de foto's, drone- en 360°-opnames komen maken. Dit is je voorkeur: de definitieve datum spreken we samen af, volgens de planning en het weer.</p>
         <div class="form-grid-2">
           <div class="field">
-            <label for="o-snelheid">Wanneer?*</label>
+            <label for="o-snelheid">Voorkeur opnamedag*</label>
             <select id="o-snelheid" data-error="Kies wanneer de opnames moeten gebeuren." name="snelheid" required>
               <option value="" selected disabled>Kies een optie</option>
               <option>Zo snel mogelijk</option>
@@ -262,17 +284,9 @@
             </select>
           </div>
           <div class="field" id="o-datum-field" hidden>
-            <label for="o-datum">Gewenste datum*</label>
+            <label for="o-datum">Gewenste opnamedag*</label>
             <input type="date" id="o-datum" name="datum" data-error="Kies een datum vanaf morgen.">
           </div>
-        </div>
-      </div>
-
-      <div class="form-fieldset">
-        <p class="fieldset-title">Bijkomende info <span class="hint">(optioneel)</span></p>
-        <div class="field">
-          <label for="o-bericht">Extra wensen, aandachtspunten of context</label>
-          <textarea id="o-bericht" name="bericht" placeholder="Bv. bijzondere toegang, deadline voor publicatie op een portaal, wat je zeker in beeld wil…"></textarea>
         </div>
       </div>
 
@@ -293,6 +307,14 @@
     <p>We bekijken de gegevens van je pand en sturen binnen 1 werkdag een offerte op maat naar je e-mailadres.</p>
   </div>
 
+</section>
+
+<section class="closing closing-only">
+  <div class="closing-marquee" aria-hidden="true">
+    <div class="closing-track">
+      <span>Buro Scott</span><span>—</span><span>Buro Scott</span><span>—</span><span>Buro Scott</span><span>—</span><span>Buro Scott</span><span>—</span>
+    </div>
+  </div>
 </section>
 
 </main>
