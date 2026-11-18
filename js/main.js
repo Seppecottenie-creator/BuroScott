@@ -440,11 +440,11 @@ if (heroSection && heroPanel && !prefersReduced) {
       const goingDown = y > lastY + 4;
       const goingUp = y < lastY - 4;
       if (goingDown && y > 240 && !mobileMenuIsOpen && !navHasFocus && !nearBottom){
-        nav.classList.add('is-hidden');
-        document.body.classList.add('nav-is-hidden');
+        nav.classList.add('is-compact');
+        document.body.classList.add('nav-is-compact');
       } else if (goingUp || y < 240 || nearBottom){
-        nav.classList.remove('is-hidden');
-        document.body.classList.remove('nav-is-hidden');
+        nav.classList.remove('is-compact');
+        document.body.classList.remove('nav-is-compact');
       }
     }
     if (Math.abs(y - lastY) > 4) lastY = y;
@@ -452,10 +452,12 @@ if (heroSection && heroPanel && !prefersReduced) {
   window.addEventListener('scroll', () => {
     if (!ticking){ ticking = true; requestAnimationFrame(update); }
   }, { passive:true });
-  // Toetsenbord: zodra iets in de navigatie focus krijgt, komt ze terug
-  if (nav) nav.addEventListener('focusin', () => {
-    nav.classList.remove('is-hidden');
-    document.body.classList.remove('nav-is-hidden');
+  // Toetsenbord: zodra je met Tab in de navigatie komt, klapt ze volledig open
+  // (behalve op het ronde menuknopje zelf, dat moet bruikbaar blijven)
+  if (nav) nav.addEventListener('focusin', (e) => {
+    if (e.target.id === 'nav-toggle') return;
+    nav.classList.remove('is-compact');
+    document.body.classList.remove('nav-is-compact');
   });
   update();
 })();
