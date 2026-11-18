@@ -343,6 +343,7 @@ setupHeroMarquee();
 const heroSection = document.querySelector('.hero');
 const heroPanel = document.querySelector('.hero-panel');
 const heroTitle = document.querySelector('.hero-title');
+const scrollCue = document.querySelector('.scroll-cue');
 
 function clampPx(vwFraction, minPx, maxPx) {
   return Math.min(Math.max(window.innerWidth * vwFraction, minPx), maxPx);
@@ -372,9 +373,14 @@ if (heroSection && heroPanel && !prefersReduced) {
     const startW = window.innerWidth;
     const startH = window.innerHeight;
     const scale = 1 - eased * (1 - MIN_SCALE);
+    // Bij de start iets groter dan het scherm, zodat er nergens een randje
+    // van de achtergrond zichtbaar is (afrondingen, adresbalk op gsm, …)
+    const overscan = (1 - eased) * 48;
 
-    heroPanel.style.width = (startW * scale) + 'px';
-    heroPanel.style.height = (startH * scale) + 'px';
+    heroPanel.style.width = (startW * scale + overscan) + 'px';
+    heroPanel.style.height = (startH * scale + overscan) + 'px';
+    if (scrollCue) scrollCue.style.opacity = Math.max(0, 1 - progress * 5).toFixed(2);
+    if (scrollCue) scrollCue.style.pointerEvents = progress > 0.15 ? 'none' : '';
     heroPanel.style.borderRadius = (eased * RADIUS_PX) + 'px'; // vaste px-waarde, geen %
     // Geen inline transform hier: de CSS-regel translate(-50%, -50%) houdt
     // het vlak altijd exact gecentreerd, ook terwijl het van grootte verandert.

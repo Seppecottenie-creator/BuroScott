@@ -144,7 +144,7 @@ $('ad-create-form').addEventListener('submit', async (e) => {
 $('ad-back').addEventListener('click', () => openList());
 
 function shareText(g, password) {
-  return `Dag,\n\nDe beelden van ${g.title} staan klaar in onze klantenzone. Je kan ze daar bekijken en downloaden (per stuk of alles in één keer).\n\nLink: ${clientLink(g.code)}\nGalerijcode: ${g.code}\nWachtwoord: ${password}\n\nDe galerij blijft beschikbaar tot ${fmtDate(g.expires)}.\n\nVriendelijke groeten,\nBuro Scott`;
+  return `Dag,\n\nDe beelden van ${g.title} staan klaar in My Scott, ons klantenportaal. Je kan ze daar bekijken en downloaden (per stuk of alles in één keer).\n\nLink: ${clientLink(g.code)}\nGalerijcode: ${g.code}\nWachtwoord: ${password}\n\nDe galerij blijft beschikbaar tot ${fmtDate(g.expires)}.\n\nVriendelijke groeten,\nBuro Scott`;
 }
 function showShare(g, password) {
   $('ad-share').hidden = false;
