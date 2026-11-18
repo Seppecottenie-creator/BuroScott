@@ -52,6 +52,14 @@
     syncPanels();
   }
   $('o-type').addEventListener('change', syncType);
+  // Bij een appartement telt het aantal bouwlagen van het appartement zelf, niet de verdieping waarop het ligt
+  var flLabel = q('label[for="o-verdiepingen"]'), flOrig = flLabel.innerHTML;
+  $('o-type').addEventListener('change', function () {
+    var apt = $('o-type').value === 'Appartement';
+    flLabel.innerHTML = apt ? 'Aantal bouwlagen van het appartement <span class="hint">(meestal 1; duplex = 2)</span>' : flOrig;
+    if (apt && num('o-verdiepingen') > 2) $('o-verdiepingen').value = 1;
+    update();
+  });
 
   /* ---------- Keuze: pakket / zelf / advies ---------- */
   function syncPanels() {
@@ -174,7 +182,10 @@
     var tl = L.length ? travelLine() : null;
     if (tl) L.push(tl);
     var km = distance();
-    $('o-fine').textContent = 'Vanafprijs. Je krijgt altijd eerst een offerte op maat. ' + (km == null
+    var pcTyped = /^\s*[1-9][0-9]{3}\b/.test($('o-gemeente').value || '');
+    $('o-fine').textContent = 'Vanafprijs. Je krijgt altijd eerst een offerte op maat. ' + (km == null && pcTyped
+      ? 'Deze postcode kennen we niet: controleer ze even. De verplaatsing staat in je offerte.'
+      : km == null
       ? 'Verplaatsing: tot ' + PR.kmFree + ' km van Waregem gratis, daarna ' + money(rg(PR.kmRate)) + '/km heen en terug.'
       : km <= PR.kmFree ? 'Verplaatsing gratis (binnen ' + PR.kmFree + ' km van Waregem).' : 'Afstand geschat vanaf Waregem; de juiste afstand staat in je offerte.');
     // prijzen op de pakketkaartjes

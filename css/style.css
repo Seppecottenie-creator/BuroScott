@@ -1445,3 +1445,6 @@ body.nav-is-compact .bottom-page-blur{ opacity:0; }
 @media (max-width:760px){
   .o-modes, .o-packs, .o-opts{ grid-template-columns:1fr; }
 }
+
+.o-total b{ white-space:nowrap; }
+@media (max-width:480px){ .o-total{ flex-wrap:wrap; } .o-total b{ font-size:1.35rem; } }
