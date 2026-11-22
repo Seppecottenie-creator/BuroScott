@@ -22,8 +22,12 @@ const FURN = {
   table: ['Tafel', 160, 90], rtable: ['Ronde tafel', 110, 110], chair: ['Stoel', 45, 50], desk: ['Bureau', 140, 70],
   wardrobe: ['Kast', 120, 60], tv: ['Tv-meubel', 180, 45], kitchen: ['Keukenblok', 240, 60], hob: ['Kookplaat', 60, 60],
   fridge: ['Koelkast', 60, 65], ksink: ['Spoelbak', 80, 60], bath: ['Bad', 170, 75], shower: ['Douche', 90, 90],
-  wc: ['Toilet', 40, 65], sink: ['Lavabo', 60, 45], washer: ['Wasmachine', 60, 60], stairs: ['Trap', 90, 280],
+  wc: ['Toilet', 40, 65], sink: ['Lavabo', 60, 45], washer: ['Wasmachine', 60, 60],
 };
+// Bouwkundige elementen: blijven ook zichtbaar als meubels bij export uit staan
+const ELEM = { stairs: ['Trap', 90, 280], steps: ['Opstap (2 treden)', 90, 50], wallpiece: ['Muurstuk', 60, 14] };
+const STRUCT = new Set(Object.keys(ELEM));
+const KINDS = { ...ELEM, ...FURN };
 const OPEN_KINDS = { door: 'Deur', double: 'Dubbele deur', slide: 'Schuifdeur', passage: 'Doorgang', window: 'Raam' };
 const T_CHIPS = [7, 10, 14, 20, 30, 35, 40];
 
@@ -185,6 +189,8 @@ function setPhase(p, quiet) {
   if (quiet) return;
   if (p === 2) {
     const open = floor().rooms.reduce((n, r) => n + r.pts.filter((_, i) => wallStatus(r, i) === 'open').length, 0);
+    const mv = Object.keys(CTX.moved || {}).map((id) => roomById(id)).filter(Boolean);
+    if (mv.length) { toast(`Gevels recht gehouden: ${mv.map((r) => r.name).join(', ')} ${mv.length > 1 ? 'zijn' : 'is'} iets smaller getekend door de binnenmuur. Tik op die muur voor details.`); return; }
     toast(open ? `Let op: ${open} muren hebben nog geen maat. Muren ingevoegd: binnen ${st.plan.tIn} cm, buiten ${st.plan.tOut} cm.` : `Muren ingevoegd: binnen ${st.plan.tIn} cm, buiten ${st.plan.tOut} cm. Tik op een muur om de dikte te wijzigen.`);
   } else toast('Fase 1: binnenmaten en ruimtes tegen elkaar schuiven.');
 }
@@ -228,6 +234,31 @@ document.querySelectorAll('.pe-dlg [data-close]').forEach((b) => b.addEventListe
 /* ======================== Meetkunde ======================== */
 function signedArea(p) { let a = 0; for (let i = 0; i < p.length; i++) { const q = p[(i + 1) % p.length]; a += p[i][0] * q[1] - q[0] * p[i][1]; } return a / 2; }
 const areaM2 = (room) => Math.abs(signedArea(room.pts)) / 10000;
+// Ligt ruimte b volledig binnen ruimte a (bv. toilet getekend in de gang)?
+function inside(b, a) {
+  const xs = (r, k) => r.pts.map((q) => q[k]);
+  for (const k of [0, 1]) if (Math.min(...xs(b, k)) < Math.min(...xs(a, k)) - 0.6 || Math.max(...xs(b, k)) > Math.max(...xs(a, k)) + 0.6) return false;
+  return areaM2(b) < areaM2(a) - 0.01 && inPoly(centroid(b.pts), a.pts);
+}
+// Oppervlakte zonder de ruimtes (incl. hun muren) die erin liggen
+function netArea(r, rooms) {
+  rooms = rooms || floor().rooms;
+  let a = areaM2(r);
+  for (const b of rooms) {
+    if (b.id === r.id || !inside(b, r)) continue;
+    const n = b.pts.length, E = [];
+    for (let i = 0; i < n; i++) {
+      const e = edge(b, i);
+      // muur die samenvalt met de muur van de grote ruimte telt niet mee
+      const onEdge = r.pts.some((_, j) => { const f = edge(r, j); return f.d[0] * e.d[0] + f.d[1] * e.d[1] > 0.99 && Math.abs((e.a[0] - f.a[0]) * f.n[0] + (e.a[1] - f.a[1]) * f.n[1]) < 0.6; });
+      const t = onEdge ? 0 : (b.walls[i] && b.walls[i].t != null ? b.walls[i].t : st.plan.tIn);
+      E.push({ p: [e.a[0] + e.n[0] * t, e.a[1] + e.n[1] * t], d: e.d });
+    }
+    const op = E.map((cur, i) => { const prev = E[(i - 1 + n) % n]; return lineX(prev.p, prev.d, cur.p, cur.d) || cur.p; });
+    a -= Math.abs(signedArea(op)) / 10000;
+  }
+  return Math.max(0, a);
+}
 function edge(room, i) {
   const a = room.pts[i], b = room.pts[(i + 1) % room.pts.length];
   const dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy) || 1;
@@ -393,13 +424,18 @@ function wallT(r, i) {
   return g != null ? g : wallT0(r, i);
 }
 /* Fase 2: ruimtes uit elkaar schuiven met de muurdiktes.
-   Buitenmuren die in fase 1 op één lijn liggen, blijven op één lijn ("gevels recht houden");
-   een binnenmuur vangt dan het verschil op. Eigen ingestelde diktes krijgen voorrang. */
+   Buitenmuren die in fase 1 op één lijn liggen, blijven op één lijn ("gevels recht houden").
+   Liggen twee ruimtes aan weerszijden van een binnenmuur toch op dezelfde gevel (bv. een gang
+   in een inham van de leefruimte), dan schuift niet de hele ruimte op maar enkel die ene muur:
+   de ruimte waarvan de minst gemeten maten veranderen, wordt de muurdikte smaller. */
 function solveLayout(rooms, adj) {
-  const off = {}; rooms.forEach((r) => { off[r.id] = [0, 0]; });
+  const off = {}, dE = {};
+  rooms.forEach((r) => { off[r.id] = [0, 0]; dE[r.id] = r.pts.map(() => [0, 0]); });
   const nominal = (A, i, p) => Math.max(wallT0(A, i), wallT0(p.room, p.i));
   const explicit = (A, i, p) => A.walls[i].t != null || p.room.walls[p.i].t != null;
+  const gapOf = (A, i, p, ax) => (off[p.room.id][ax] + dE[p.room.id][p.i][ax] - off[A.id][ax] - dE[A.id][i][ax]) * p.n[ax];
   const solveAxis = (ax, align) => {
+    rooms.forEach((r) => dE[r.id].forEach((d) => { d[ax] = 0; }));
     const par = {}; rooms.forEach((r) => { par[r.id] = r.id; });
     const find = (x) => (par[x] === x ? x : (par[x] = find(par[x])));
     if (align) {
@@ -414,12 +450,12 @@ function solveLayout(rooms, adj) {
         if (A.id !== B.id && A.d === B.d && Math.abs(A.c - B.c) < 0.6) par[find(A.id)] = find(B.id);
       }
     }
-    const nb = {};
+    const nb = {}, conf = [];
     rooms.forEach((A) => A.pts.forEach((_, i) => {
       for (const p of adj.get(A.id + ':' + i) || []) {
         if (Math.abs(p.n[ax]) < 0.5) continue;
         const g1 = find(A.id), g2 = find(p.room.id);
-        if (g1 === g2) continue;
+        if (g1 === g2) { if (A.id < p.room.id) conf.push([A, i, p]); continue; }
         (nb[g1] = nb[g1] || []).push([g2, p.n[ax] * nominal(A, i, p), explicit(A, i, p)]);
       }
     }));
@@ -436,9 +472,22 @@ function solveLayout(rooms, adj) {
       }
     }
     rooms.forEach((r) => { off[r.id][ax] = gOff[find(r.id)] || 0; });
+    // conflicten: één muur verplaatsen in plaats van een hele ruimte
+    const cost = (r, i) => {
+      const n = r.pts.length, e = edge(r, i), cs = r.pts.map((q) => q[ax]);
+      const extreme = Math.abs(e.a[ax] - (e.n[ax] > 0 ? Math.max(...cs) : Math.min(...cs))) < 0.6;
+      return (r.walls[(i - 1 + n) % n].ok ? 2 : 0) + (r.walls[(i + 1) % n].ok ? 2 : 0) + (r.walls[i].ok ? 0.5 : 0) + (extreme ? 0 : 1);
+    };
+    const span = (r) => { const cs = r.pts.map((q) => q[ax]); return Math.max(...cs) - Math.min(...cs); };
+    for (const [A, i, p] of conf) {
+      const need = nominal(A, i, p) - gapOf(A, i, p, ax);
+      if (need < 0.5) continue;
+      const B = p.room, cA = cost(A, i) + (span(A) < need + 20 ? 99 : 0), cB = cost(B, p.i) + (span(B) < need + 20 ? 99 : 0);
+      if (cB <= cA) dE[B.id][p.i][ax] += p.n[ax] * need; else dE[A.id][i][ax] -= p.n[ax] * need;
+    }
   };
   const gapsOk = (ax) => rooms.every((A) => A.pts.every((_, i) => (adj.get(A.id + ':' + i) || []).every((p) =>
-    Math.abs(p.n[ax]) < 0.5 || (off[p.room.id][ax] - off[A.id][ax]) * p.n[ax] >= 2)));
+    Math.abs(p.n[ax]) < 0.5 || gapOf(A, i, p, ax) >= 2)));
   const keep = st.plan.keepAlign !== false;
   for (const ax of [0, 1]) { solveAxis(ax, keep); if (keep && !gapsOk(ax)) solveAxis(ax, false); }
   // werkelijke dikte van gedeelde muren
@@ -446,19 +495,31 @@ function solveLayout(rooms, adj) {
   rooms.forEach((A) => A.pts.forEach((_, i) => {
     for (const p of adj.get(A.id + ':' + i) || []) {
       const ax = Math.abs(p.n[0]) > 0.5 ? 0 : 1;
-      const g = Math.round((off[p.room.id][ax] - off[A.id][ax]) * p.n[ax] * 10) / 10;
+      const g = Math.round(gapOf(A, i, p, ax) * 10) / 10;
       const k = A.id + ':' + i;
       gap[k] = Math.max(gap[k] || 0, g);
     }
   }));
-  return { off, gap };
+  // per ruimte: welke muren zijn verschoven (voor melding)
+  const moved = {};
+  rooms.forEach((r) => r.pts.forEach((_, i) => { const d = dE[r.id][i], v = Math.abs(d[0]) + Math.abs(d[1]); if (v >= 0.5) (moved[r.id] = moved[r.id] || []).push([i, Math.round(v * 10) / 10]); }));
+  return { off, gap, dE, moved };
 }
 function setCtx(f, solved) {
-  CTX = { adj: adjacency(f.rooms), off: {}, gap: null };
-  if (solved) { const L = solveLayout(f.rooms, CTX.adj); CTX.off = L.off; CTX.gap = L.gap; }
+  CTX = { adj: adjacency(f.rooms), off: {}, gap: null, dE: {}, moved: {} };
+  if (solved) { const L = solveLayout(f.rooms, CTX.adj); CTX.off = L.off; CTX.gap = L.gap; CTX.dE = L.dE; CTX.moved = L.moved; }
 }
 const offOf = (id) => (id && CTX.off[id]) || [0, 0];
-function sh(r) { const o = offOf(r.id); return o[0] || o[1] ? { ...r, pts: r.pts.map((q) => [q[0] + o[0], q[1] + o[1]]) } : r; }
+function sh(r) {
+  const o = offOf(r.id), d = CTX.dE && CTX.dE[r.id], n = r.pts.length;
+  const moved = d && d.some((v) => v[0] || v[1]);
+  if (!o[0] && !o[1] && !moved) return r;
+  // punt i hoort bij muur i-1 en muur i; een verschoven muur verschuift beide hoekpunten
+  return { ...r, pts: r.pts.map((q, i) => {
+    const a = moved ? d[i] : [0, 0], b = moved ? d[(i - 1 + n) % n] : [0, 0];
+    return [q[0] + o[0] + a[0] + b[0], q[1] + o[1] + a[1] + b[1]];
+  }) };
+}
 function outerPts(room) { // room = verschoven ruimte; diktes via id/index
   const n = room.pts.length, E = [];
   for (let i = 0; i < n; i++) { const e = edge(room, i), t = wallT(room, i); E.push({ p: [e.a[0] + e.n[0] * t, e.a[1] + e.n[1] * t], d: e.d }); }
@@ -588,7 +649,16 @@ function furnSymbol(g, it) {
     case 'shower': el('path', { d: `M${x} ${y}L${x + w} ${y + d}M${x + w} ${y}L${x} ${y + d}`, ...L, 'stroke-width': 0.8 }, g); el('circle', { cx: 0, cy: 0, r: 5, ...L }, g); break;
     case 'wc': el('rect', { x: x + 2, y, width: w - 4, height: 16, rx: 3, ...L }, g); el('ellipse', { cx: 0, cy: y + 16 + (d - 18) / 2, rx: w / 2 - 3, ry: (d - 18) / 2, ...L }, g); break;
     case 'washer': el('circle', { cx: 0, cy: 3, r: Math.min(w, d) / 2 - 10, ...L }, g); break;
-    case 'stairs': { const n = Math.max(3, Math.round(d / 25)); let s = ''; for (let k = 1; k < n; k++) s += `M${x} ${y + k * d / n}H${x + w}`; el('path', { d: s, ...L, 'stroke-width': 1 }, g); el('path', { d: `M0 ${y + d - 10}V${y + 14}M-8 ${y + 26}L0 ${y + 14}L8 ${y + 26}`, ...L, stroke: '#0E0F0D' }, g); break; }
+    case 'stairs': case 'steps': {
+      const n = Math.max(1, it.steps || (it.kind === 'steps' ? 2 : Math.max(3, Math.round(d / 25))));
+      let s = ''; for (let k = 1; k < n; k++) s += `M${x} ${y + k * d / n}H${x + w}`;
+      if (s) el('path', { d: s, ...L, 'stroke-width': 1 }, g);
+      // pijl wijst naar boven (oplopend); 'flip' keert de looprichting om
+      const a0 = it.flip ? y + 8 : y + d - 8, a1 = it.flip ? y + d - 10 : y + 10, h = it.flip ? -9 : 9, hw = Math.min(9, w / 4);
+      el('path', { d: `M0 ${a0}V${a1}M${-hw} ${a1 + h}L0 ${a1}L${hw} ${a1 + h}`, ...L, stroke: '#0E0F0D', 'stroke-width': 1.6 }, g);
+      el('circle', { cx: 0, cy: a0, r: 3, fill: '#0E0F0D' }, g);
+      break;
+    }
     default: return false;
   }
   return true;
@@ -641,6 +711,13 @@ function drawOpening(g, r, o, sel) {
       el('path', { d: `M${tip[0].toFixed(1)} ${tip[1].toFixed(1)}A${w} ${w} 0 0 ${sweep} ${to[0].toFixed(1)} ${to[1].toFixed(1)}`, ...S, 'stroke-width': 0.8 }, g);
     }
   }
+  if (o.entry && o.kind !== 'window') { // dikke pijl buiten de deur, wijst naar binnen
+    const M = [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2], q = (u, v) => { const b = off(M, t + u); return [b[0] + e.d[0] * v, b[1] + e.d[1] * v]; };
+    const L0 = 16, L1 = 110, hl = 38, sw = 9, hw = 24;
+    const pts = [q(L0, 0), q(L0 + hl, hw), q(L0 + hl, sw), q(L1, sw), q(L1, -sw), q(L0 + hl, -sw), q(L0 + hl, -hw)];
+    el('polygon', { points: P(pts), fill: '#1E1F1C' }, g);
+    ext.push(q(L1, sw), q(L1, -sw), q(L0, hw), q(L0, -hw));
+  }
   // grotere, onzichtbare aanraakzone
   el('polygon', { points: P([off(A, -24), off(B, -24), off(B, t + 24), off(A, t + 24)]), fill: 'transparent' }, g);
   if (sel) el('polygon', { points: P([off(A, -3), off(B, -3), off(B, t + 3), off(A, t + 3)]), fill: 'rgba(29,63,214,.12)', stroke: '#1D3FD6', 'stroke-width': 2.5, 'vector-effect': 'non-scaling-stroke' }, g);
@@ -680,16 +757,22 @@ function drawFloor(f, root, opts) {
       if (ph === 2) boxes.push(bx);
     }
   });
-  if (opts.furniture !== false) for (const it of f.items) {
+  for (const it of f.items) {
+    if (opts.furniture === false && !STRUCT.has(it.kind)) continue;
     const o = offOf(it.room);
     const g = el('g', { transform: `translate(${it.x + o[0]} ${it.y + o[1]}) rotate(${it.rot || 0})`, ...(ex ? {} : { 'data-k': 'item', 'data-item': it.id }) }, gItem);
     const sel = !ex && st.sel && st.sel.item === it.id;
     const base = { fill: '#F7F6F2', stroke: sel ? '#1D3FD6' : '#6B6A63', 'stroke-width': sel ? 3 : 1.4 };
+    if (it.kind === 'wallpiece') {
+      el('rect', { x: -it.w / 2, y: -it.d / 2, width: it.w, height: it.d, fill: '#1E1F1C', ...(sel ? { stroke: '#1D3FD6', 'stroke-width': 3 } : {}) }, g);
+      el('rect', { x: -it.w / 2 - 12, y: -it.d / 2 - 12, width: it.w + 24, height: it.d + 24, fill: 'transparent' }, g);
+      continue;
+    }
     if (it.kind === 'rtable') el('ellipse', { cx: 0, cy: 0, rx: it.w / 2, ry: it.d / 2, ...base }, g);
     else el('rect', { x: -it.w / 2, y: -it.d / 2, width: it.w, height: it.d, rx: 2, ...base }, g);
     if (!furnSymbol(g, it) || ['table', 'desk', 'kitchen', 'fridge', 'tv'].includes(it.kind)) {
       const lt = el('text', { x: 0, y: 0, 'text-anchor': 'middle', 'dominant-baseline': 'middle', 'font-size': Math.min(13, it.w / 5, it.d / 2.2), fill: '#6B6A63', 'font-family': fontF, 'pointer-events': 'none', transform: `rotate(${-(it.rot || 0)})` }, g);
-      lt.textContent = (FURN[it.kind] || [it.kind])[0];
+      lt.textContent = (KINDS[it.kind] || [it.kind])[0];
     }
     const hw = (it.rot === 90 || it.rot === 270) ? [it.d, it.w] : [it.w, it.d];
     if (ph === 2) boxes.push(boxAt(it.x + o[0], it.y + o[1], hw[0] * 0.6, hw[1] * 0.6));
@@ -700,7 +783,11 @@ function drawFloor(f, root, opts) {
     const bw = Math.max(...xs) - Math.min(...xs), bh = Math.max(...ys) - Math.min(...ys);
     let c = centroid(r.pts);
     if (!inPoly(c, r.pts)) c = [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2];
-    const area = (opts.area !== false && !r.hideArea ? fmtArea(areaM2(r)) : '') + (opts.heights ? `${opts.area !== false && !r.hideArea ? ' · ' : ''}h ${fmtM(r.h)} m` : '');
+    const parts = [];
+    if (opts.area !== false && !r.hideArea) parts.push(fmtArea(netArea(r, f.rooms)));
+    if (opts.heights) parts.push(`h ${fmtM(r.h)} m`);
+    if (r.lvl) parts.push((r.lvl > 0 ? '+' : '−') + fmtM(Math.abs(r.lvl)));
+    const area = parts.join(' · ');
     let fs = Math.min(20, (bw * 0.8) / (r.name.length * 0.58), bh * 0.3);
     const showArea = !!area && fs >= 11 && bh > 60;
     fs = Math.max(fs, 7);
@@ -830,14 +917,16 @@ document.querySelectorAll('.pe-tools [data-tool]').forEach((b) => b.addEventList
 function toast(msg) { const t = $('pe-toast'); t.textContent = msg; t.classList.add('is-on'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('is-on'), 4200); }
 
 function openLib() {
-  $('pe-lib-grid').innerHTML = Object.entries(FURN).map(([k, [name, w, d]]) => {
+  const card = ([k, [name, w, d]]) => {
     const sc = 56 / Math.max(w, d);
     return `<button type="button" data-furn="${k}"><svg viewBox="${-w / 2 - 4} ${-d / 2 - 4} ${w + 8} ${d + 8}" width="${(w + 8) * sc}" height="${(d + 8) * sc}" aria-hidden="true">${furnPreview(k, w, d)}</svg><b>${name}</b><span>${w} × ${d}</span></button>`;
-  }).join('');
+  };
+  $('pe-lib-grid').innerHTML = '<p class="pe-lib-h">Bouwkundig</p>' + Object.entries(ELEM).map(card).join('') + '<p class="pe-lib-h">Meubels</p>' + Object.entries(FURN).map(card).join('');
   $('pe-lib').showModal();
 }
 function furnPreview(kind, w, d) {
   const g = document.createElementNS(NS, 'g');
+  if (kind === 'wallpiece') { el('rect', { x: -w / 2, y: -d / 2, width: w, height: d, fill: '#1E1F1C' }, g); return g.innerHTML; }
   if (kind === 'rtable') el('ellipse', { cx: 0, cy: 0, rx: w / 2, ry: d / 2, fill: '#F7F6F2', stroke: '#6B6A63', 'stroke-width': 1.4 }, g);
   else el('rect', { x: -w / 2, y: -d / 2, width: w, height: d, rx: 2, fill: '#F7F6F2', stroke: '#6B6A63', 'stroke-width': 1.4 }, g);
   furnSymbol(g, { kind, w, d });
@@ -849,7 +938,8 @@ function roomAt(pt) { // in getoonde coördinaten
 }
 $('pe-lib-grid').addEventListener('click', (e) => {
   const b = e.target.closest('[data-furn]'); if (!b) return;
-  const [, w, d] = FURN[b.dataset.furn];
+  const [, w0, d0] = KINDS[b.dataset.furn];
+  const w = w0, d = b.dataset.furn === 'wallpiece' ? st.plan.tIn : d0;
   const rect = svg.getBoundingClientRect();
   const c = toWorld(rect.left + rect.width / 2, rect.top + rect.height / 2);
   snapshot();
@@ -1023,10 +1113,21 @@ function snapItem(it, cx, cy) {
   let bx = null, dx = thr, by = null, dy = thr;
   const tryX = (t) => { const d = Math.abs(t - cx); if (d < dx) { dx = d; bx = t; } };
   const tryY = (t) => { const d = Math.abs(t - cy); if (d < dy) { dy = d; by = t; } };
+  const wp = it.kind === 'wallpiece', ph2 = st.phase === 2;
   for (const r0 of floor().rooms) {
     const r = sh(r0);
     r.pts.forEach((_, i) => {
       const e = edge(r, i);
+      if (wp) { // muurstuk: zijkanten in het verlengde van de muurvlakken, kop tegen het einde van de muur
+        const t = ph2 ? wallT(r, i) : 0, near = 40;
+        if (Math.abs(e.d[1]) > 0.7) {
+          const y0 = Math.min(e.a[1], e.b[1]) - t, y1 = Math.max(e.a[1], e.b[1]) + t;
+          if (cy + hd > y0 - near && cy - hd < y1 + near) for (const k of [0, t]) { const fx = e.a[0] + e.n[0] * k; tryX(fx - hw); tryX(fx + hw); }
+        } else if (Math.abs(e.d[0]) > 0.7) {
+          const x0 = Math.min(e.a[0], e.b[0]) - t, x1 = Math.max(e.a[0], e.b[0]) + t;
+          if (cx + hw > x0 - near && cx - hw < x1 + near) for (const k of [0, t]) { const fy = e.a[1] + e.n[1] * k; tryY(fy - hd); tryY(fy + hd); }
+        }
+      }
       if (Math.abs(e.d[1]) > 0.7) { // verticale muur
         const y0 = Math.min(e.a[1], e.b[1]), y1 = Math.max(e.a[1], e.b[1]);
         if (cy + hd > y0 && cy - hd < y1) tryX(e.a[0] - e.n[0] * hw);
@@ -1117,10 +1218,13 @@ function renderPanel() {
   if (s.item) {
     const it = itemById(s.item); if (!it) { p.hidden = true; return; }
     p.innerHTML = `
-      <div class="pe-p-head"><b>${esc((FURN[it.kind] || [it.kind])[0])}</b><button type="button" class="pe-p-x" data-act="close" aria-label="Sluiten">✕</button></div>
-      <div class="pe-p-row"><label>Breedte (cm)<input type="number" inputmode="numeric" id="pe-it-w" value="${it.w}" min="10" max="2000"></label>
-      <label>Diepte (cm)<input type="number" inputmode="numeric" id="pe-it-d" value="${it.d}" min="10" max="2000"></label></div>
-      <div class="pe-p-btns"><button type="button" data-act="rot">↻ Draai 90°</button><button type="button" data-act="dup">Dupliceer</button><button type="button" class="is-del" data-act="del">Verwijder</button></div>`;
+      <div class="pe-p-head"><b>${esc((KINDS[it.kind] || [it.kind])[0])}</b><button type="button" class="pe-p-x" data-act="close" aria-label="Sluiten">✕</button></div>
+      <div class="pe-p-row"><label>${it.kind === 'wallpiece' ? 'Lengte' : 'Breedte'} (cm)<input type="number" inputmode="numeric" id="pe-it-w" value="${it.w}" min="2" max="2000"></label>
+      <label>${it.kind === 'wallpiece' ? 'Dikte' : 'Diepte'} (cm)<input type="number" inputmode="numeric" id="pe-it-d" value="${it.d}" min="2" max="2000"></label></div>
+      ${it.kind === 'stairs' || it.kind === 'steps' ? `<div class="pe-p-row"><label>Treden<input type="number" inputmode="numeric" id="pe-it-n" value="${it.steps || (it.kind === 'steps' ? 2 : Math.max(3, Math.round(it.d / 25)))}" min="1" max="40"></label></div>
+      <p class="pe-p-tip">De pijl wijst naar boven (oplopend). Het bolletje is het vertrek.</p>` : ''}
+      ${it.kind === 'wallpiece' ? '<p class="pe-p-tip">Een los stuk muur, bv. een muur die uitsteekt. Klikt vast tegen muren en hoeken.</p>' : ''}
+      <div class="pe-p-btns"><button type="button" data-act="rot">↻ Draai 90°</button>${it.kind === 'stairs' || it.kind === 'steps' ? '<button type="button" data-act="sflip">⇅ Richting</button>' : ''}<button type="button" data-act="dup">Dupliceer</button><button type="button" class="is-del" data-act="del">Verwijder</button></div>`;
     return;
   }
   const r = roomById(s.room); if (!r) { p.hidden = true; return; }
@@ -1130,6 +1234,7 @@ function renderPanel() {
       <div class="pe-p-head"><b>${OPEN_KINDS[o.kind]}</b><button type="button" class="pe-p-x" data-act="close" aria-label="Sluiten">✕</button></div>
       <label class="pe-p-full">Soort<select id="pe-o-kind">${Object.entries(OPEN_KINDS).map(([k, v]) => `<option value="${k}"${k === o.kind ? ' selected' : ''}>${v}</option>`).join('')}</select></label>
       <label class="pe-p-full">Breedte (cm)<input type="number" inputmode="numeric" id="pe-o-w" value="${o.width}" min="30" max="600"></label>
+      ${o.kind !== 'window' ? `<label class="pe-tog"><input type="checkbox" id="pe-o-entry"${o.entry ? ' checked' : ''}><span>Inkomdeur (pijl)</span></label>` : ''}
       <div class="pe-p-btns">${['door', 'double'].includes(o.kind) ? '<button type="button" data-act="flip">⇄ Draairichting</button>' : ''}<button type="button" class="is-del" data-act="del">Verwijder</button></div>
       <p class="pe-p-tip">Sleep om te verschuiven langs de muur.</p>`;
     return;
@@ -1149,6 +1254,7 @@ function renderPanel() {
         </form>
         <div class="pe-chips">${T_CHIPS.map((c) => `<button type="button" data-t="${c}"${c === t ? ' aria-pressed="true"' : ''}>${c}</button>`).join('')}</div>
         <p class="pe-p-tip">${custom ? 'Eigen dikte voor deze muur.' : `Standaard ${prt.length ? 'binnenmuur' : 'buitenmuur'}.`}</p>
+        ${(() => { const mv = [r, ...prt.map((q) => q.room)].map((x) => [x, (CTX.moved[x.id] || []).find((m) => x === r ? m[0] === i : prt.some((q) => q.room === x && q.i === m[0]))]).find((z) => z[1]); return mv ? `<p class="pe-p-warn">${esc(mv[0].name)} is hier ${String(mv[1][1]).replace('.', ',')} cm smaller getekend, zodat de gevels recht blijven. Klopt dat niet, zet dan "Gevels recht houden" uit (tik naast het plan).</p>` : ''; })()}
         ${Math.abs(tDraw - t) >= 0.5 ? `<p class="pe-p-warn">Getekend als ${String(tDraw).replace('.', ',')} cm om de gevels recht te houden. Klopt de dikte, controleer dan de binnenmaten van de ruimtes ernaast.</p>` : ''}
         <div class="pe-p-btns">${custom ? '<button type="button" data-act="tdef">Terug naar standaard</button>' : ''}<button type="button" data-act="prev">← Vorige</button><button type="button" data-act="next">Volgende →</button></div>`;
       return;
@@ -1172,12 +1278,14 @@ function renderPanel() {
     <div class="pe-p-head"><b>Ruimte</b><button type="button" class="pe-p-x" data-act="close" aria-label="Sluiten">✕</button></div>
     <label class="pe-p-full">Functie<select id="pe-r-type">${ROOM_TYPES.map((t) => `<option${t === r.type ? ' selected' : ''}>${t}</option>`).join('')}</select></label>
     <label class="pe-p-full">Naam op het plan<input type="text" id="pe-r-name" value="${esc(r.name)}" maxlength="40"></label>
-    <div class="pe-p-row"><label>Hoogte (cm)<input type="number" inputmode="numeric" id="pe-r-h" value="${r.h}" min="100" max="1000"></label></div>
+    <div class="pe-p-row"><label>Hoogte (cm)<input type="number" inputmode="numeric" id="pe-r-h" value="${r.h}" min="100" max="1000"></label>
+    <label>Niveau (cm)<input type="number" inputmode="numeric" id="pe-r-lvl" value="${r.lvl || 0}" min="-500" max="500" step="1"></label></div>
+    <p class="pe-p-tip">Niveau: hoeveel hoger (of lager, met −) deze vloer ligt dan de rest, bv. 40. Komt als +0,40 op het plan.</p>
     <div class="pe-p-toggles">
       <label class="pe-tog"><input type="checkbox" id="pe-r-dims"${r.hideDims ? '' : ' checked'}><span>Maten tonen</span></label>
       <label class="pe-tog"><input type="checkbox" id="pe-r-area"${r.hideArea ? '' : ' checked'}><span>Oppervlakte tonen</span></label>
     </div>
-    <p class="pe-p-area">${fmtArea(areaM2(r))} · volume ${(areaM2(r) * r.h / 100).toFixed(1).replace('.', ',')} m³</p>
+    <p class="pe-p-area">${fmtArea(netArea(r))} · volume ${(netArea(r) * r.h / 100).toFixed(1).replace('.', ',')} m³${netArea(r) < areaM2(r) - 0.005 ? '<br><small>Ruimtes die hierin getekend zijn (bv. een toilet in de gang) zijn afgetrokken.</small>' : ''}</p>
     <div class="pe-p-btns">${st.phase === 1 ? '<button type="button" data-act="walls">Maten invullen</button><button type="button" data-act="dup">Dupliceer</button>' : ''}<button type="button" class="is-del" data-act="del">Verwijder</button></div>`;
 }
 function nextWall(r, from, dir = 1) {
@@ -1213,7 +1321,7 @@ $('pe-panel').addEventListener('submit', (e) => {
   if (res.warn) toast(res.warn);
   markDirty();
   const j = nextWall(r, i);
-  if (j == null) { st.sel = { room: r.id }; render(); toast(`Alle maten gekend ✓ ${r.name}: ${fmtArea(areaM2(r))}`); return; }
+  if (j == null) { st.sel = { room: r.id }; render(); toast(`Alle maten gekend ✓ ${r.name}: ${fmtArea(netArea(r))}`); return; }
   st.sel = { room: r.id, wall: j }; render(); focusLength();
 });
 $('pe-panel').addEventListener('change', (e) => {
@@ -1230,18 +1338,21 @@ $('pe-panel').addEventListener('change', (e) => {
   snapshot();
   if (s.item) {
     const it = itemById(s.item);
-    if (id === 'pe-it-w') it.w = Math.max(10, +v || it.w);
-    if (id === 'pe-it-d') it.d = Math.max(10, +v || it.d);
+    if (id === 'pe-it-w') it.w = Math.max(2, +v || it.w);
+    if (id === 'pe-it-d') it.d = Math.max(2, +v || it.d);
+    if (id === 'pe-it-n') it.steps = Math.min(40, Math.max(1, Math.round(+v) || 1));
   } else {
     const r = roomById(s.room);
     if (s.open) {
       const o = r.open.find((q) => q.id === s.open);
       if (id === 'pe-o-kind') { o.kind = v; if (v === 'window' && o.width < 60) o.width = 100; }
+      if (id === 'pe-o-entry') { if (e.target.checked) r.open.forEach((q) => { delete q.entry; }); floor().rooms.forEach((rr) => (rr.open || []).forEach((q) => { if (e.target.checked) delete q.entry; })); o.entry = e.target.checked || undefined; }
       if (id === 'pe-o-w') o.width = Math.min(Math.max(30, +v || o.width), edge(r, o.wall).len);
     } else {
       if (id === 'pe-r-type') { const auto = /^Ruimte \d+$/.test(r.name) || ROOM_TYPES.includes(r.name); r.type = v; if (auto) r.name = v; }
       if (id === 'pe-r-name') r.name = v.trim().slice(0, 40) || r.type;
       if (id === 'pe-r-h') r.h = Math.max(100, +v || r.h);
+      if (id === 'pe-r-lvl') { const n = Math.round(+String(v).replace(',', '.')) || 0; if (n) r.lvl = Math.max(-500, Math.min(500, n)); else delete r.lvl; }
       if (id === 'pe-r-dims') r.hideDims = !e.target.checked;
       if (id === 'pe-r-area') r.hideArea = !e.target.checked;
     }
@@ -1258,6 +1369,7 @@ $('pe-panel').addEventListener('click', async (e) => {
     const f = floor(), it = itemById(s.item);
     snapshot();
     if (a === 'rot') it.rot = ((it.rot || 0) + 90) % 360;
+    if (a === 'sflip') it.flip = it.flip ? 0 : 1;
     if (a === 'dup') { const c = { ...it, id: uid(), x: it.x + 30, y: it.y + 30 }; f.items.push(c); st.sel = { item: c.id }; }
     if (a === 'del') { f.items = f.items.filter((q) => q.id !== it.id); st.sel = null; }
     render(); markDirty(); return;
@@ -1304,7 +1416,7 @@ function exportSVG(f, opts) {
   const bb = bounds(f, true) || [0, 0, 500, 300];
   const pad = 70, W = bb[2] - bb[0] + pad * 2, H = bb[3] - bb[1] + pad * 2 + 90;
   const x0 = bb[0] - pad, y0 = bb[1] - pad;
-  const total = f.rooms.reduce((s, r) => s + areaM2(r), 0);
+  const total = f.rooms.reduce((s, r) => s + netArea(r, f.rooms), 0);
   const fy = bb[3] + pad + 30;
   const foot = `
     <line x1="${x0 + pad}" y1="${fy - 18}" x2="${x0 + W - pad}" y2="${fy - 18}" stroke="#D4D2CA" stroke-width="1"/>
