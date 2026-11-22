@@ -764,6 +764,7 @@ function drawFloor(f, root, opts) {
     const sel = !ex && st.sel && st.sel.item === it.id;
     const base = { fill: '#F7F6F2', stroke: sel ? '#1D3FD6' : '#6B6A63', 'stroke-width': sel ? 3 : 1.4 };
     if (it.kind === 'wallpiece') {
+      if (ph === 2) { const hw = (it.rot === 90 || it.rot === 270) ? [it.d, it.w] : [it.w, it.d]; boxes.push(boxAt(it.x + o[0], it.y + o[1], hw[0], hw[1])); }
       el('rect', { x: -it.w / 2, y: -it.d / 2, width: it.w, height: it.d, fill: '#1E1F1C', ...(sel ? { stroke: '#1D3FD6', 'stroke-width': 3 } : {}) }, g);
       el('rect', { x: -it.w / 2 - 12, y: -it.d / 2 - 12, width: it.w + 24, height: it.d + 24, fill: 'transparent' }, g);
       continue;
@@ -775,12 +776,17 @@ function drawFloor(f, root, opts) {
       lt.textContent = (KINDS[it.kind] || [it.kind])[0];
     }
     const hw = (it.rot === 90 || it.rot === 270) ? [it.d, it.w] : [it.w, it.d];
-    if (ph === 2) boxes.push(boxAt(it.x + o[0], it.y + o[1], hw[0] * 0.6, hw[1] * 0.6));
+    if (ph === 2) boxes.push(boxAt(it.x + o[0], it.y + o[1], hw[0], hw[1]));
   }
+  // Labels: automatisch vrij geplaatst, of waar de gebruiker ze zelf sleepte (r.lo)
+  const parentsOf = (r) => rooms.filter((b) => b.id !== r.id && inside(r, b)).map((b) => b.id);
+  const inOther = (pt, r, par) => rooms.some((b) => b.id !== r.id && !par.includes(b.id) && inPoly(pt, b.pts));
+  const lab = (attrs, key, r, base, cur) => ex || ph === 1 ? attrs : { ...attrs, 'data-k': 'label', 'data-room': r.id, 'data-lab': key, 'data-ox': (cur[0] - base[0]).toFixed(1), 'data-oy': (cur[1] - base[1]).toFixed(1), style: 'pointer-events:auto;cursor:move' };
   // Naam + oppervlakte (passend in de ruimte)
   rooms.forEach((r) => {
     const xs = r.pts.map((q) => q[0]), ys = r.pts.map((q) => q[1]);
     const bw = Math.max(...xs) - Math.min(...xs), bh = Math.max(...ys) - Math.min(...ys);
+    const par = parentsOf(r);
     let c = centroid(r.pts);
     if (!inPoly(c, r.pts)) c = [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2];
     const parts = [];
@@ -792,30 +798,55 @@ function drawFloor(f, root, opts) {
     const showArea = !!area && fs >= 11 && bh > 60;
     fs = Math.max(fs, 7);
     const af = Math.min(14, fs * 0.72, (bw * 0.85) / (area.length * 0.56));
-    const ny = showArea ? c[1] - fs * 0.35 : c[1] + fs * 0.35;
-    const tn = el('text', { x: c[0], y: ny, 'text-anchor': 'middle', 'font-size': fs.toFixed(1), 'font-weight': 800, fill: '#0E0F0D' }, gText); tn.textContent = r.name;
-    boxes.push(boxAt(c[0], ny - fs * 0.35, textW(r.name, fs), fs * 1.1));
-    if (showArea) {
-      const ay = c[1] + af * 1.1;
-      const ta = el('text', { x: c[0], y: ay, 'text-anchor': 'middle', 'font-size': af.toFixed(1), fill: '#6B6A63' }, gText); ta.textContent = area;
-      boxes.push(boxAt(c[0], ay - af * 0.35, textW(area, af), af * 1.1));
+    const bwN = Math.max(textW(r.name, fs), showArea ? textW(area, af) : 0), bhN = fs * 1.1 + (showArea ? af * 1.4 : 0);
+    const fits = (q) => {
+      const b = boxAt(q[0], q[1], bwN, bhN);
+      const cs = [[b.x0, b.y0], [b.x1, b.y0], [b.x0, b.y1], [b.x1, b.y1], q];
+      return cs.every((k) => inPoly(k, r.pts) && !inOther(k, r, par)) && !overlaps(b, boxes);
+    };
+    let pos;
+    const man = r.lo && r.lo.n;
+    if (man) pos = [c[0] + man[0], c[1] + man[1]];
+    else {
+      const cand = [c];
+      for (let gx = 1; gx < 12; gx++) for (let gy = 1; gy < 12; gy++) cand.push([Math.min(...xs) + bw * gx / 12, Math.min(...ys) + bh * gy / 12]);
+      cand.sort((p1, p2) => Math.hypot(p1[0] - c[0], p1[1] - c[1]) - Math.hypot(p2[0] - c[0], p2[1] - c[1]));
+      pos = cand.find(fits) || c;
     }
+    const g = el('g', lab({}, 'n', r, c, pos), gText);
+    const ny = showArea ? pos[1] - af * 0.55 : pos[1] + fs * 0.35;
+    const tn = el('text', { x: pos[0], y: ny, 'text-anchor': 'middle', 'font-size': fs.toFixed(1), 'font-weight': 800, fill: '#0E0F0D' }, g); tn.textContent = r.name;
+    if (showArea) {
+      const ta = el('text', { x: pos[0], y: ny + af * 1.4, 'text-anchor': 'middle', 'font-size': af.toFixed(1), fill: '#6B6A63' }, g); ta.textContent = area;
+    }
+    if (!ex) el('rect', { x: pos[0] - bwN / 2, y: pos[1] - bhN / 2, width: bwN, height: bhN, fill: 'transparent' }, g);
+    boxes.push(boxAt(pos[0], pos[1], bwN, bhN));
   });
-  // Maten (binnenmaat), zonder overlap
-  if (opts.dims !== false) rooms.filter((r) => !r.hideDims).forEach((r) => r.pts.forEach((_, i) => {
+  // Maten (binnenmaat), zonder overlap: probeer verschillende plaatsen langs en naast de muur
+  if (opts.dims !== false) rooms.filter((r) => !r.hideDims).forEach((r) => { const par = parentsOf(r); r.pts.forEach((_, i) => {
     const e = edge(r, i), s = ex ? 'ok' : wallStatus(r, i);
     const txt = (s === 'open' ? '≈ ' : '') + fmtM(e.len);
     const mid = [(e.a[0] + e.b[0]) / 2, (e.a[1] + e.b[1]) / 2];
     const vert = Math.abs(e.d[1]) > 0.7;
     const t = ph === 2 ? wallT(r, i) : 0;
+    const box = (p, fs) => { const w = textW(txt, fs), h = fs * 1.05; return vert ? boxAt(p[0], p[1], h, w) : boxAt(p[0], p[1], w, h); };
     let pick = null;
-    for (const fs of [14, 11, 9]) {
-      for (const k of [-(fs * 0.9 + 3), -(fs * 2.1 + 6), t + fs * 0.9 + 3]) {
-        const p = [mid[0] + e.n[0] * k, mid[1] + e.n[1] * k];
-        const w = textW(txt, fs), h = fs * 1.05;
-        if (w > e.len + 10 && fs > 9) continue;
-        const b = vert ? boxAt(p[0], p[1], h, w) : boxAt(p[0], p[1], w, h);
-        if (!overlaps(b, boxes)) { pick = { fs, p, b }; break; }
+    const man = r.lo && r.lo['d' + i];
+    if (man) { const p = [mid[0] + man[0], mid[1] + man[1]]; pick = { fs: 12, p, b: box(p, 12) }; }
+    else for (const fs of [14, 11, 9]) {
+      const w = textW(txt, fs);
+      if (w > e.len + 10 && fs > 9) continue;
+      for (const al of [0.5, 0.3, 0.7, 0.18, 0.82]) {
+        const sl = (al - 0.5) * e.len;
+        if (Math.abs(sl) + w / 2 > e.len / 2 + 6) continue;
+        for (const k of [-(fs * 0.9 + 3), -(fs * 2.1 + 6), t + fs * 0.9 + 3]) {
+          const p = [mid[0] + e.d[0] * sl + e.n[0] * k, mid[1] + e.d[1] * sl + e.n[1] * k];
+          const b = box(p, fs);
+          if (k < 0 && (!inPoly(p, r.pts) || inOther(p, r, par))) continue;
+          if (k > 0 && inOther(p, r, par)) continue;
+          if (!overlaps(b, boxes)) { pick = { fs, p, b }; break; }
+        }
+        if (pick) break;
       }
       if (pick) break;
     }
@@ -823,9 +854,9 @@ function drawFloor(f, root, opts) {
     boxes.push(pick.b);
     let ang = Math.atan2(e.d[1], e.d[0]) * 180 / Math.PI;
     if (ang > 90) ang -= 180; if (ang <= -90) ang += 180;
-    const te = el('text', { x: pick.p[0].toFixed(1), y: pick.p[1].toFixed(1), transform: `rotate(${ang.toFixed(1)} ${pick.p[0].toFixed(1)} ${pick.p[1].toFixed(1)})`, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': pick.fs, 'font-weight': s === 'ok' ? 700 : 500, fill: s === 'open' ? '#A3A197' : '#1E1F1C' }, gText);
+    const te = el('text', lab({ x: pick.p[0].toFixed(1), y: pick.p[1].toFixed(1), transform: `rotate(${ang.toFixed(1)} ${pick.p[0].toFixed(1)} ${pick.p[1].toFixed(1)})`, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': pick.fs, 'font-weight': s === 'ok' ? 700 : 500, fill: s === 'open' ? '#A3A197' : '#1E1F1C' }, 'd' + i, r, mid, pick.p), gText);
     te.textContent = txt;
-  }));
+  }); });
 }
 
 function render() {
@@ -958,7 +989,7 @@ let G = null, pinch = null;
 function targetOf(e) {
   const t = e.target.closest && e.target.closest('[data-k]');
   if (!t) return { k: 'none' };
-  return { k: t.dataset.k, room: t.dataset.room, i: t.dataset.i != null ? +t.dataset.i : null, open: t.dataset.open, item: t.dataset.item };
+  return { k: t.dataset.k, room: t.dataset.room, i: t.dataset.i != null ? +t.dataset.i : null, open: t.dataset.open, item: t.dataset.item, lab: t.dataset.lab, ox: +t.dataset.ox || 0, oy: +t.dataset.oy || 0 };
 }
 function nearestWall(pt, maxPx) {
   let best = null, bd = maxPx / st.view.s;
@@ -993,6 +1024,7 @@ svg.addEventListener('pointerdown', (e) => {
   const ph = st.phase;
   if (ph === 1 && st.tool === 'sketch') { G.type = 'sketch'; G.pts = [w]; }
   else if (ph === 1 && st.tool === 'rect') G.type = 'rect';
+  else if (tg.k === 'label' && st.tool === 'select') G.type = 'label';
   else if (tg.k === 'open' && ph === 2) G.type = 'open';
   else if (tg.k === 'item' && ph === 2 && st.tool === 'select') { const it = itemById(tg.item); const o = offOf(it.room); G.type = 'item'; G.orig = [it.x + o[0], it.y + o[1]]; }
   else if (st.tool === 'select' && ph === 1 && tg.k === 'wall') { G.type = 'wall'; G.orig = roomById(tg.room).pts.map((q) => q.slice()); }
@@ -1017,7 +1049,7 @@ svg.addEventListener('pointermove', (e) => {
   if (!G) return;
   const dx = e.clientX - G.start[0], dy = e.clientY - G.start[1];
   if (!G.moved && Math.hypot(dx, dy) < 6) return;
-  if (!G.moved && ['item', 'open', 'wall', 'room'].includes(G.type)) snapshot();
+  if (!G.moved && ['item', 'open', 'wall', 'room', 'label'].includes(G.type)) snapshot();
   G.moved = true;
   const w = toWorld(e.clientX, e.clientY);
   const W = [w[0] - G.w0[0], w[1] - G.w0[1]];
@@ -1034,6 +1066,11 @@ svg.addEventListener('pointermove', (e) => {
     el('polygon', { points: P(G.pts), fill: 'rgba(29,63,214,.08)', stroke: '#1D3FD6', 'stroke-width': 2, 'vector-effect': 'non-scaling-stroke' }, overlay);
     const lab = el('text', { x: Math.max(a[0], b[0]) + 8 / st.view.s, y: Math.max(a[1], b[1]) + 18 / st.view.s, 'font-size': 14 / st.view.s, fill: '#1D3FD6', 'font-weight': 700 }, overlay);
     lab.textContent = `${fmtM(Math.abs(b[0] - a[0]))} × ${fmtM(Math.abs(b[1] - a[1]))} m`;
+  } else if (G.type === 'label') {
+    const r = roomById(G.tg.room);
+    r.lo = r.lo || {};
+    r.lo[G.tg.lab] = [R1(G.tg.ox + W[0]), R1(G.tg.oy + W[1])];
+    render();
   } else if (G.type === 'item') {
     const it = itemById(G.tg.item), o = offOf(it.room);
     const [cx, cy] = snapItem(it, G.orig[0] + W[0], G.orig[1] + W[1]);
@@ -1175,7 +1212,8 @@ function tapSelect(g) {
     toast(kind === 'door' ? 'Deur geplaatst. Sleep om te verschuiven.' : 'Raam geplaatst. Sleep om te verschuiven.');
     return;
   }
-  if (tg.k === 'wall') st.sel = { room: tg.room, wall: tg.i };
+  if (tg.k === 'label') st.sel = tg.lab === 'n' ? { room: tg.room } : { room: tg.room, wall: +tg.lab.slice(1) };
+  else if (tg.k === 'wall') st.sel = { room: tg.room, wall: tg.i };
   else if (tg.k === 'open') st.sel = { room: tg.room, open: tg.open };
   else if (tg.k === 'item') st.sel = { item: tg.item };
   else if (tg.k === 'room') st.sel = { room: tg.room };
@@ -1285,6 +1323,7 @@ function renderPanel() {
       <label class="pe-tog"><input type="checkbox" id="pe-r-dims"${r.hideDims ? '' : ' checked'}><span>Maten tonen</span></label>
       <label class="pe-tog"><input type="checkbox" id="pe-r-area"${r.hideArea ? '' : ' checked'}><span>Oppervlakte tonen</span></label>
     </div>
+    <p class="pe-p-tip">Tekst staat niet goed? Sleep de naam of een maat zelf naar een andere plek.${r.lo && Object.keys(r.lo).length ? ' <button type="button" class="pe-linkbtn" data-act="labreset">Automatisch plaatsen</button>' : ''}</p>
     <p class="pe-p-area">${fmtArea(netArea(r))} · volume ${(netArea(r) * r.h / 100).toFixed(1).replace('.', ',')} m³${netArea(r) < areaM2(r) - 0.005 ? '<br><small>Ruimtes die hierin getekend zijn (bv. een toilet in de gang) zijn afgetrokken.</small>' : ''}</p>
     <div class="pe-p-btns">${st.phase === 1 ? '<button type="button" data-act="walls">Maten invullen</button><button type="button" data-act="dup">Dupliceer</button>' : ''}<button type="button" class="is-del" data-act="del">Verwijder</button></div>`;
 }
@@ -1388,6 +1427,7 @@ $('pe-panel').addEventListener('click', async (e) => {
     if (a === 'room') { st.sel = { room: r.id }; render(); }
     return;
   }
+  if (a === 'labreset') { snapshot(); delete r.lo; render(); markDirty(); return; }
   if (a === 'walls') { const j = nextWall(r, -1); st.sel = { room: r.id, wall: j == null ? 0 : j }; render(); focusLength(); return; }
   if (a === 'dup') { snapshot(); const c = JSON.parse(JSON.stringify(r)); c.id = uid(); c.pts = c.pts.map((q) => [q[0] + 60, q[1] + 60]); c.open.forEach((o) => { o.id = uid(); }); floor().rooms.push(c); st.sel = { room: c.id }; render(); markDirty(); return; }
   if (a === 'del') {
